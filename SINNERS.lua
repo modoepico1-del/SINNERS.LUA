@@ -292,6 +292,8 @@ local galaxyModeEnabled = false
 local galaxySky         = nil
 local originalSkyStore  = {}
 
+local galaxyOriginalLighting = {}
+
 local function startGalaxyMode()
     -- Guardar y remover skies existentes
     originalSkyStore = {}
@@ -301,6 +303,24 @@ local function startGalaxyMode()
             child.Parent = nil
         end
     end
+    -- Guardar estado de Lighting
+    galaxyOriginalLighting = {
+        Ambient          = Lighting.Ambient,
+        OutdoorAmbient   = Lighting.OutdoorAmbient,
+        Brightness       = Lighting.Brightness,
+        ColorShift_Top   = Lighting.ColorShift_Top,
+        ColorShift_Bottom= Lighting.ColorShift_Bottom,
+        FogColor         = Lighting.FogColor,
+        FogEnd           = Lighting.FogEnd,
+    }
+    -- Iluminación azul oscuro profundo
+    Lighting.Ambient           = Color3.fromRGB(0, 5, 30)
+    Lighting.OutdoorAmbient    = Color3.fromRGB(0, 10, 50)
+    Lighting.Brightness        = 0.3
+    Lighting.ColorShift_Top    = Color3.fromRGB(0, 20, 80)
+    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 5, 40)
+    Lighting.FogColor          = Color3.fromRGB(0, 10, 60)
+    Lighting.FogEnd            = 9e9
     local sky = Instance.new("Sky")
     sky.Name                = "Sky"
     sky.SkyboxBk            = "rbxassetid://14939997943"
@@ -310,10 +330,10 @@ local function startGalaxyMode()
     sky.SkyboxRt            = "rbxassetid://14939997943"
     sky.SkyboxUp            = "rbxassetid://14940000257"
     sky.MoonTextureId       = "rbxassetid://14940062085"
-    sky.MoonAngularSize     = 12
+    sky.MoonAngularSize     = 18
     sky.SunTextureId        = "rbxasset://sky/sun.jpg"
     sky.SunAngularSize      = 11
-    sky.StarCount           = 3000
+    sky.StarCount           = 9000   -- máximo brillo de estrellas
     sky.CelestialBodiesShown = true
     sky.SkyboxOrientation   = Vector3.new(0, 0, 0)
     sky.Parent              = Lighting
@@ -326,6 +346,16 @@ local function stopGalaxyMode()
         pcall(function() obj.instance.Parent = obj.parent end)
     end
     originalSkyStore = {}
+    -- Restaurar Lighting
+    pcall(function()
+        Lighting.Ambient           = galaxyOriginalLighting.Ambient           or Color3.fromRGB(70,70,70)
+        Lighting.OutdoorAmbient    = galaxyOriginalLighting.OutdoorAmbient    or Color3.fromRGB(140,140,140)
+        Lighting.Brightness        = galaxyOriginalLighting.Brightness        or 1
+        Lighting.ColorShift_Top    = galaxyOriginalLighting.ColorShift_Top    or Color3.fromRGB(0,0,0)
+        Lighting.ColorShift_Bottom = galaxyOriginalLighting.ColorShift_Bottom or Color3.fromRGB(0,0,0)
+        Lighting.FogColor          = galaxyOriginalLighting.FogColor          or Color3.fromRGB(191,191,191)
+        Lighting.FogEnd            = galaxyOriginalLighting.FogEnd            or 100000
+    end)
 end
 
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
