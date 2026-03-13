@@ -301,13 +301,27 @@ end
 local function startGalaxyMode()
     saveGalaxyLightingState()
     galaxyModeObjects = {}
-    -- Guardar y remover skies existentes
+    -- Guardar y remover skies, atmósferas y efectos existentes
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
+        if child:IsA("Sky") or child:IsA("Atmosphere") or child:IsA("BloomEffect") or child:IsA("ColorCorrectionEffect") then
             table.insert(galaxyModeObjects, {removed = true, instance = child, parent = Lighting})
             child.Parent = nil
         end
     end
+    -- Guardar y ajustar propiedades de Lighting para sky correcto
+    originalGalaxyLighting.Brightness     = Lighting.Brightness
+    originalGalaxyLighting.Ambient        = Lighting.Ambient
+    originalGalaxyLighting.OutdoorAmbient = Lighting.OutdoorAmbient
+    originalGalaxyLighting.GlobalShadows  = Lighting.GlobalShadows
+    originalGalaxyLighting.ClockTime      = Lighting.ClockTime
+    originalGalaxyLighting.FogEnd         = Lighting.FogEnd
+    Lighting.Brightness     = 0
+    Lighting.Ambient        = Color3.fromRGB(0, 0, 0)
+    Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+    Lighting.GlobalShadows  = false
+    Lighting.ClockTime      = 0
+    Lighting.FogEnd         = 9e9
+    Lighting.FogStart       = 9e9
     -- Crear sky galaxia
     local sky = Instance.new("Sky")
     sky.Name                 = "GalaxySky"
@@ -325,7 +339,6 @@ local function startGalaxyMode()
     sky.SunTextureId         = "rbxasset://sky/sun.jpg"
     sky.Parent               = Lighting
     table.insert(galaxyModeObjects, sky)
-    Lighting.FogStart = 10000
 end
 
 local function stopGalaxyMode()
@@ -339,7 +352,17 @@ local function stopGalaxyMode()
         end)
     end
     galaxyModeObjects = {}
-    pcall(function() Lighting.FogStart = originalGalaxyLighting.FogStart or 0 end)
+    pcall(function()
+        Lighting.FogStart       = originalGalaxyLighting.FogStart      or 0
+        Lighting.FogEnd         = originalGalaxyLighting.FogEnd         or 9e9
+        Lighting.Brightness     = originalGalaxyLighting.Brightness     or 2
+        Lighting.Ambient        = originalGalaxyLighting.Ambient        or Color3.fromRGB(70,70,70)
+        Lighting.OutdoorAmbient = originalGalaxyLighting.OutdoorAmbient or Color3.fromRGB(140,140,140)
+        if originalGalaxyLighting.GlobalShadows ~= nil then
+            Lighting.GlobalShadows = originalGalaxyLighting.GlobalShadows
+        end
+        Lighting.ClockTime = originalGalaxyLighting.ClockTime or 14
+    end)
 end
 
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
