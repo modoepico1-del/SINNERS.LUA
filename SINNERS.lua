@@ -11,9 +11,10 @@ local CoreGui = game:GetService("CoreGui")
 
 local me = Players.LocalPlayer
 local player = me
+local LocalPlayer = me
 local RS = RunService
 
-local cfg = { Unwalk = false, Xray = false }
+local cfg = { Unwalk = false, Xray = false, ESP = false }
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
@@ -48,7 +49,7 @@ ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size             = UDim2.new(0, 480, 0, 460)
+MainFrame.Size             = UDim2.new(0, 480, 0, 520)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel  = 0
@@ -172,13 +173,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,480,0,460)
+        MainFrame.Size    = UDim2.new(0,480,0,520)
     end)
 end)
-
--- ══════════════════════════════════════
---  AREA CONTENIDO
--- ══════════════════════════════════════
 
 local ContentArea = Instance.new("Frame")
 ContentArea.Size             = UDim2.new(1, 0, 1, -42)
@@ -189,7 +186,7 @@ ContentArea.ZIndex           = 3
 ContentArea.Parent           = MainFrame
 
 -- ══════════════════════════════════════
---  HELPER: CREAR FILA OPCION
+--  HELPER FILA
 -- ══════════════════════════════════════
 
 local function makeOptionRow(parent, labelText, yPos)
@@ -200,17 +197,14 @@ local function makeOptionRow(parent, labelText, yPos)
     row.BorderSizePixel  = 0
     row.ZIndex           = 4
     row.Parent           = parent
-
     local rc = Instance.new("UICorner")
     rc.CornerRadius = UDim.new(0, 7)
     rc.Parent = row
-
-    local rs = Instance.new("UIStroke")
-    rs.Color       = Color3.fromRGB(255, 0, 0)
-    rs.Thickness   = 0.8
-    rs.Transparency = 0.5
-    rs.Parent      = row
-
+    local rs2 = Instance.new("UIStroke")
+    rs2.Color       = Color3.fromRGB(255, 0, 0)
+    rs2.Thickness   = 0.8
+    rs2.Transparency = 0.5
+    rs2.Parent      = row
     local lbl = Instance.new("TextLabel")
     lbl.Text               = labelText
     lbl.Size               = UDim2.new(1, -70, 1, 0)
@@ -222,7 +216,6 @@ local function makeOptionRow(parent, labelText, yPos)
     lbl.TextXAlignment     = Enum.TextXAlignment.Left
     lbl.ZIndex             = 5
     lbl.Parent             = row
-
     local track = Instance.new("TextButton")
     track.Text             = ""
     track.Size             = UDim2.new(0, 44, 0, 24)
@@ -231,11 +224,9 @@ local function makeOptionRow(parent, labelText, yPos)
     track.BorderSizePixel  = 0
     track.ZIndex           = 5
     track.Parent           = row
-
     local tc = Instance.new("UICorner")
     tc.CornerRadius = UDim.new(1, 0)
     tc.Parent = track
-
     local thumb = Instance.new("Frame")
     thumb.Size             = UDim2.new(0, 18, 0, 18)
     thumb.Position         = UDim2.new(0, 3, 0.5, -9)
@@ -243,20 +234,29 @@ local function makeOptionRow(parent, labelText, yPos)
     thumb.BorderSizePixel  = 0
     thumb.ZIndex           = 6
     thumb.Parent           = track
-
     local thc = Instance.new("UICorner")
     thc.CornerRadius = UDim.new(1, 0)
     thc.Parent = thumb
-
     return lbl, track, thumb
 end
 
+local function toggleOn(ts, lbl, track, thumb)
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
+end
+
+local function toggleOff(ts, lbl, track, thumb)
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
+end
+
 -- ══════════════════════════════════════
---  OPCION UNWALK
+--  UNWALK
 -- ══════════════════════════════════════
 
 local unwalkLabel, unwalkTrack, unwalkThumb = makeOptionRow(ContentArea, "UNWALK", 10)
-
 local unwalkConn = nil
 local unwalkOn   = false
 
@@ -274,33 +274,22 @@ local function enableUnwalk()
         for _, t in ipairs(an:GetPlayingAnimationTracks()) do t:Stop(0) end
     end)
 end
-
 local function disableUnwalk()
     if unwalkConn then unwalkConn:Disconnect() unwalkConn = nil end
 end
 
 unwalkTrack.MouseButton1Click:Connect(function()
-    unwalkOn   = not unwalkOn
+    unwalkOn = not unwalkOn
     cfg.Unwalk = unwalkOn
-    if unwalkOn then
-        TweenService:Create(unwalkTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
-        TweenService:Create(unwalkThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-        TweenService:Create(unwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
-        enableUnwalk()
-    else
-        TweenService:Create(unwalkTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
-        TweenService:Create(unwalkThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
-        TweenService:Create(unwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
-        disableUnwalk()
-    end
+    if unwalkOn then toggleOn(TweenService, unwalkLabel, unwalkTrack, unwalkThumb); enableUnwalk()
+    else toggleOff(TweenService, unwalkLabel, unwalkTrack, unwalkThumb); disableUnwalk() end
 end)
 
 -- ══════════════════════════════════════
---  OPCION XRAY
+--  XRAY
 -- ══════════════════════════════════════
 
 local xrayLabel, xrayTrack, xrayThumb = makeOptionRow(ContentArea, "XRAY", 64)
-
 local xrayOn               = false
 local originalTransparency = {}
 local unwalkDescConn       = nil
@@ -366,7 +355,6 @@ local function startUnwalk()
         task.wait(0.5) if xrayOn then startUnwalk() end
     end)
 end
-
 local function stopUnwalk()
     if unwalkDescConn then unwalkDescConn:Disconnect() unwalkDescConn = nil end
     if unwalkCharConn then unwalkCharConn:Disconnect() unwalkCharConn = nil end
@@ -377,19 +365,90 @@ local function stopUnwalk()
 end
 
 xrayTrack.MouseButton1Click:Connect(function()
-    xrayOn     = not xrayOn
-    cfg.Xray   = xrayOn
-    if xrayOn then
-        TweenService:Create(xrayTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
-        TweenService:Create(xrayThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-        TweenService:Create(xrayLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
-        startUnwalk()
-    else
-        TweenService:Create(xrayTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
-        TweenService:Create(xrayThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
-        TweenService:Create(xrayLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
-        stopUnwalk()
+    xrayOn = not xrayOn
+    cfg.Xray = xrayOn
+    if xrayOn then toggleOn(TweenService, xrayLabel, xrayTrack, xrayThumb); startUnwalk()
+    else toggleOff(TweenService, xrayLabel, xrayTrack, xrayThumb); stopUnwalk() end
+end)
+
+-- ══════════════════════════════════════
+--  ESP
+-- ══════════════════════════════════════
+
+local espLabel, espTrack, espThumb = makeOptionRow(ContentArea, "ESP", 118)
+local espOn          = false
+local espObjects     = {}
+local espConnections = {}
+
+local function createESP(plr)
+    if plr == LocalPlayer then return end
+    if not plr.Character then return end
+    if plr.Character:FindFirstChild("NightESP") then return end
+    local c = plr.Character
+    local charHrp = c:FindFirstChild("HumanoidRootPart")
+    if not charHrp then return end
+    local humanoid = c:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+    local hitbox = Instance.new("BoxHandleAdornment")
+    hitbox.Name        = "NightESP"
+    hitbox.Adornee     = charHrp
+    hitbox.Size        = Vector3.new(4, 6, 2)
+    hitbox.Color3      = Color3.fromRGB(255, 80, 80)
+    hitbox.Transparency = 0.5
+    hitbox.ZIndex      = 10
+    hitbox.AlwaysOnTop = true
+    hitbox.Parent      = c
+    espObjects[plr]    = {box = hitbox, character = c}
+end
+
+local function removeESP(plr)
+    pcall(function()
+        if plr.Character then
+            local hitbox = plr.Character:FindFirstChild("NightESP")
+            if hitbox then hitbox:Destroy() end
+            local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Automatic end
+        end
+        if espObjects[plr] then espObjects[plr] = nil end
+    end)
+end
+
+local function enableESP()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            if plr.Character then pcall(function() createESP(plr) end) end
+            local conn = plr.CharacterAdded:Connect(function()
+                task.wait(0.1)
+                if espOn then pcall(function() createESP(plr) end) end
+            end)
+            table.insert(espConnections, conn)
+        end
     end
+    local playerAddedConn = Players.PlayerAdded:Connect(function(plr)
+        if plr == LocalPlayer then return end
+        local charAddedConn = plr.CharacterAdded:Connect(function()
+            task.wait(0.1)
+            if espOn then pcall(function() createESP(plr) end) end
+        end)
+        table.insert(espConnections, charAddedConn)
+    end)
+    table.insert(espConnections, playerAddedConn)
+end
+
+local function disableESP()
+    for _, plr in ipairs(Players:GetPlayers()) do pcall(function() removeESP(plr) end) end
+    for _, conn in ipairs(espConnections) do
+        if conn and conn.Connected then conn:Disconnect() end
+    end
+    espConnections = {}
+    espObjects     = {}
+end
+
+espTrack.MouseButton1Click:Connect(function()
+    espOn    = not espOn
+    cfg.ESP  = espOn
+    if espOn then toggleOn(TweenService, espLabel, espTrack, espThumb); enableESP()
+    else toggleOff(TweenService, espLabel, espTrack, espThumb); disableESP() end
 end)
 
 -- ══════════════════════════════════════
@@ -401,12 +460,12 @@ ToggleBtn.MouseButton1Click:Connect(function()
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
         task.delay(0.27, function()
             MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0,480,0,460)
+            MainFrame.Size    = UDim2.new(0,480,0,520)
         end)
     else
         MainFrame.Size    = UDim2.new(0,480,0,0)
         MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,460)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,520)}):Play()
     end
 end)
 
@@ -444,7 +503,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0, 480, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,460)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,520)}):Play()
 
 local dragging, dragStart, startPos = false, nil, nil
 TitleBar.InputBegan:Connect(function(input)
