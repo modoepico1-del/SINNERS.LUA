@@ -1,116 +1,153 @@
-local Players           = game:GetService("Players")
-local UserInputService  = game:GetService("UserInputService")
-local TweenService      = game:GetService("TweenService")
-local CoreGui           = game:GetService("CoreGui")
+-- ╔══════════════════════════════════════╗
+-- ║         DEMONTIME HUB     ║
+-- ╚══════════════════════════════════════╝
 
-local player    = Players.LocalPlayer
-local Camera    = workspace.CurrentCamera
+-- Servicios
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
-local WHITE       = Color3.fromRGB(255, 255, 255)
-local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 60
+local LocalPlayer = Players.LocalPlayer
 
-if CoreGui:FindFirstChild("KMoneyHub") then
-    CoreGui:FindFirstChild("KMoneyHub"):Destroy()
+-- ══════════════════════════════════════
+--  CONFIGURACIÓN DEL HUB
+-- ══════════════════════════════════════
+
+local HubConfig = {
+    Name    = "Mi Hub",
+    Version = "v1.0",
+    Color   = Color3.fromRGB(255, 0, 0),
+}
+
+-- ══════════════════════════════════════
+--  CREACIÓN DE LA GUI
+-- ══════════════════════════════════════
+
+-- Eliminar instancias anteriores del mismo Hub
+if CoreGui:FindFirstChild(HubConfig.Name) then
+    CoreGui:FindFirstChild(HubConfig.Name):Destroy()
 end
 
+-- Contenedor raíz
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name           = "KMoneyHub"
-ScreenGui.ResetOnSpawn   = false
+ScreenGui.Name          = HubConfig.Name
+ScreenGui.ResetOnSpawn  = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder   = 999
-pcall(function() ScreenGui.Parent = CoreGui end)
+ScreenGui.Parent        = CoreGui
 
-local Main = Instance.new("Frame", ScreenGui)
-Main.Name                   = "Main"
-Main.Size                   = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position               = UDim2.new(0.5, -135, 0.5, -30)
-Main.BackgroundTransparency = 1
-Main.BorderSizePixel        = 0
-Main.ClipsDescendants       = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+-- Ventana principal
+local MainFrame = Instance.new("Frame")
+MainFrame.Name            = "MainFrame"
+MainFrame.Size            = UDim2.new(0, 480, 0, 320)
+MainFrame.Position        = UDim2.new(0.5, -240, 0.5, -160)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent          = ScreenGui
 
-local grimStroke = Instance.new("UIStroke", Main)
-grimStroke.Color        = BLACK
-grimStroke.Thickness    = 2
-grimStroke.Transparency = 0
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent       = MainFrame
 
-local TopLine = Instance.new("Frame", Main)
-TopLine.Size             = UDim2.new(1, 0, 0, 2)
-TopLine.BackgroundColor3 = BLACK
-TopLine.BorderSizePixel  = 0
+-- Barra de título
+local TitleBar = Instance.new("Frame")
+TitleBar.Name              = "TitleBar"
+TitleBar.Size              = UDim2.new(1, 0, 0, 40)
+TitleBar.Position          = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3  = Color3.fromRGB(000, 000, 000)
+TitleBar.BorderSizePixel   = 0
+TitleBar.Parent            = MainFrame
 
-local TitleBar = Instance.new("Frame", Main)
-TitleBar.Size               = UDim2.new(1, 0, 0, 48)
-TitleBar.Position           = UDim2.new(0, 0, 0, 2)
-TitleBar.BackgroundTransparency = 1
-TitleBar.BorderSizePixel    = 0
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent       = TitleBar
 
-local TitleLbl = Instance.new("TextLabel", TitleBar)
-TitleLbl.Size                   = UDim2.new(1, -46, 1, 0)
-TitleLbl.Position               = UDim2.new(0, 14, 0, 0)
-TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text                   = "KMONEY HUB"
-TitleLbl.TextColor3             = WHITE
-TitleLbl.TextStrokeColor3       = BLACK
-TitleLbl.TextStrokeTransparency = 0
-TitleLbl.Font                   = Enum.Font.GothamBlack
-TitleLbl.TextSize               = 16
-TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
+-- Texto del título
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name            = "TitleLabel"
+TitleLabel.Text            = HubConfig.Name .. "  " .. HubConfig.Version
+TitleLabel.Size            = UDim2.new(1, -60, 1, 0)
+TitleLabel.Position        = UDim2.new(0, 14, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextColor3      = Color3.fromRGB(220, 220, 255)
+TitleLabel.TextSize        = 15
+TitleLabel.Font            = Enum.Font.GothamBold
+TitleLabel.TextXAlignment  = Enum.TextXAlignment.Left
+TitleLabel.Parent          = TitleBar
 
-local MinBtn = Instance.new("TextButton", TitleBar)
-MinBtn.Size               = UDim2.new(0, 26, 0, 26)
-MinBtn.Position           = UDim2.new(1, -36, 0.5, -13)
-MinBtn.BackgroundTransparency = 1
-MinBtn.Text               = "—"
-MinBtn.TextColor3         = WHITE
-MinBtn.Font               = Enum.Font.GothamBold
-MinBtn.TextSize           = 13
-MinBtn.BorderSizePixel    = 0
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
-local minStroke = Instance.new("UIStroke", MinBtn)
-minStroke.Color = BLACK; minStroke.Thickness = 1.5; minStroke.Transparency = 0
+-- Botón cerrar
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name              = "CloseBtn"
+CloseBtn.Text              = "✕"
+CloseBtn.Size              = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position          = UDim2.new(1, -36, 0, 5)
+CloseBtn.BackgroundColor3  = Color3.fromRGB(200, 60, 60)
+CloseBtn.TextColor3        = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize          = 14
+CloseBtn.Font              = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel   = 0
+CloseBtn.Parent            = TitleBar
 
--- Draggable
-do
-    local dragging, dragStart, startPos = false, nil, nil
-    TitleBar.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging=true; dragStart=inp.Position; startPos=Main.Position
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end
-    end)
-    UserInputService.InputChanged:Connect(function(inp)
-        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = inp.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
-        end
-    end)
-end
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent       = CloseBtn
 
--- Minimizar
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    MinBtn.Text = minimized and "+" or "—"
-    TweenService:Create(Main, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {
-        Size = minimized and UDim2.new(0,270,0,52) or UDim2.new(0,270,0,FULL_HEIGHT)
-    }):Play()
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
 end)
 
--- Neon pulse
-task.spawn(function()
-    local t = 0
-    while ScreenGui.Parent do
-        t = t + 0.04
-        local pulse = (math.sin(t) + 1) / 2
-        grimStroke.Transparency = 0.05 + pulse * 0.5
-        task.wait(0.03)
+-- Área de contenido vacía
+local ContentArea = Instance.new("Frame")
+ContentArea.Name              = "ContentArea"
+ContentArea.Size              = UDim2.new(1, -20, 1, -60)
+ContentArea.Position          = UDim2.new(0, 10, 0, 50)
+ContentArea.BackgroundTransparency = 1
+ContentArea.Parent            = MainFrame
+
+-- Texto placeholder (se elimina cuando agregues opciones)
+local Placeholder = Instance.new("TextLabel")
+Placeholder.Text              = "Sin opciones configuradas."
+Placeholder.Size              = UDim2.new(1, 0, 1, 0)
+Placeholder.Position          = UDim2.new(0, 0, 0, 0)
+Placeholder.BackgroundTransparency = 1
+Placeholder.TextColor3        = Color3.fromRGB(100, 100, 120)
+Placeholder.TextSize          = 13
+Placeholder.Font              = Enum.Font.Gotham
+Placeholder.TextXAlignment    = Enum.TextXAlignment.Center
+Placeholder.Parent            = ContentArea
+
+-- ══════════════════════════════════════
+--  ARRASTRE DE LA VENTANA
+-- ══════════════════════════════════════
+
+local dragging, dragStart, startPos = false, nil, nil
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging  = true
+        dragStart = input.Position
+        startPos  = MainFrame.Position
     end
 end)
 
--- Animacion de apertura
-Main.Size = UDim2.new(0,0,0,0)
-TweenService:Create(Main, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,270,0,FULL_HEIGHT)}):Play()
+TitleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- ══════════════════════════════════════
+--  FIN DEL SCRIPT
+-- ══════════════════════════════════════
