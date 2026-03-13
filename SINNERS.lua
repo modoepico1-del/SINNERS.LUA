@@ -9,23 +9,14 @@ local CoreGui = game:GetService("CoreGui")
 
 local HubConfig = {
     Name    = "DEMONTIME",
-    Version = "v1.0",
     NeonRed = Color3.fromRGB(255, 0, 0),
-    BgDark  = Color3.fromRGB(10, 10, 10),
-    TitleBg = Color3.fromRGB(10, 10, 10),
+    BgDark  = Color3.fromRGB(0, 0, 0),
+    TitleBg = Color3.fromRGB(0, 0, 0),
 }
-
--- ══════════════════════════════════════
---  LIMPIEZA TOTAL
--- ══════════════════════════════════════
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
 end
-
--- ══════════════════════════════════════
---  GUI RAIZ
--- ══════════════════════════════════════
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name           = "DEMONTIME_GUI"
@@ -34,15 +25,15 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 -- ══════════════════════════════════════
---  BOTON PARA REABRIR (siempre visible)
+--  BOTON TOGGLE (arriba izquierda)
 -- ══════════════════════════════════════
 
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Name             = "ToggleBtn"
 ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
-ToggleBtn.Position         = UDim2.new(0, 10, 0.5, -14)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
 ToggleBtn.TextSize         = 12
 ToggleBtn.Font             = Enum.Font.GothamBlack
@@ -61,14 +52,14 @@ ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent      = ToggleBtn
 
 -- ══════════════════════════════════════
---  VENTANA PRINCIPAL
+--  VENTANA PRINCIPAL (arriba izquierda)
 -- ══════════════════════════════════════
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name             = "MainFrame"
 MainFrame.Size             = UDim2.new(0, 480, 0, 320)
-MainFrame.Position         = UDim2.new(0.5, -240, 0.5, -160)
-MainFrame.BackgroundColor3 = HubConfig.BgDark
+MainFrame.Position         = UDim2.new(0, 10, 0, 48)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel  = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Visible          = true
@@ -78,7 +69,7 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Borde neon rojo (3 capas)
+-- Borde neon rojo 3 capas
 local function addNeonBorder(parent, thickness, color)
     local glow = Instance.new("Frame")
     glow.Size               = UDim2.new(1, thickness * 6, 1, thickness * 6)
@@ -122,7 +113,7 @@ local TitleBar = Instance.new("Frame")
 TitleBar.Name              = "TitleBar"
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
 TitleBar.Position          = UDim2.new(0, 0, 0, 0)
-TitleBar.BackgroundColor3  = HubConfig.TitleBg
+TitleBar.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
 TitleBar.BorderSizePixel   = 0
 TitleBar.ZIndex            = 3
 TitleBar.Parent            = MainFrame
@@ -131,7 +122,6 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
--- Linea separadora roja neon
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
 TitleLine.Position         = UDim2.new(0, 0, 1, -2)
@@ -149,10 +139,10 @@ lineGlow.BorderSizePixel   = 0
 lineGlow.ZIndex            = 3
 lineGlow.Parent            = TitleBar
 
--- Texto DEMONTIME: letras rojas, stroke/neon negro
+-- Texto DEMONTIME letras rojas neon negro
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text            = "DEMONTIME"
-TitleLabel.Size            = UDim2.new(1, -60, 1, 0)
+TitleLabel.Size            = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position        = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.TextColor3      = Color3.fromRGB(255, 0, 0)
@@ -162,33 +152,21 @@ TitleLabel.TextXAlignment  = Enum.TextXAlignment.Left
 TitleLabel.ZIndex          = 5
 TitleLabel.Parent          = TitleBar
 
--- Neon negro alrededor de las letras rojas
 local TitleStroke = Instance.new("UIStroke")
 TitleStroke.Color       = Color3.fromRGB(0, 0, 0)
 TitleStroke.Thickness   = 2.5
 TitleStroke.Transparency = 0.0
 TitleStroke.Parent      = TitleLabel
 
-local VersionLabel = Instance.new("TextLabel")
-VersionLabel.Text            = HubConfig.Version
-VersionLabel.Size            = UDim2.new(0, 40, 1, 0)
-VersionLabel.Position        = UDim2.new(1, -82, 0, 0)
-VersionLabel.BackgroundTransparency = 1
-VersionLabel.TextColor3      = Color3.fromRGB(140, 0, 0)
-VersionLabel.TextSize        = 11
-VersionLabel.Font            = Enum.Font.Gotham
-VersionLabel.ZIndex          = 5
-VersionLabel.Parent          = TitleBar
-
 -- ══════════════════════════════════════
---  BOTON X PARA CERRAR (oculta ventana)
+--  BOTON X
 -- ══════════════════════════════════════
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
 CloseBtn.Size              = UDim2.new(0, 28, 0, 28)
 CloseBtn.Position          = UDim2.new(1, -34, 0, 7)
-CloseBtn.BackgroundColor3  = Color3.fromRGB(10, 10, 10)
+CloseBtn.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
 CloseBtn.TextColor3        = Color3.fromRGB(255, 0, 0)
 CloseBtn.TextSize          = 13
 CloseBtn.Font              = Enum.Font.GothamBlack
@@ -214,32 +192,30 @@ CloseBtn.MouseEnter:Connect(function()
 end)
 CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-        BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
         TextColor3       = Color3.fromRGB(255, 0, 0)
     }):Play()
 end)
 
--- Cerrar = solo ocultar, no destruir
 CloseBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        Size     = UDim2.new(0, 480, 0, 0),
-        Position = UDim2.new(0.5, -240, 0.5, -160)
+        Size = UDim2.new(0, 480, 0, 0)
     }):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size     = UDim2.new(0, 480, 0, 320)
-        MainFrame.Position = UDim2.new(0.5, -240, 0.5, -160)
+        MainFrame.Size    = UDim2.new(0, 480, 0, 320)
     end)
 end)
 
 -- ══════════════════════════════════════
---  AREA DE CONTENIDO
+--  AREA DE CONTENIDO (negro puro)
 -- ══════════════════════════════════════
 
 local ContentArea = Instance.new("Frame")
-ContentArea.Size               = UDim2.new(1, -20, 1, -58)
-ContentArea.Position           = UDim2.new(0, 10, 0, 52)
-ContentArea.BackgroundTransparency = 1
+ContentArea.Size               = UDim2.new(1, 0, 1, -42)
+ContentArea.Position           = UDim2.new(0, 0, 0, 42)
+ContentArea.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
+ContentArea.BorderSizePixel    = 0
 ContentArea.ZIndex             = 3
 ContentArea.Parent             = MainFrame
 
@@ -247,7 +223,7 @@ local Placeholder = Instance.new("TextLabel")
 Placeholder.Text               = "sin opciones configuradas"
 Placeholder.Size               = UDim2.new(1, 0, 1, 0)
 Placeholder.BackgroundTransparency = 1
-Placeholder.TextColor3         = Color3.fromRGB(90, 0, 0)
+Placeholder.TextColor3         = Color3.fromRGB(80, 0, 0)
 Placeholder.TextSize           = 13
 Placeholder.Font               = Enum.Font.Gotham
 Placeholder.TextXAlignment     = Enum.TextXAlignment.Center
@@ -255,12 +231,11 @@ Placeholder.ZIndex             = 4
 Placeholder.Parent             = ContentArea
 
 -- ══════════════════════════════════════
---  BOTON TOGGLE: REABRIR VENTANA
+--  TOGGLE ABRIR / CERRAR
 -- ══════════════════════════════════════
 
 ToggleBtn.MouseButton1Click:Connect(function()
     if MainFrame.Visible then
-        -- Si ya esta visible, solo animar cierre
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
             Size = UDim2.new(0, 480, 0, 0)
         }):Play()
@@ -269,12 +244,10 @@ ToggleBtn.MouseButton1Click:Connect(function()
             MainFrame.Size    = UDim2.new(0, 480, 0, 320)
         end)
     else
-        -- Reabrir con animacion
         MainFrame.Size    = UDim2.new(0, 480, 0, 0)
         MainFrame.Visible = true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size     = UDim2.new(0, 480, 0, 320),
-            Position = UDim2.new(0.5, -240, 0.5, -160)
+            Size = UDim2.new(0, 480, 0, 320)
         }):Play()
     end
 end)
@@ -314,8 +287,7 @@ end)
 --  ANIMACION DE APERTURA INICIAL
 -- ══════════════════════════════════════
 
-MainFrame.Size     = UDim2.new(0, 480, 0, 0)
-MainFrame.Position = UDim2.new(0.5, -240, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 480, 0, 0)
 TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
     Size = UDim2.new(0, 480, 0, 320)
 }):Play()
