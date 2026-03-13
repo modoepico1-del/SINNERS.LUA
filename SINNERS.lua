@@ -11,16 +11,7 @@ local CoreGui = game:GetService("CoreGui")
 local me = Players.LocalPlayer
 local RS = RunService
 
-local HubConfig = {
-    Name    = "DEMONTIME",
-    NeonRed = Color3.fromRGB(255, 0, 0),
-    BgDark  = Color3.fromRGB(0, 0, 0),
-    TitleBg = Color3.fromRGB(0, 0, 0),
-}
-
-local cfg = {
-    Unwalk = false,
-}
+local cfg = { Unwalk = false }
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
@@ -33,7 +24,6 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name             = "ToggleBtn"
 ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
 ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
@@ -50,18 +40,18 @@ ToggleCorner.CornerRadius = UDim.new(0, 6)
 ToggleCorner.Parent = ToggleBtn
 
 local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color       = Color3.fromRGB(255, 0, 0)
-ToggleStroke.Thickness   = 1.5
+ToggleStroke.Color        = Color3.fromRGB(255, 0, 0)
+ToggleStroke.Thickness    = 1.5
 ToggleStroke.Transparency = 0.0
-ToggleStroke.Parent      = ToggleBtn
+ToggleStroke.Parent       = ToggleBtn
 
+-- ventana mas alta para ver opciones
 local MainFrame = Instance.new("Frame")
-MainFrame.Name             = "MainFrame"
-MainFrame.Size             = UDim2.new(0, 480, 0, 320)
+MainFrame.Size             = UDim2.new(0, 480, 0, 400)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel  = 0
-MainFrame.ClipsDescendants = true
+MainFrame.ClipsDescendants = false
 MainFrame.Visible          = true
 MainFrame.Parent           = ScreenGui
 
@@ -71,8 +61,8 @@ MainCorner.Parent = MainFrame
 
 local function addNeonBorder(parent, thickness, color)
     local glow = Instance.new("Frame")
-    glow.Size               = UDim2.new(1, thickness * 6, 1, thickness * 6)
-    glow.Position           = UDim2.new(0, -thickness * 3, 0, -thickness * 3)
+    glow.Size               = UDim2.new(1, thickness*6, 1, thickness*6)
+    glow.Position           = UDim2.new(0, -thickness*3, 0, -thickness*3)
     glow.BackgroundColor3   = color
     glow.BackgroundTransparency = 0.72
     glow.BorderSizePixel    = 0
@@ -81,10 +71,9 @@ local function addNeonBorder(parent, thickness, color)
     local gc = Instance.new("UICorner")
     gc.CornerRadius = UDim.new(0, 14)
     gc.Parent = glow
-
     local mid = Instance.new("Frame")
-    mid.Size               = UDim2.new(1, thickness * 3, 1, thickness * 3)
-    mid.Position           = UDim2.new(0, -thickness * 1.5, 0, -thickness * 1.5)
+    mid.Size               = UDim2.new(1, thickness*3, 1, thickness*3)
+    mid.Position           = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
     mid.BackgroundColor3   = color
     mid.BackgroundTransparency = 0.50
     mid.BorderSizePixel    = 0
@@ -93,7 +82,6 @@ local function addNeonBorder(parent, thickness, color)
     local mc = Instance.new("UICorner")
     mc.CornerRadius = UDim.new(0, 12)
     mc.Parent = mid
-
     local stroke = Instance.new("UIStroke")
     stroke.Color           = color
     stroke.Thickness       = thickness
@@ -102,10 +90,9 @@ local function addNeonBorder(parent, thickness, color)
     stroke.Parent          = parent
 end
 
-addNeonBorder(MainFrame, 2, HubConfig.NeonRed)
+addNeonBorder(MainFrame, 2, Color3.fromRGB(255, 0, 0))
 
 local TitleBar = Instance.new("Frame")
-TitleBar.Name              = "TitleBar"
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
 TitleBar.Position          = UDim2.new(0, 0, 0, 0)
 TitleBar.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
@@ -120,7 +107,7 @@ TitleCorner.Parent = TitleBar
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
 TitleLine.Position         = UDim2.new(0, 0, 1, -2)
-TitleLine.BackgroundColor3 = HubConfig.NeonRed
+TitleLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
@@ -128,7 +115,7 @@ TitleLine.Parent           = TitleBar
 local lineGlow = Instance.new("Frame")
 lineGlow.Size              = UDim2.new(1, 0, 0, 8)
 lineGlow.Position          = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3  = HubConfig.NeonRed
+lineGlow.BackgroundColor3  = Color3.fromRGB(255, 0, 0)
 lineGlow.BackgroundTransparency = 0.6
 lineGlow.BorderSizePixel   = 0
 lineGlow.ZIndex            = 3
@@ -169,53 +156,45 @@ CloseBtnCorner.CornerRadius = UDim.new(0, 6)
 CloseBtnCorner.Parent = CloseBtn
 
 local CloseBtnStroke = Instance.new("UIStroke")
-CloseBtnStroke.Color       = Color3.fromRGB(255, 0, 0)
-CloseBtnStroke.Thickness   = 1.2
+CloseBtnStroke.Color        = Color3.fromRGB(255, 0, 0)
+CloseBtnStroke.Thickness    = 1.2
 CloseBtnStroke.Transparency = 0.1
-CloseBtnStroke.Parent      = CloseBtn
+CloseBtnStroke.Parent       = CloseBtn
 
 CloseBtn.MouseEnter:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-        BackgroundColor3 = Color3.fromRGB(180, 0, 0),
-        TextColor3       = Color3.fromRGB(255, 255, 255)
-    }):Play()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180,0,0), TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 end)
 CloseBtn.MouseLeave:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-        TextColor3       = Color3.fromRGB(255, 0, 0)
-    }):Play()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end)
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        Size = UDim2.new(0, 480, 0, 0)
-    }):Play()
+    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0, 480, 0, 320)
+        MainFrame.Size    = UDim2.new(0,480,0,400)
     end)
 end)
 
 -- ══════════════════════════════════════
---  AREA DE CONTENIDO
+--  AREA CONTENIDO
 -- ══════════════════════════════════════
 
 local ContentArea = Instance.new("Frame")
-ContentArea.Size               = UDim2.new(1, 0, 1, -42)
-ContentArea.Position           = UDim2.new(0, 0, 0, 42)
-ContentArea.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
-ContentArea.BorderSizePixel    = 0
-ContentArea.ZIndex             = 3
-ContentArea.Parent             = MainFrame
+ContentArea.Size             = UDim2.new(1, 0, 1, -42)
+ContentArea.Position         = UDim2.new(0, 0, 0, 42)
+ContentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ContentArea.BorderSizePixel  = 0
+ContentArea.ZIndex           = 3
+ContentArea.Parent           = MainFrame
 
 -- ══════════════════════════════════════
---  OPCION UNWALK
+--  FILA UNWALK
 -- ══════════════════════════════════════
 
 local UnwalkRow = Instance.new("Frame")
 UnwalkRow.Size             = UDim2.new(1, -20, 0, 44)
-UnwalkRow.Position         = UDim2.new(0, 10, 0, 14)
-UnwalkRow.BackgroundColor3 = Color3.fromRGB(12, 0, 0)
+UnwalkRow.Position         = UDim2.new(0, 10, 0, 10)
+UnwalkRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 UnwalkRow.BorderSizePixel  = 0
 UnwalkRow.ZIndex           = 4
 UnwalkRow.Parent           = ContentArea
@@ -227,7 +206,7 @@ UnwalkRowCorner.Parent = UnwalkRow
 local UnwalkRowStroke = Instance.new("UIStroke")
 UnwalkRowStroke.Color       = Color3.fromRGB(255, 0, 0)
 UnwalkRowStroke.Thickness   = 0.8
-UnwalkRowStroke.Transparency = 0.6
+UnwalkRowStroke.Transparency = 0.5
 UnwalkRowStroke.Parent      = UnwalkRow
 
 local UnwalkLabel = Instance.new("TextLabel")
@@ -242,37 +221,37 @@ UnwalkLabel.TextXAlignment     = Enum.TextXAlignment.Left
 UnwalkLabel.ZIndex             = 5
 UnwalkLabel.Parent             = UnwalkRow
 
--- Toggle switch
-local ToggleTrack = Instance.new("TextButton")
-ToggleTrack.Text             = ""
-ToggleTrack.Size             = UDim2.new(0, 44, 0, 24)
-ToggleTrack.Position         = UDim2.new(1, -54, 0.5, -12)
-ToggleTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ToggleTrack.BorderSizePixel  = 0
-ToggleTrack.ZIndex           = 5
-ToggleTrack.Parent           = UnwalkRow
+local Track = Instance.new("TextButton")
+Track.Text             = ""
+Track.Size             = UDim2.new(0, 44, 0, 24)
+Track.Position         = UDim2.new(1, -54, 0.5, -12)
+Track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Track.BorderSizePixel  = 0
+Track.ZIndex           = 5
+Track.Parent           = UnwalkRow
 
-local ToggleTrackCorner = Instance.new("UICorner")
-ToggleTrackCorner.CornerRadius = UDim.new(1, 0)
-ToggleTrackCorner.Parent = ToggleTrack
+local TrackCorner = Instance.new("UICorner")
+TrackCorner.CornerRadius = UDim.new(1, 0)
+TrackCorner.Parent = Track
 
-local ToggleThumb = Instance.new("Frame")
-ToggleThumb.Size             = UDim2.new(0, 18, 0, 18)
-ToggleThumb.Position         = UDim2.new(0, 3, 0.5, -9)
-ToggleThumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-ToggleThumb.BorderSizePixel  = 0
-ToggleThumb.ZIndex           = 6
-ToggleThumb.Parent           = ToggleTrack
+local Thumb = Instance.new("Frame")
+Thumb.Size             = UDim2.new(0, 18, 0, 18)
+Thumb.Position         = UDim2.new(0, 3, 0.5, -9)
+Thumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Thumb.BorderSizePixel  = 0
+Thumb.ZIndex           = 6
+Thumb.Parent           = Track
 
-local ToggleThumbCorner = Instance.new("UICorner")
-ToggleThumbCorner.CornerRadius = UDim.new(1, 0)
-ToggleThumbCorner.Parent = ToggleThumb
+local ThumbCorner = Instance.new("UICorner")
+ThumbCorner.CornerRadius = UDim.new(1, 0)
+ThumbCorner.Parent = Thumb
 
 -- ══════════════════════════════════════
 --  LOGICA UNWALK
 -- ══════════════════════════════════════
 
 local unwalkConn = nil
+local unwalkOn   = false
 
 local function enableUnwalk()
     local char = me.Character if not char then return end
@@ -281,7 +260,7 @@ local function enableUnwalk()
     for _, t in ipairs(anim:GetPlayingAnimationTracks()) do t:Stop(0) end
     if unwalkConn then unwalkConn:Disconnect() end
     unwalkConn = RS.Heartbeat:Connect(function()
-        if not cfg.Unwalk then unwalkConn:Disconnect(); unwalkConn = nil return end
+        if not cfg.Unwalk then unwalkConn:Disconnect() unwalkConn = nil return end
         local c = me.Character if not c then return end
         local h = c:FindFirstChildOfClass("Humanoid") if not h then return end
         local an = h:FindFirstChildOfClass("Animator") if not an then return end
@@ -290,44 +269,21 @@ local function enableUnwalk()
 end
 
 local function disableUnwalk()
-    if unwalkConn then unwalkConn:Disconnect(); unwalkConn = nil end
+    if unwalkConn then unwalkConn:Disconnect() unwalkConn = nil end
 end
 
-local unwalkOn = false
-
-local function updateToggleVisual(on)
-    if on then
-        TweenService:Create(ToggleTrack, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-        }):Play()
-        TweenService:Create(ToggleThumb, TweenInfo.new(0.2), {
-            Position         = UDim2.new(0, 23, 0.5, -9),
-            BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        }):Play()
-        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {
-            TextColor3 = Color3.fromRGB(255, 80, 80)
-        }):Play()
-    else
-        TweenService:Create(ToggleTrack, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        }):Play()
-        TweenService:Create(ToggleThumb, TweenInfo.new(0.2), {
-            Position         = UDim2.new(0, 3, 0.5, -9),
-            BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-        }):Play()
-        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {
-            TextColor3 = Color3.fromRGB(220, 220, 220)
-        }):Play()
-    end
-end
-
-ToggleTrack.MouseButton1Click:Connect(function()
-    unwalkOn = not unwalkOn
+Track.MouseButton1Click:Connect(function()
+    unwalkOn   = not unwalkOn
     cfg.Unwalk = unwalkOn
-    updateToggleVisual(unwalkOn)
     if unwalkOn then
+        TweenService:Create(Track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+        TweenService:Create(Thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
         enableUnwalk()
     else
+        TweenService:Create(Track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+        TweenService:Create(Thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
+        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
         disableUnwalk()
     end
 end)
@@ -338,19 +294,15 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     if MainFrame.Visible then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 480, 0, 0)
-        }):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
         task.delay(0.27, function()
             MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0, 480, 0, 320)
+            MainFrame.Size    = UDim2.new(0,480,0,400)
         end)
     else
-        MainFrame.Size    = UDim2.new(0, 480, 0, 0)
+        MainFrame.Size    = UDim2.new(0,480,0,0)
         MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 480, 0, 320)
-        }):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,400)}):Play()
     end
 end)
 
@@ -360,27 +312,25 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.6 }):Play()
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.6}):Play()
         task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.0 }):Play()
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.0}):Play()
         task.wait(1.2)
     end
 end)
-
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0.55 }):Play()
+        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.55}):Play()
         task.wait(1.0)
-        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0.0 }):Play()
+        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.0}):Play()
         task.wait(1.0)
     end
 end)
-
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(ToggleStroke, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.6 }):Play()
+        TweenService:Create(ToggleStroke, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.6}):Play()
         task.wait(1.0)
-        TweenService:Create(ToggleStroke, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Transparency = 0.0 }):Play()
+        TweenService:Create(ToggleStroke, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.0}):Play()
         task.wait(1.0)
     end
 end)
@@ -390,30 +340,20 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0, 480, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-    Size = UDim2.new(0, 480, 0, 320)
-}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,400)}):Play()
 
 local dragging, dragStart, startPos = false, nil, nil
-
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging  = true
-        dragStart = input.Position
-        startPos  = MainFrame.Position
+        dragging=true dragStart=input.Position startPos=MainFrame.Position
     end
 end)
 TitleBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
     end
 end)
