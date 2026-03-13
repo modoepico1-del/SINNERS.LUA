@@ -2,325 +2,302 @@ local Players           = game:GetService("Players")
 local UserInputService  = game:GetService("UserInputService")
 local TweenService      = game:GetService("TweenService")
 local CoreGui           = game:GetService("CoreGui")
-local HttpService       = game:GetService("HttpService")
-local RunService        = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService        = game:GetService("RunService")
+local HttpService       = game:GetService("HttpService")
+local Lighting          = game:GetService("Lighting")
 
-local player    = Players.LocalPlayer
-local Camera    = workspace.CurrentCamera
+local player      = Players.LocalPlayer
+local LocalPlayer = player
+local character   = player.Character or player.CharacterAdded:Wait()
+local HRP         = character:WaitForChild("HumanoidRootPart", 5)
+local Camera      = workspace.CurrentCamera
 
--- ─── AUTO STEAL ────────────────────────────────────────────────
-local AUTO_STEAL_ENABLED = false
-
-local AnimalsData = nil
-pcall(function()
-    AnimalsData = require(ReplicatedStorage:WaitForChild("Datas"):WaitForChild("Animals"))
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    HRP       = newChar:WaitForChild("HumanoidRootPart", 5)
 end)
 
-local allAnimalsCache   = {}
-local PromptMemoryCache = {}
-local InternalStealCache = {}
-local LastTargetUID     = nil
-local LastPlayerPosition = nil
-local PlayerVelocity    = Vector3.zero
+-- ─── AUTO STEAL ────────────────────────────────────────────────
+local stealEnabled  = false
+local stealCooldown = 0.2
+local HOLD_DURATION = 0.5
+local stealThread   = nil
 
-local AUTO_STEAL_PROX_RADIUS = 20
-local IsStealing        = false
-local StealProgress     = 0
-local CurrentStealTarget = nil
-
-local stealConnection   = nil
-local velocityConnection = nil
-
-local function getHRP()
-    local char = player.Character
-    if not char then return nil end
-    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso")
+local function getPromptPart(prompt)
+    local p = prompt.Parent
+    if p:IsA("BasePart")   then return p end
+    if p:IsA("Model")      then return p.PrimaryPart or p:FindFirstChildWhichIsA("BasePart") end
+    if p:IsA("Attachment") then return p.Parent end
+    return p:FindFirstChildWhichIsA("BasePart", true)
 end
 
-local function isMyBase(plotName)
-    local plot = workspace.Plots:FindFirstChild(plotName)
-    if not plot then return false end
-    local sign = plot:FindFirstChild("PlotSign")
-    if sign then
-        local yourBase = sign:FindFirstChild("YourBase")
-        if yourBase and yourBase:IsA("BillboardGui") then
-            return yourBase.Enabled == true
-        end
-    end
-    return false
-end
-
-local function scanSinglePlot(plot)
-    if not plot or not plot:IsA("Model") then return end
-    if isMyBase(plot.Name) then return end
-    local podiums = plot:FindFirstChild("AnimalPodiums")
-    if not podiums then return end
-    for _, podium in ipairs(podiums:GetChildren()) do
-        if podium:IsA("Model") and podium:FindFirstChild("Base") then
-            local animalName = "Unknown"
-            local spawn = podium.Base:FindFirstChild("Spawn")
-            if spawn then
-                for _, child in ipairs(spawn:GetChildren()) do
-                    if child:IsA("Model") and child.Name ~= "PromptAttachment" then
-                        animalName = child.Name
-                        if AnimalsData then
-                            local animalInfo = AnimalsData[animalName]
-                            if animalInfo and animalInfo.DisplayName then
-                                animalName = animalInfo.DisplayName
-                            end
-                        end
-                        break
-                    end
-                end
-            end
-            table.insert(allAnimalsCache, {
-                name = animalName,
-                plot = plot.Name,
-                slot = podium.Name,
-                worldPosition = podium:GetPivot().Position,
-                uid = plot.Name .. "_" .. podium.Name,
-            })
-        end
-    end
-end
-
-local function initializeScanner()
-    task.spawn(function()
-        task.wait(2)
-        local plots = workspace:WaitForChild("Plots", 10)
-        if not plots then return end
-        for _, plot in ipairs(plots:GetChildren()) do
-            if plot:IsA("Model") then scanSinglePlot(plot) end
-        end
-        plots.ChildAdded:Connect(function(plot)
-            if plot:IsA("Model") then task.wait(0.5); scanSinglePlot(plot) end
-        end)
-        task.spawn(function()
-            while task.wait(5) do
-                allAnimalsCache = {}
-                for _, plot in ipairs(plots:GetChildren()) do
-                    if plot:IsA("Model") then scanSinglePlot(plot) end
-                end
-            end
-        end)
-    end)
-end
-
-local function findProximityPromptForAnimal(animalData)
-    if not animalData then return nil end
-    local cachedPrompt = PromptMemoryCache[animalData.uid]
-    if cachedPrompt and cachedPrompt.Parent then return cachedPrompt end
-    local plot = workspace.Plots:FindFirstChild(animalData.plot)
-    if not plot then return nil end
-    local podiums = plot:FindFirstChild("AnimalPodiums")
-    if not podiums then return nil end
-    local podium = podiums:FindFirstChild(animalData.slot)
-    if not podium then return nil end
-    local base = podium:FindFirstChild("Base")
-    if not base then return nil end
-    local spawn = base:FindFirstChild("Spawn")
-    if not spawn then return nil end
-    local attach = spawn:FindFirstChild("PromptAttachment")
-    if not attach then return nil end
-    for _, p in ipairs(attach:GetChildren()) do
-        if p:IsA("ProximityPrompt") then
-            PromptMemoryCache[animalData.uid] = p
-            return p
-        end
-    end
-    return nil
-end
-
-local function shouldSteal(animalData)
-    if not animalData or not animalData.worldPosition then return false end
-    local hrp = getHRP()
-    if not hrp then return false end
-    return (hrp.Position - animalData.worldPosition).Magnitude <= AUTO_STEAL_PROX_RADIUS
-end
-
-local function buildStealCallbacks(prompt)
-    if InternalStealCache[prompt] then return end
-    local data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
-    local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
-    if ok1 and type(conns1) == "table" then
-        for _, conn in ipairs(conns1) do
-            if type(conn.Function) == "function" then table.insert(data.holdCallbacks, conn.Function) end
-        end
-    end
-    local ok2, conns2 = pcall(getconnections, prompt.Triggered)
-    if ok2 and type(conns2) == "table" then
-        for _, conn in ipairs(conns2) do
-            if type(conn.Function) == "function" then table.insert(data.triggerCallbacks, conn.Function) end
-        end
-    end
-    if (#data.holdCallbacks > 0) or (#data.triggerCallbacks > 0) then
-        InternalStealCache[prompt] = data
-    end
-end
-
-local function executeInternalStealAsync(prompt, animalData)
-    local data = InternalStealCache[prompt]
-    if not data or not data.ready then return false end
-    data.ready = false
-    IsStealing = true
-    StealProgress = 0
-    CurrentStealTarget = animalData
-    task.spawn(function()
-        if #data.holdCallbacks > 0 then
-            for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
-        end
-        local startTime = tick()
-        while tick() - startTime < 1.3 do
-            StealProgress = (tick() - startTime) / 1.3
-            task.wait(0.05)
-        end
-        StealProgress = 1
-        if #data.triggerCallbacks > 0 then
-            for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
-        end
-        task.wait(0.1)
-        data.ready = true
-        task.wait(0.3)
-        IsStealing = false
-        StealProgress = 0
-        CurrentStealTarget = nil
-    end)
-    return true
-end
-
-local function attemptSteal(prompt, animalData)
-    if not prompt or not prompt.Parent then return false end
-    buildStealCallbacks(prompt)
-    if not InternalStealCache[prompt] then return false end
-    return executeInternalStealAsync(prompt, animalData)
-end
-
-local function getNearestAnimal()
-    local hrp = getHRP()
-    if not hrp then return nil end
+local function findNearestStealPrompt()
+    if not HRP then return nil end
     local nearest, minDist = nil, math.huge
-    for _, animalData in ipairs(allAnimalsCache) do
-        if not isMyBase(animalData.plot) and animalData.worldPosition then
-            local dist = (hrp.Position - animalData.worldPosition).Magnitude
-            if dist < minDist then minDist = dist; nearest = animalData end
+    local plots = workspace:FindFirstChild("Plots")
+    if not plots then return nil end
+    for _, desc in pairs(plots:GetDescendants()) do
+        if desc:IsA("ProximityPrompt") and desc.Enabled and desc.ActionText == "Steal" then
+            local part = getPromptPart(desc)
+            if part then
+                local dist = (HRP.Position - part.Position).Magnitude
+                if dist < minDist then minDist = dist; nearest = desc end
+            end
         end
     end
     return nearest
 end
 
+local function triggerStealPrompt(prompt)
+    if not prompt or not prompt:IsDescendantOf(workspace) then return end
+    prompt.MaxActivationDistance = 9e9
+    prompt.RequiresLineOfSight   = false
+    prompt.ClickablePrompt       = true
+    local ok = pcall(function() fireproximityprompt(prompt, 9e9, HOLD_DURATION) end)
+    if not ok then
+        pcall(function()
+            prompt:InputHoldBegin()
+            task.wait(HOLD_DURATION)
+            prompt:InputHoldEnd()
+        end)
+    end
+end
+
 local function startAutoSteal()
-    if stealConnection then stealConnection:Disconnect() end
-    stealConnection = RunService.Heartbeat:Connect(function()
-        if not AUTO_STEAL_ENABLED then return end
-        if IsStealing then return end
-        local targetAnimal = getNearestAnimal()
-        if not targetAnimal then return end
-        if not shouldSteal(targetAnimal) then return end
-        if LastTargetUID ~= targetAnimal.uid then LastTargetUID = targetAnimal.uid end
-        local prompt = PromptMemoryCache[targetAnimal.uid]
-        if not prompt or not prompt.Parent then
-            prompt = findProximityPromptForAnimal(targetAnimal)
+    if stealThread then return end
+    stealThread = task.spawn(function()
+        while stealEnabled do
+            local p = findNearestStealPrompt()
+            if p then triggerStealPrompt(p) end
+            task.wait(stealCooldown)
         end
-        if prompt then attemptSteal(prompt, targetAnimal) end
+        stealThread = nil
     end)
 end
 
 local function stopAutoSteal()
-    AUTO_STEAL_ENABLED = false
-    if stealConnection then stealConnection:Disconnect(); stealConnection = nil end
+    stealEnabled = false
+    stealThread  = nil
 end
 
-initializeScanner()
-startAutoSteal()
+-- ─── ANTI RAGDOLL ──────────────────────────────────────────────
+local antiRagdollEnabled      = false
+local RAGDOLL_SPEED           = 16
+local currentCharacter        = nil
+local ragdollRemoteConnection = nil
+local moveConnection          = nil
+local playerModule, controls  = nil, nil
 
--- ─── HITBOX ────────────────────────────────────────────────────
-_G.HeadSize = 1
-local SIDE_TEXT     = "SINNERS"
-local hitboxEnabled = false
-local hitboxCurrentTarget = nil
-local FACES = {
-    Enum.NormalId.Front, Enum.NormalId.Back,
-    Enum.NormalId.Left,  Enum.NormalId.Right,
-    Enum.NormalId.Top,   Enum.NormalId.Bottom
-}
-
-local function applyHitbox(plr)
-    local char = plr.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    for _, c in ipairs(hrp:GetChildren()) do
-        if c:IsA("SurfaceGui") then c:Destroy() end
-    end
-    for _, face in ipairs(FACES) do
-        local sg = Instance.new("SurfaceGui")
-        sg.Face           = face
-        sg.Adornee        = hrp
-        sg.AlwaysOnTop    = true
-        sg.SizingMode     = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        sg.CanvasSize     = Vector2.new(50, 50)
-        sg.Parent         = hrp
-        local txt = Instance.new("TextLabel")
-        txt.Size                   = UDim2.new(1,0,1,0)
-        txt.BackgroundTransparency = 1
-        txt.Text                   = SIDE_TEXT
-        txt.TextColor3             = Color3.fromRGB(180, 0, 255)
-        txt.TextScaled             = true
-        txt.Font                   = Enum.Font.GothamBold
-        txt.Parent                 = sg
-    end
-end
-
-local function clearHitbox(plr)
-    local char = plr.Character
-    if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    for _, c in ipairs(hrp:GetChildren()) do
-        if c:IsA("SurfaceGui") then c:Destroy() end
-    end
-    pcall(function() hrp.Size = Vector3.new(2, 2, 1) end)
-end
-
-local function getNearestPlayer()
-    local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-    local nearest, minDist = nil, math.huge
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
-            if dist < minDist then minDist = dist; nearest = plr end
-        end
-    end
-    return nearest
-end
-
-RunService.RenderStepped:Connect(function()
-    if not hitboxEnabled then
-        if hitboxCurrentTarget then
-            clearHitbox(hitboxCurrentTarget)
-            hitboxCurrentTarget = nil
-        end
-        return
-    end
-    local target = getNearestPlayer()
-    if target ~= hitboxCurrentTarget then
-        if hitboxCurrentTarget then clearHitbox(hitboxCurrentTarget) end
-        hitboxCurrentTarget = target
-        if hitboxCurrentTarget then applyHitbox(hitboxCurrentTarget) end
-    end
-    if hitboxCurrentTarget and hitboxCurrentTarget.Character then
-        local hrp = hitboxCurrentTarget.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.Size         = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
-            hrp.Transparency = 0.7
-            hrp.BrickColor   = BrickColor.new("Bright red")
-            hrp.Material     = Enum.Material.Neon
-            hrp.CanCollide   = false
-        end
-    end
+pcall(function()
+    playerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+    controls     = playerModule:GetControls()
 end)
+
+local function cleanupRagdoll()
+    if currentCharacter then
+        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
+        if root then
+            local anchor = root:FindFirstChild("RagdollAnchor")
+            if anchor then anchor:Destroy() end
+        end
+    end
+    if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
+end
+
+local function disconnectRemote()
+    if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
+end
+
+local function setupAntiRagdoll(char)
+    currentCharacter = char
+    cleanupRagdoll()
+    disconnectRemote()
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    local root     = char:WaitForChild("HumanoidRootPart", 5)
+    local head     = char:WaitForChild("Head", 5)
+    if not (humanoid and root and head) then return end
+    local ragdollRemote
+    pcall(function()
+        ragdollRemote = ReplicatedStorage:WaitForChild("Packages", 8)
+                            :WaitForChild("Ragdoll", 5)
+                            :WaitForChild("Ragdoll", 5)
+    end)
+    if not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then return end
+    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
+        if not antiRagdollEnabled then return end
+        if arg1 == "Make" or arg2 == "manualM" then
+            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+            Camera.CameraSubject = head
+            root.CanCollide = false
+            if controls then pcall(controls.Enable, controls) end
+            cleanupRagdoll()
+            local anchor = Instance.new("BodyPosition")
+            anchor.Name = "RagdollAnchor"; anchor.MaxForce = Vector3.new(1e5,1e5,1e5)
+            anchor.Position = root.Position; anchor.D = 200; anchor.P = 5000
+            anchor.Parent = root
+            moveConnection = RunService.Heartbeat:Connect(function()
+                if not antiRagdollEnabled then cleanupRagdoll(); return end
+                local moveDir = Vector3.zero
+                if controls then pcall(function() moveDir = controls:GetMoveVector() end) end
+                if moveDir.Magnitude > 0.1 then
+                    local cf = Camera.CFrame
+                    local fwd = Vector3.new(cf.LookVector.X,0,cf.LookVector.Z).Unit
+                    local rgt = Vector3.new(cf.RightVector.X,0,cf.RightVector.Z).Unit
+                    anchor.Position = root.Position + (fwd*-moveDir.Z+rgt*moveDir.X).Unit*RAGDOLL_SPEED*0.1
+                else
+                    anchor.Position = root.Position
+                end
+            end)
+        elseif arg1 == "Destroy" or arg2 == "manualD" then
+            cleanupRagdoll()
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            root.CanCollide = true
+            Camera.CameraSubject = humanoid
+            if controls then pcall(controls.Enable, controls) end
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(function(newChar)
+    if antiRagdollEnabled then task.wait(1); setupAntiRagdoll(newChar) end
+end)
+
+-- ─── XRAY ──────────────────────────────────────────────────────
+local unwalkEnabled        = false
+local originalTransparency = {}
+local unwalkDescConn       = nil
+local unwalkCharConn       = nil
+
+local function startUnwalk()
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        Lighting.GlobalShadows = false
+        Lighting.Brightness    = 3
+        Lighting.FogEnd        = 9e9
+    end)
+    pcall(function()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            pcall(function()
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                    obj:Destroy()
+                elseif obj:IsA("BasePart") then
+                    obj.CastShadow = false
+                    obj.Material   = Enum.Material.Plastic
+                end
+            end)
+        end
+    end)
+    local function cleanCharacter(char)
+        if char == player.Character then return end
+        pcall(function()
+            for _, a in ipairs(char:GetChildren()) do
+                if a:IsA("Accessory") then a:Destroy() end
+            end
+            char.ChildAdded:Connect(function(c)
+                if unwalkEnabled and c:IsA("Accessory") then c:Destroy() end
+            end)
+        end)
+    end
+    pcall(function()
+        for _, h in ipairs(workspace:GetDescendants()) do
+            if h:IsA("Humanoid") then cleanCharacter(h.Parent) end
+        end
+    end)
+    pcall(function()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Anchored and
+               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
+               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
+                originalTransparency[obj] = obj.LocalTransparencyModifier
+                obj.LocalTransparencyModifier = 0.85
+            end
+        end
+    end)
+    unwalkDescConn = workspace.DescendantAdded:Connect(function(obj)
+        if not unwalkEnabled then return end
+        pcall(function()
+            if obj:IsA("BasePart") and obj.Anchored and
+               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
+               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
+                originalTransparency[obj] = obj.LocalTransparencyModifier
+                obj.LocalTransparencyModifier = 0.85
+            end
+        end)
+    end)
+    unwalkCharConn = player.CharacterAdded:Connect(function()
+        task.wait(0.5); if unwalkEnabled then startUnwalk() end
+    end)
+end
+
+local function stopUnwalk()
+    if unwalkDescConn then unwalkDescConn:Disconnect(); unwalkDescConn = nil end
+    if unwalkCharConn then unwalkCharConn:Disconnect(); unwalkCharConn = nil end
+    for obj, val in pairs(originalTransparency) do
+        pcall(function() obj.LocalTransparencyModifier = val end)
+    end
+    originalTransparency = {}
+end
+
+-- ─── DARK MODE ─────────────────────────────────────────────────
+local darkModeEnabled  = false
+local darkModeObjects  = {}
+local originalLighting = {}
+
+local function saveLightingState()
+    originalLighting = {
+        ClockTime                = Lighting.ClockTime,
+        Ambient                  = Lighting.Ambient,
+        Brightness               = Lighting.Brightness,
+        EnvironmentDiffuseScale  = Lighting.EnvironmentDiffuseScale,
+        EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+        GlobalShadows            = Lighting.GlobalShadows,
+        OutdoorAmbient           = Lighting.OutdoorAmbient,
+        FogColor                 = Lighting.FogColor,
+        FogEnd                   = Lighting.FogEnd,
+        FogStart                 = Lighting.FogStart,
+    }
+end
+
+local function startDarkMode()
+    saveLightingState()
+    darkModeObjects = {}
+    for _, child in pairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            table.insert(darkModeObjects, {removed = true, instance = child, parent = Lighting})
+            child.Parent = nil
+        end
+    end
+    local sky = Instance.new("Sky")
+    sky.Name                 = "BlackSky"
+    sky.SkyboxBk             = "rbxassetid://2013298"
+    sky.SkyboxDn             = "rbxassetid://2013298"
+    sky.SkyboxFt             = "rbxassetid://2013298"
+    sky.SkyboxLf             = "rbxassetid://2013298"
+    sky.SkyboxRt             = "rbxassetid://2013298"
+    sky.SkyboxUp             = "rbxassetid://2013298"
+    sky.StarCount            = 0
+    sky.CelestialBodiesShown = false
+    sky.Parent               = Lighting
+    table.insert(darkModeObjects, sky)
+    Lighting.FogStart = 10000
+end
+
+local function stopDarkMode()
+    for _, obj in ipairs(darkModeObjects) do
+        pcall(function()
+            if obj.removed then
+                obj.instance.Parent = obj.parent
+            else
+                obj:Destroy()
+            end
+        end)
+    end
+    darkModeObjects = {}
+    pcall(function()
+        Lighting.FogStart = originalLighting.FogStart or 0
+    end)
+end
 
 -- ─── ESP ───────────────────────────────────────────────────────
 local espEnabled     = false
@@ -328,24 +305,24 @@ local espObjects     = {}
 local espConnections = {}
 
 local function createESP(plr)
-    if plr == player then return end
+    if plr == LocalPlayer then return end
     if not plr.Character then return end
     if plr.Character:FindFirstChild("NightESP") then return end
-    local c       = plr.Character
+    local c = plr.Character
     local charHrp = c:FindFirstChild("HumanoidRootPart")
     if not charHrp then return end
     local humanoid = c:FindFirstChildOfClass("Humanoid")
     if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
     local hitbox = Instance.new("BoxHandleAdornment")
-    hitbox.Name         = "NightESP"
-    hitbox.Adornee      = charHrp
-    hitbox.Size         = Vector3.new(4, 6, 2)
-    hitbox.Color3       = Color3.fromRGB(128, 0, 128)
+    hitbox.Name = "NightESP"
+    hitbox.Adornee = charHrp
+    hitbox.Size = Vector3.new(4, 6, 2)
+    hitbox.Color3 = Color3.fromRGB(128, 0, 128)
     hitbox.Transparency = 0.5
-    hitbox.ZIndex       = 10
-    hitbox.AlwaysOnTop  = true
-    hitbox.Parent       = c
-    espObjects[plr]     = {box = hitbox, character = c}
+    hitbox.ZIndex = 10
+    hitbox.AlwaysOnTop = true
+    hitbox.Parent = c
+    espObjects[plr] = {box = hitbox, character = c}
 end
 
 local function removeESP(plr)
@@ -362,7 +339,7 @@ end
 
 local function enableESP()
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
+        if plr ~= LocalPlayer then
             if plr.Character then pcall(function() createESP(plr) end) end
             local conn = plr.CharacterAdded:Connect(function()
                 task.wait(0.1)
@@ -372,7 +349,7 @@ local function enableESP()
         end
     end
     local playerAddedConn = Players.PlayerAdded:Connect(function(plr)
-        if plr == player then return end
+        if plr == LocalPlayer then return end
         local charAddedConn = plr.CharacterAdded:Connect(function()
             task.wait(0.1)
             if espEnabled then pcall(function() createESP(plr) end) end
@@ -388,7 +365,7 @@ local function disableESP()
         if conn and conn.Connected then conn:Disconnect() end
     end
     espConnections = {}
-    espObjects     = {}
+    espObjects = {}
 end
 
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
@@ -397,9 +374,11 @@ local CONFIG_FILE = "KMoneyHub_config.json"
 local function saveConfig()
     pcall(function()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
-            AutoSteal = AUTO_STEAL_ENABLED,
-            Hitbox    = hitboxEnabled,
-            ESP       = espEnabled,
+            AutoSteal   = stealEnabled,
+            AntiRagdoll = antiRagdollEnabled,
+            XRAY        = unwalkEnabled,
+            DarkMode    = darkModeEnabled,
+            ESP         = espEnabled,
         }))
     end)
 end
@@ -410,7 +389,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 -- ─── PALETA ────────────────────────────────────────────────────
 local WHITE       = Color3.fromRGB(255, 255, 255)
 local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 330
+local FULL_HEIGHT = 427  -- aumentado para la nueva fila
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -427,7 +406,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 local Main = Instance.new("Frame", ScreenGui)
 Main.Name                   = "Main"
 Main.Size                   = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position               = UDim2.new(0.5, -135, 0.5, -105)
+Main.Position               = UDim2.new(0.5, -135, 0.5, -213)
 Main.BackgroundTransparency = 1
 Main.BorderSizePixel        = 0
 Main.ClipsDescendants       = true
@@ -489,6 +468,7 @@ local function makeToggleRow(labelText, yOffset)
     Row.BackgroundTransparency = 1
     Row.BorderSizePixel      = 0
     Instance.new("UICorner", Row).CornerRadius = UDim.new(0, 8)
+
     local rowStroke = Instance.new("UIStroke", Row)
     rowStroke.Color = BLACK; rowStroke.Thickness = 1.5; rowStroke.Transparency = 0
 
@@ -529,53 +509,85 @@ end
 
 -- ROW 1: Auto Steal
 local T1,K1,S1,RS1 = makeToggleRow("Auto Steal", 10)
-if savedCfg.AutoSteal then AUTO_STEAL_ENABLED=true; applyOn(T1,K1,S1,RS1) end
+if savedCfg.AutoSteal then stealEnabled=true; startAutoSteal(); applyOn(T1,K1,S1,RS1) end
 T1.MouseButton1Click:Connect(function()
-    AUTO_STEAL_ENABLED = not AUTO_STEAL_ENABLED
-    if AUTO_STEAL_ENABLED then
+    stealEnabled = not stealEnabled
+    if stealEnabled then
+        startAutoSteal()
         TweenService:Create(K1,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
+        stopAutoSteal()
         TweenService:Create(K1,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
     end
 end)
 
--- ROW 2: Hitbox
-local T2,K2,S2,RS2 = makeToggleRow("Hitbox", 66)
-if savedCfg.Hitbox then hitboxEnabled=true; applyOn(T2,K2,S2,RS2) end
+-- ROW 2: Anti Ragdoll
+local T2,K2,S2,RS2 = makeToggleRow("Anti Ragdoll", 66)
+if savedCfg.AntiRagdoll then antiRagdollEnabled=true; task.delay(1,function() setupAntiRagdoll(character) end); applyOn(T2,K2,S2,RS2) end
 T2.MouseButton1Click:Connect(function()
-    hitboxEnabled = not hitboxEnabled
-    if hitboxEnabled then
+    antiRagdollEnabled = not antiRagdollEnabled
+    if antiRagdollEnabled then
+        task.wait(0.5); setupAntiRagdoll(character)
         TweenService:Create(K2,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
+        cleanupRagdoll(); disconnectRemote()
         TweenService:Create(K2,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
     end
 end)
 
--- ROW 3: ESP
-local T3,K3,S3,RS3 = makeToggleRow("ESP", 122)
-if savedCfg.ESP then espEnabled=true; enableESP(); applyOn(T3,K3,S3,RS3) end
+-- ROW 3: XRAY
+local T3,K3,S3,RS3 = makeToggleRow("XRAY", 122)
+if savedCfg.XRAY then unwalkEnabled=true; startUnwalk(); applyOn(T3,K3,S3,RS3) end
 T3.MouseButton1Click:Connect(function()
+    unwalkEnabled = not unwalkEnabled
+    if unwalkEnabled then
+        startUnwalk()
+        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        stopUnwalk()
+        TweenService:Create(K3,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
+-- ROW 4: Dark Mode
+local T4,K4,S4,RS4 = makeToggleRow("Dark Mode", 178)
+if savedCfg.DarkMode then darkModeEnabled=true; startDarkMode(); applyOn(T4,K4,S4,RS4) end
+T4.MouseButton1Click:Connect(function()
+    darkModeEnabled = not darkModeEnabled
+    if darkModeEnabled then
+        startDarkMode()
+        TweenService:Create(K4,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        stopDarkMode()
+        TweenService:Create(K4,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
+-- ROW 5: ESP
+local T5,K5,S5,RS5 = makeToggleRow("ESP", 234)
+if savedCfg.ESP then espEnabled=true; enableESP(); applyOn(T5,K5,S5,RS5) end
+T5.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
     if espEnabled then
         enableESP()
-        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+        TweenService:Create(K5,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
         disableESP()
-        TweenService:Create(K3,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+        TweenService:Create(K5,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
     end
 end)
 
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 188)
+Sep.Position         = UDim2.new(0, 12, 0, 300)
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 200)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 312)
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
