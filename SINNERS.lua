@@ -234,6 +234,95 @@ end
 initializeScanner()
 startAutoSteal()
 
+-- ─── HITBOX ────────────────────────────────────────────────────
+_G.HeadSize = 8
+local SIDE_TEXT     = "SINNERS"
+local hitboxEnabled = false
+local hitboxCurrentTarget = nil
+local FACES = {
+    Enum.NormalId.Front, Enum.NormalId.Back,
+    Enum.NormalId.Left,  Enum.NormalId.Right,
+    Enum.NormalId.Top,   Enum.NormalId.Bottom
+}
+
+local function applyHitbox(plr)
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    for _, c in ipairs(hrp:GetChildren()) do
+        if c:IsA("SurfaceGui") then c:Destroy() end
+    end
+    for _, face in ipairs(FACES) do
+        local sg = Instance.new("SurfaceGui")
+        sg.Face           = face
+        sg.Adornee        = hrp
+        sg.AlwaysOnTop    = true
+        sg.SizingMode     = Enum.SurfaceGuiSizingMode.PixelsPerStud
+        sg.CanvasSize     = Vector2.new(100, 100)
+        sg.Parent         = hrp
+        local txt = Instance.new("TextLabel")
+        txt.Size                  = UDim2.new(1,0,1,0)
+        txt.BackgroundTransparency = 1
+        txt.Text                  = SIDE_TEXT
+        txt.TextColor3            = Color3.fromRGB(180, 0, 255)
+        txt.TextScaled            = true
+        txt.Font                  = Enum.Font.GothamBold
+        txt.Parent                = sg
+    end
+end
+
+local function clearHitbox(plr)
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    for _, c in ipairs(hrp:GetChildren()) do
+        if c:IsA("SurfaceGui") then c:Destroy() end
+    end
+    -- restaurar tamaño original
+    pcall(function() hrp.Size = Vector3.new(2, 2, 1) end)
+end
+
+local function getNearestPlayer()
+    local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local nearest, minDist = nil, math.huge
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+            if dist < minDist then minDist = dist; nearest = plr end
+        end
+    end
+    return nearest
+end
+
+RunService.RenderStepped:Connect(function()
+    if not hitboxEnabled then
+        if hitboxCurrentTarget then
+            clearHitbox(hitboxCurrentTarget)
+            hitboxCurrentTarget = nil
+        end
+        return
+    end
+    local target = getNearestPlayer()
+    if target ~= hitboxCurrentTarget then
+        if hitboxCurrentTarget then clearHitbox(hitboxCurrentTarget) end
+        hitboxCurrentTarget = target
+        if hitboxCurrentTarget then applyHitbox(hitboxCurrentTarget) end
+    end
+    if hitboxCurrentTarget and hitboxCurrentTarget.Character then
+        local hrp = hitboxCurrentTarget.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.Size        = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+            hrp.Transparency = 0.7
+            hrp.BrickColor  = BrickColor.new("Black")
+            hrp.Material    = Enum.Material.Neon
+            hrp.CanCollide  = false
+        end
+    end
+end)
+
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -241,6 +330,7 @@ local function saveConfig()
     pcall(function()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
             AutoSteal = AUTO_STEAL_ENABLED,
+            Hitbox    = hitboxEnabled,
         }))
     end)
 end
@@ -251,7 +341,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 -- ─── PALETA ────────────────────────────────────────────────────
 local WHITE       = Color3.fromRGB(255, 255, 255)
 local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 210
+local FULL_HEIGHT = 270
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -380,17 +470,29 @@ T1.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ROW 2: Hitbox
+local T2,K2,S2,RS2 = makeToggleRow("Hitbox", 66)
+if savedCfg.Hitbox then hitboxEnabled=true; applyOn(T2,K2,S2,RS2) end
+T2.MouseButton1Click:Connect(function()
+    hitboxEnabled = not hitboxEnabled
+    if hitboxEnabled then
+        TweenService:Create(K2,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        TweenService:Create(K2,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 76)
+Sep.Position         = UDim2.new(0, 12, 0, 132)
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 88)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 144)
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
