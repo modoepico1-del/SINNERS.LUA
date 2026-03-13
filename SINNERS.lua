@@ -313,30 +313,34 @@ local function startGalaxyMode()
         FogColor         = Lighting.FogColor,
         FogEnd           = Lighting.FogEnd,
     }
-    -- Iluminación azul oscuro profundo
+    -- Iluminación azul oscuro profundo para resaltar estrellas
     Lighting.Ambient           = Color3.fromRGB(0, 5, 30)
     Lighting.OutdoorAmbient    = Color3.fromRGB(0, 10, 50)
-    Lighting.Brightness        = 0.3
-    Lighting.ColorShift_Top    = Color3.fromRGB(0, 20, 80)
+    Lighting.Brightness        = 0.1
+    Lighting.ColorShift_Top    = Color3.fromRGB(0, 15, 70)
     Lighting.ColorShift_Bottom = Color3.fromRGB(0, 5, 40)
-    Lighting.FogColor          = Color3.fromRGB(0, 10, 60)
+    Lighting.FogColor          = Color3.fromRGB(0, 8, 50)
     Lighting.FogEnd            = 9e9
     local sky = Instance.new("Sky")
-    sky.Name                = "Sky"
-    sky.SkyboxBk            = "rbxassetid://14939997943"
-    sky.SkyboxDn            = "rbxassetid://14939714090"
-    sky.SkyboxFt            = "rbxassetid://14939997943"
-    sky.SkyboxLf            = "rbxassetid://14939997943"
-    sky.SkyboxRt            = "rbxassetid://14939997943"
-    sky.SkyboxUp            = "rbxassetid://14940000257"
+    sky.Name = "Sky"
+    sky.Parent = Lighting
+    -- Skybox azul oscuro con el ID que pusiste
+    sky.SkyboxBk = "rbxassetid://14940021683"
+    sky.SkyboxDn = "rbxassetid://14940021683"
+    sky.SkyboxFt = "rbxassetid://14940021683"
+    sky.SkyboxLf = "rbxassetid://14940021683"
+    sky.SkyboxRt = "rbxassetid://14940021683"
+    sky.SkyboxUp = "rbxassetid://14940021683"
+    -- Luna
     sky.MoonTextureId       = "rbxassetid://14940062085"
-    sky.MoonAngularSize     = 18
+    sky.MoonAngularSize     = 12
+    -- Sol
     sky.SunTextureId        = "rbxasset://sky/sun.jpg"
     sky.SunAngularSize      = 11
-    sky.StarCount           = 9000   -- máximo brillo de estrellas
+    -- Estrellas al máximo
+    sky.StarCount           = 9000
     sky.CelestialBodiesShown = true
     sky.SkyboxOrientation   = Vector3.new(0, 0, 0)
-    sky.Parent              = Lighting
     galaxySky = sky
 end
 
