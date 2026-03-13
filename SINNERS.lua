@@ -287,72 +287,6 @@ local function stopDarkMode()
     pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
 end
 
--- ─── GALAXY MODE ───────────────────────────────────────────────
-local galaxyModeEnabled      = false
-local galaxySky              = nil
-local originalSkyStore       = {}
-local galaxyOriginalLighting = {}
-
-local function startGalaxyMode()
-    originalSkyStore = {}
-    for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(originalSkyStore, {instance = child, parent = Lighting})
-            child.Parent = nil
-        end
-    end
-    galaxyOriginalLighting = {
-        Ambient          = Lighting.Ambient,
-        OutdoorAmbient   = Lighting.OutdoorAmbient,
-        Brightness       = Lighting.Brightness,
-        ColorShift_Top   = Lighting.ColorShift_Top,
-        ColorShift_Bottom= Lighting.ColorShift_Bottom,
-        FogColor         = Lighting.FogColor,
-        FogEnd           = Lighting.FogEnd,
-    }
-    Lighting.Ambient           = Color3.fromRGB(0, 5, 30)
-    Lighting.OutdoorAmbient    = Color3.fromRGB(0, 10, 50)
-    Lighting.Brightness        = 0.1
-    Lighting.ColorShift_Top    = Color3.fromRGB(0, 15, 70)
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 5, 40)
-    Lighting.FogColor          = Color3.fromRGB(0, 8, 50)
-    Lighting.FogEnd            = 9e9
-    local sky = Instance.new("Sky")
-    sky.Name = "Sky"
-    sky.Parent = Lighting
-    sky.SkyboxBk = "rbxassetid://14940021683"
-    sky.SkyboxDn = "rbxassetid://14940021683"
-    sky.SkyboxFt = "rbxassetid://14940021683"
-    sky.SkyboxLf = "rbxassetid://14940021683"
-    sky.SkyboxRt = "rbxassetid://14940021683"
-    sky.SkyboxUp = "rbxassetid://14940021683"
-    sky.MoonTextureId        = "rbxassetid://14940062085"
-    sky.MoonAngularSize      = 12
-    sky.SunTextureId         = "rbxasset://sky/sun.jpg"
-    sky.SunAngularSize       = 11
-    sky.StarCount            = 9000
-    sky.CelestialBodiesShown = true
-    sky.SkyboxOrientation    = Vector3.new(0, 0, 0)
-    galaxySky = sky
-end
-
-local function stopGalaxyMode()
-    if galaxySky then pcall(function() galaxySky:Destroy() end); galaxySky = nil end
-    for _, obj in ipairs(originalSkyStore) do
-        pcall(function() obj.instance.Parent = obj.parent end)
-    end
-    originalSkyStore = {}
-    pcall(function()
-        Lighting.Ambient           = galaxyOriginalLighting.Ambient           or Color3.fromRGB(70,70,70)
-        Lighting.OutdoorAmbient    = galaxyOriginalLighting.OutdoorAmbient    or Color3.fromRGB(140,140,140)
-        Lighting.Brightness        = galaxyOriginalLighting.Brightness        or 1
-        Lighting.ColorShift_Top    = galaxyOriginalLighting.ColorShift_Top    or Color3.fromRGB(0,0,0)
-        Lighting.ColorShift_Bottom = galaxyOriginalLighting.ColorShift_Bottom or Color3.fromRGB(0,0,0)
-        Lighting.FogColor          = galaxyOriginalLighting.FogColor          or Color3.fromRGB(191,191,191)
-        Lighting.FogEnd            = galaxyOriginalLighting.FogEnd            or 100000
-    end)
-end
-
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -363,7 +297,6 @@ local function saveConfig()
             AntiRagdoll = antiRagdollEnabled,
             XRAY        = unwalkEnabled,
             DarkMode    = darkModeEnabled,
-            GalaxyMode  = galaxyModeEnabled,
         }))
     end)
 end
@@ -372,10 +305,10 @@ local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
 -- ─── PALETA ────────────────────────────────────────────────────
-local WHITE      = Color3.fromRGB(180, 220, 255)
-local BLACK      = Color3.fromRGB(0, 30, 80)
-local GLOW_COLOR = Color3.fromRGB(0, 100, 255)
-local FULL_HEIGHT = 427
+local WHITE      = Color3.fromRGB(255, 255, 255)
+local BLACK      = Color3.fromRGB(0, 0, 0)
+local TRANSPARENT = Color3.fromRGB(0, 0, 0)
+local FULL_HEIGHT = 371  -- aumentado para la nueva fila
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -389,43 +322,49 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder   = 999
 pcall(function() ScreenGui.Parent = CoreGui end)
 
+-- Main frame - 100% transparente
 local Main = Instance.new("Frame", ScreenGui)
-Main.Name                   = "Main"
-Main.Size                   = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position               = UDim2.new(0.5, -135, 0.5, -185)
+Main.Name                 = "Main"
+Main.Size                 = UDim2.new(0, 270, 0, FULL_HEIGHT)
+Main.Position             = UDim2.new(0.5, -135, 0.5, -185)
 Main.BackgroundTransparency = 1
-Main.BorderSizePixel        = 0
-Main.ClipsDescendants       = true
+Main.BorderSizePixel      = 0
+Main.ClipsDescendants     = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
+-- Borde negro con glow neon
 local grimStroke = Instance.new("UIStroke", Main)
-grimStroke.Color        = GLOW_COLOR
-grimStroke.Thickness    = 3
+grimStroke.Color       = BLACK
+grimStroke.Thickness   = 2
 grimStroke.Transparency = 0
 
+-- Línea superior negra
 local TopLine = Instance.new("Frame", Main)
 TopLine.Size             = UDim2.new(1, 0, 0, 2)
-TopLine.BackgroundColor3 = GLOW_COLOR
+TopLine.BackgroundColor3 = BLACK
 TopLine.BorderSizePixel  = 0
 
+-- Title bar - transparente
 local TitleBar = Instance.new("Frame", Main)
 TitleBar.Size               = UDim2.new(1, 0, 0, 48)
 TitleBar.Position           = UDim2.new(0, 0, 0, 2)
 TitleBar.BackgroundTransparency = 1
 TitleBar.BorderSizePixel    = 0
 
+-- Título BLANCO
 local TitleLbl = Instance.new("TextLabel", TitleBar)
 TitleLbl.Size                   = UDim2.new(1, -46, 1, 0)
 TitleLbl.Position               = UDim2.new(0, 14, 0, 0)
 TitleLbl.BackgroundTransparency = 1
 TitleLbl.Text                   = "KMONEY HUB"
 TitleLbl.TextColor3             = WHITE
-TitleLbl.TextStrokeColor3       = GLOW_COLOR
-TitleLbl.TextStrokeTransparency = 0.2
+TitleLbl.TextStrokeColor3       = BLACK
+TitleLbl.TextStrokeTransparency = 0
 TitleLbl.Font                   = Enum.Font.GothamBlack
 TitleLbl.TextSize               = 16
 TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
 
+-- Botón minimizar
 local MinBtn = Instance.new("TextButton", TitleBar)
 MinBtn.Size               = UDim2.new(0, 26, 0, 26)
 MinBtn.Position           = UDim2.new(1, -36, 0.5, -13)
@@ -437,8 +376,9 @@ MinBtn.TextSize           = 13
 MinBtn.BorderSizePixel    = 0
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 local minStroke = Instance.new("UIStroke", MinBtn)
-minStroke.Color = GLOW_COLOR; minStroke.Thickness = 1.5; minStroke.Transparency = 0
+minStroke.Color = BLACK; minStroke.Thickness = 1.5; minStroke.Transparency = 0
 
+-- Content
 local Content = Instance.new("Frame", Main)
 Content.Size                 = UDim2.new(1, 0, 1, -52)
 Content.Position             = UDim2.new(0, 0, 0, 52)
@@ -456,13 +396,13 @@ local function makeToggleRow(labelText, yOffset)
     Instance.new("UICorner", Row).CornerRadius = UDim.new(0, 8)
 
     local rowStroke = Instance.new("UIStroke", Row)
-    rowStroke.Color = GLOW_COLOR; rowStroke.Thickness = 1.5; rowStroke.Transparency = 0
+    rowStroke.Color = BLACK; rowStroke.Thickness = 1.5; rowStroke.Transparency = 0
 
     local Lbl = Instance.new("TextLabel", Row)
     Lbl.Size = UDim2.new(1,-70,1,0); Lbl.Position = UDim2.new(0,14,0,0)
     Lbl.BackgroundTransparency = 1; Lbl.Text = labelText
     Lbl.TextColor3 = WHITE
-    Lbl.TextStrokeColor3 = GLOW_COLOR; Lbl.TextStrokeTransparency = 0.3
+    Lbl.TextStrokeColor3 = BLACK; Lbl.TextStrokeTransparency = 0
     Lbl.Font = Enum.Font.GothamBold
     Lbl.TextSize = 13; Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -471,21 +411,21 @@ local function makeToggleRow(labelText, yOffset)
     Btn.BackgroundTransparency = 1; Btn.Text = ""; Btn.BorderSizePixel = 0
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(1,0)
     local bStroke = Instance.new("UIStroke", Btn)
-    bStroke.Color = GLOW_COLOR; bStroke.Thickness = 1.5; bStroke.Transparency = 0
+    bStroke.Color = BLACK; bStroke.Thickness = 1.5; bStroke.Transparency = 0
 
     local Knob = Instance.new("Frame", Btn)
     Knob.Size = UDim2.new(0,18,0,18); Knob.Position = UDim2.new(0,3,0.5,-9)
     Knob.BackgroundColor3 = WHITE; Knob.BorderSizePixel = 0
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1,0)
     local kStroke = Instance.new("UIStroke", Knob)
-    kStroke.Color = GLOW_COLOR; kStroke.Thickness = 1; kStroke.Transparency = 0
+    kStroke.Color = BLACK; kStroke.Thickness = 1; kStroke.Transparency = 0
 
     return Btn, Knob, bStroke, rowStroke
 end
 
 local function applyOn(b,k,s,rs)
     k.Position         = UDim2.new(1,-21,0.5,-9)
-    k.BackgroundColor3 = GLOW_COLOR
+    k.BackgroundColor3 = BLACK
 end
 
 local function applyOff(b,k,s,rs)
@@ -500,7 +440,7 @@ T1.MouseButton1Click:Connect(function()
     stealEnabled = not stealEnabled
     if stealEnabled then
         startAutoSteal()
-        TweenService:Create(K1,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=GLOW_COLOR}):Play()
+        TweenService:Create(K1,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
         stopAutoSteal()
         TweenService:Create(K1,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
@@ -514,7 +454,7 @@ T2.MouseButton1Click:Connect(function()
     antiRagdollEnabled = not antiRagdollEnabled
     if antiRagdollEnabled then
         task.wait(0.5); setupAntiRagdoll(character)
-        TweenService:Create(K2,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=GLOW_COLOR}):Play()
+        TweenService:Create(K2,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
         cleanupRagdoll(); disconnectRemote()
         TweenService:Create(K2,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
@@ -528,7 +468,7 @@ T3.MouseButton1Click:Connect(function()
     unwalkEnabled = not unwalkEnabled
     if unwalkEnabled then
         startUnwalk()
-        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=GLOW_COLOR}):Play()
+        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
         stopUnwalk()
         TweenService:Create(K3,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
@@ -542,38 +482,24 @@ T4.MouseButton1Click:Connect(function()
     darkModeEnabled = not darkModeEnabled
     if darkModeEnabled then
         startDarkMode()
-        TweenService:Create(K4,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=GLOW_COLOR}):Play()
+        TweenService:Create(K4,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
     else
         stopDarkMode()
         TweenService:Create(K4,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
     end
 end)
 
--- ROW 5: Galaxy Mode
-local T5,K5,S5,RS5 = makeToggleRow("Galaxy Mode", 234)
-if savedCfg.GalaxyMode then galaxyModeEnabled=true; startGalaxyMode(); applyOn(T5,K5,S5,RS5) end
-T5.MouseButton1Click:Connect(function()
-    galaxyModeEnabled = not galaxyModeEnabled
-    if galaxyModeEnabled then
-        startGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=GLOW_COLOR}):Play()
-    else
-        stopGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 300)
-Sep.BackgroundColor3 = GLOW_COLOR
+Sep.Position         = UDim2.new(0, 12, 0, 244)  -- 178 + 46 + 20
+Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 312)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 256)  -- sep + 12
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
@@ -583,12 +509,12 @@ SaveBtn.Text               = "SAVE CONFIG"
 SaveBtn.Font               = Enum.Font.GothamBlack
 SaveBtn.TextSize           = 13
 SaveBtn.TextColor3         = WHITE
-SaveBtn.TextStrokeColor3   = GLOW_COLOR
-SaveBtn.TextStrokeTransparency = 0.2
+SaveBtn.TextStrokeColor3   = BLACK
+SaveBtn.TextStrokeTransparency = 0
 SaveBtn.BorderSizePixel    = 0
 Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 8)
 local saveStroke = Instance.new("UIStroke", SaveBtn)
-saveStroke.Color = GLOW_COLOR; saveStroke.Thickness = 1.5; saveStroke.Transparency = 0
+saveStroke.Color = BLACK; saveStroke.Thickness = 1.5; saveStroke.Transparency = 0
 
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig()
@@ -630,14 +556,9 @@ end)
 task.spawn(function()
     local t = 0
     while ScreenGui.Parent do
-        t = t + 0.05
+        t = t + 0.04
         local pulse = (math.sin(t) + 1) / 2
-        grimStroke.Color = Color3.fromRGB(
-            math.floor(0   + pulse * 60),
-            math.floor(80  + pulse * 120),
-            math.floor(200 + pulse * 55)
-        )
-        grimStroke.Transparency = 0.02 + pulse * 0.2
+        grimStroke.Transparency = 0.05 + pulse * 0.5
         task.wait(0.03)
     end
 end)
