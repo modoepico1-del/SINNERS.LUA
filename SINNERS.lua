@@ -287,6 +287,47 @@ local function stopDarkMode()
     pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
 end
 
+-- ─── GALAXY MODE ───────────────────────────────────────────────
+local galaxyModeEnabled = false
+local galaxySky         = nil
+local originalSkyStore  = {}
+
+local function startGalaxyMode()
+    -- Guardar y remover skies existentes
+    originalSkyStore = {}
+    for _, child in pairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            table.insert(originalSkyStore, {instance = child, parent = Lighting})
+            child.Parent = nil
+        end
+    end
+    local sky = Instance.new("Sky")
+    sky.Name                = "Sky"
+    sky.SkyboxBk            = "rbxassetid://14939997943"
+    sky.SkyboxDn            = "rbxassetid://14939714090"
+    sky.SkyboxFt            = "rbxassetid://14939997943"
+    sky.SkyboxLf            = "rbxassetid://14939997943"
+    sky.SkyboxRt            = "rbxassetid://14939997943"
+    sky.SkyboxUp            = "rbxassetid://14940000257"
+    sky.MoonTextureId       = "rbxassetid://14940062085"
+    sky.MoonAngularSize     = 12
+    sky.SunTextureId        = "rbxasset://sky/sun.jpg"
+    sky.SunAngularSize      = 11
+    sky.StarCount           = 3000
+    sky.CelestialBodiesShown = true
+    sky.SkyboxOrientation   = Vector3.new(0, 0, 0)
+    sky.Parent              = Lighting
+    galaxySky = sky
+end
+
+local function stopGalaxyMode()
+    if galaxySky then pcall(function() galaxySky:Destroy() end); galaxySky = nil end
+    for _, obj in ipairs(originalSkyStore) do
+        pcall(function() obj.instance.Parent = obj.parent end)
+    end
+    originalSkyStore = {}
+end
+
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -297,6 +338,7 @@ local function saveConfig()
             AntiRagdoll = antiRagdollEnabled,
             XRAY        = unwalkEnabled,
             DarkMode    = darkModeEnabled,
+            GalaxyMode  = galaxyModeEnabled,
         }))
     end)
 end
@@ -308,7 +350,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 local WHITE      = Color3.fromRGB(255, 255, 255)
 local BLACK      = Color3.fromRGB(0, 0, 0)
 local TRANSPARENT = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 371  -- aumentado para el nuevo toggle
+local FULL_HEIGHT = 427  -- aumentado para Galaxy Mode
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -489,17 +531,31 @@ T4.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ROW 5: Galaxy Mode
+local T5,K5,S5,RS5 = makeToggleRow("Galaxy Mode", 234)
+if savedCfg.GalaxyMode then galaxyModeEnabled=true; startGalaxyMode(); applyOn(T5,K5,S5,RS5) end
+T5.MouseButton1Click:Connect(function()
+    galaxyModeEnabled = not galaxyModeEnabled
+    if galaxyModeEnabled then
+        startGalaxyMode()
+        TweenService:Create(K5,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        stopGalaxyMode()
+        TweenService:Create(K5,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 244)  -- desplazado +56
+Sep.Position         = UDim2.new(0, 12, 0, 300)
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 256)  -- desplazado +56
+SaveFrame.Position           = UDim2.new(0, 12, 0, 312)
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
