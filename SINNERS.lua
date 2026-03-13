@@ -288,14 +288,12 @@ local function stopDarkMode()
 end
 
 -- ─── GALAXY MODE ───────────────────────────────────────────────
-local galaxyModeEnabled = false
-local galaxySky         = nil
-local originalSkyStore  = {}
-
+local galaxyModeEnabled      = false
+local galaxySky              = nil
+local originalSkyStore       = {}
 local galaxyOriginalLighting = {}
 
 local function startGalaxyMode()
-    -- Guardar y remover skies existentes
     originalSkyStore = {}
     for _, child in pairs(Lighting:GetChildren()) do
         if child:IsA("Sky") then
@@ -303,7 +301,6 @@ local function startGalaxyMode()
             child.Parent = nil
         end
     end
-    -- Guardar estado de Lighting
     galaxyOriginalLighting = {
         Ambient          = Lighting.Ambient,
         OutdoorAmbient   = Lighting.OutdoorAmbient,
@@ -313,7 +310,6 @@ local function startGalaxyMode()
         FogColor         = Lighting.FogColor,
         FogEnd           = Lighting.FogEnd,
     }
-    -- Iluminación azul oscuro profundo para resaltar estrellas
     Lighting.Ambient           = Color3.fromRGB(0, 5, 30)
     Lighting.OutdoorAmbient    = Color3.fromRGB(0, 10, 50)
     Lighting.Brightness        = 0.1
@@ -324,23 +320,19 @@ local function startGalaxyMode()
     local sky = Instance.new("Sky")
     sky.Name = "Sky"
     sky.Parent = Lighting
-    -- Skybox azul oscuro con el ID que pusiste
     sky.SkyboxBk = "rbxassetid://14940021683"
     sky.SkyboxDn = "rbxassetid://14940021683"
     sky.SkyboxFt = "rbxassetid://14940021683"
     sky.SkyboxLf = "rbxassetid://14940021683"
     sky.SkyboxRt = "rbxassetid://14940021683"
     sky.SkyboxUp = "rbxassetid://14940021683"
-    -- Luna
-    sky.MoonTextureId       = "rbxassetid://14940062085"
-    sky.MoonAngularSize     = 12
-    -- Sol
-    sky.SunTextureId        = "rbxasset://sky/sun.jpg"
-    sky.SunAngularSize      = 11
-    -- Estrellas al máximo
-    sky.StarCount           = 9000
+    sky.MoonTextureId        = "rbxassetid://14940062085"
+    sky.MoonAngularSize      = 12
+    sky.SunTextureId         = "rbxasset://sky/sun.jpg"
+    sky.SunAngularSize       = 11
+    sky.StarCount            = 9000
     sky.CelestialBodiesShown = true
-    sky.SkyboxOrientation   = Vector3.new(0, 0, 0)
+    sky.SkyboxOrientation    = Vector3.new(0, 0, 0)
     galaxySky = sky
 end
 
@@ -350,7 +342,6 @@ local function stopGalaxyMode()
         pcall(function() obj.instance.Parent = obj.parent end)
     end
     originalSkyStore = {}
-    -- Restaurar Lighting
     pcall(function()
         Lighting.Ambient           = galaxyOriginalLighting.Ambient           or Color3.fromRGB(70,70,70)
         Lighting.OutdoorAmbient    = galaxyOriginalLighting.OutdoorAmbient    or Color3.fromRGB(140,140,140)
@@ -381,10 +372,10 @@ local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
 -- ─── PALETA ────────────────────────────────────────────────────
-local WHITE      = Color3.fromRGB(180, 220, 255)   -- azul claro para textos
-local BLACK      = Color3.fromRGB(0, 30, 80)        -- azul oscuro para bordes/knob
-local GLOW_COLOR = Color3.fromRGB(0, 100, 255)      -- azul neón para glow
-local FULL_HEIGHT = 427  -- aumentado para Galaxy Mode
+local WHITE      = Color3.fromRGB(180, 220, 255)
+local BLACK      = Color3.fromRGB(0, 30, 80)
+local GLOW_COLOR = Color3.fromRGB(0, 100, 255)
+local FULL_HEIGHT = 427
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -398,36 +389,31 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder   = 999
 pcall(function() ScreenGui.Parent = CoreGui end)
 
--- Main frame - 100% transparente
 local Main = Instance.new("Frame", ScreenGui)
-Main.Name                 = "Main"
-Main.Size                 = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position             = UDim2.new(0.5, -135, 0.5, -185)
+Main.Name                   = "Main"
+Main.Size                   = UDim2.new(0, 270, 0, FULL_HEIGHT)
+Main.Position               = UDim2.new(0.5, -135, 0.5, -185)
 Main.BackgroundTransparency = 1
-Main.BorderSizePixel      = 0
-Main.ClipsDescendants     = true
+Main.BorderSizePixel        = 0
+Main.ClipsDescendants       = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
--- Borde negro con glow neon
 local grimStroke = Instance.new("UIStroke", Main)
 grimStroke.Color        = GLOW_COLOR
 grimStroke.Thickness    = 3
 grimStroke.Transparency = 0
 
--- Línea superior negra
 local TopLine = Instance.new("Frame", Main)
 TopLine.Size             = UDim2.new(1, 0, 0, 2)
 TopLine.BackgroundColor3 = GLOW_COLOR
 TopLine.BorderSizePixel  = 0
 
--- Title bar - transparente
 local TitleBar = Instance.new("Frame", Main)
 TitleBar.Size               = UDim2.new(1, 0, 0, 48)
 TitleBar.Position           = UDim2.new(0, 0, 0, 2)
 TitleBar.BackgroundTransparency = 1
 TitleBar.BorderSizePixel    = 0
 
--- Título BLANCO
 local TitleLbl = Instance.new("TextLabel", TitleBar)
 TitleLbl.Size                   = UDim2.new(1, -46, 1, 0)
 TitleLbl.Position               = UDim2.new(0, 14, 0, 0)
@@ -440,7 +426,6 @@ TitleLbl.Font                   = Enum.Font.GothamBlack
 TitleLbl.TextSize               = 16
 TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
 
--- Botón minimizar
 local MinBtn = Instance.new("TextButton", TitleBar)
 MinBtn.Size               = UDim2.new(0, 26, 0, 26)
 MinBtn.Position           = UDim2.new(1, -36, 0.5, -13)
@@ -454,7 +439,6 @@ Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 local minStroke = Instance.new("UIStroke", MinBtn)
 minStroke.Color = GLOW_COLOR; minStroke.Thickness = 1.5; minStroke.Transparency = 0
 
--- Content
 local Content = Instance.new("Frame", Main)
 Content.Size                 = UDim2.new(1, 0, 1, -52)
 Content.Position             = UDim2.new(0, 0, 0, 52)
