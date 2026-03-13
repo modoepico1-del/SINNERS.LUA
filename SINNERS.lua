@@ -238,6 +238,55 @@ local function stopUnwalk()
     originalTransparency = {}
 end
 
+-- ─── DARK MODE ─────────────────────────────────────────────────
+local darkModeEnabled  = false
+local darkModeObjects  = {}
+local originalLighting = {}
+
+local function saveLightingState()
+    originalLighting = {
+        FogStart = Lighting.FogStart,
+    }
+end
+
+local function startDarkMode()
+    saveLightingState()
+    darkModeObjects = {}
+    for _, child in pairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            table.insert(darkModeObjects, {removed = true, instance = child, parent = Lighting})
+            child.Parent = nil
+        end
+    end
+    local sky = Instance.new("Sky")
+    sky.Name                 = "BlackSky"
+    sky.SkyboxBk             = "rbxassetid://2013298"
+    sky.SkyboxDn             = "rbxassetid://2013298"
+    sky.SkyboxFt             = "rbxassetid://2013298"
+    sky.SkyboxLf             = "rbxassetid://2013298"
+    sky.SkyboxRt             = "rbxassetid://2013298"
+    sky.SkyboxUp             = "rbxassetid://2013298"
+    sky.StarCount            = 0
+    sky.CelestialBodiesShown = false
+    sky.Parent               = Lighting
+    table.insert(darkModeObjects, sky)
+    Lighting.FogStart = 10000
+end
+
+local function stopDarkMode()
+    for _, obj in ipairs(darkModeObjects) do
+        pcall(function()
+            if obj.removed then
+                obj.instance.Parent = obj.parent
+            else
+                obj:Destroy()
+            end
+        end)
+    end
+    darkModeObjects = {}
+    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
+end
+
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -247,6 +296,7 @@ local function saveConfig()
             AutoSteal   = stealEnabled,
             AntiRagdoll = antiRagdollEnabled,
             XRAY        = unwalkEnabled,
+            DarkMode    = darkModeEnabled,
         }))
     end)
 end
@@ -258,7 +308,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 local WHITE      = Color3.fromRGB(255, 255, 255)
 local BLACK      = Color3.fromRGB(0, 0, 0)
 local TRANSPARENT = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 315
+local FULL_HEIGHT = 371  -- aumentado para el nuevo toggle
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -276,7 +326,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 local Main = Instance.new("Frame", ScreenGui)
 Main.Name                 = "Main"
 Main.Size                 = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position             = UDim2.new(0.5, -135, 0.5, -157)
+Main.Position             = UDim2.new(0.5, -135, 0.5, -185)
 Main.BackgroundTransparency = 1
 Main.BorderSizePixel      = 0
 Main.ClipsDescendants     = true
@@ -425,17 +475,31 @@ T3.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ROW 4: Dark Mode
+local T4,K4,S4,RS4 = makeToggleRow("Dark Mode", 178)
+if savedCfg.DarkMode then darkModeEnabled=true; startDarkMode(); applyOn(T4,K4,S4,RS4) end
+T4.MouseButton1Click:Connect(function()
+    darkModeEnabled = not darkModeEnabled
+    if darkModeEnabled then
+        startDarkMode()
+        TweenService:Create(K4,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        stopDarkMode()
+        TweenService:Create(K4,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 188)
+Sep.Position         = UDim2.new(0, 12, 0, 244)  -- desplazado +56
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 200)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 256)  -- desplazado +56
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
@@ -494,7 +558,6 @@ task.spawn(function()
     while ScreenGui.Parent do
         t = t + 0.04
         local pulse = (math.sin(t) + 1) / 2
-        -- borde negro, glow pulsando via transparencia
         grimStroke.Transparency = 0.05 + pulse * 0.5
         task.wait(0.03)
     end
