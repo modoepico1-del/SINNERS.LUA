@@ -1,639 +1,483 @@
-local Players           = game:GetService("Players")
-local UserInputService  = game:GetService("UserInputService")
-local TweenService      = game:GetService("TweenService")
-local CoreGui           = game:GetService("CoreGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService        = game:GetService("RunService")
-local HttpService       = game:GetService("HttpService")
-local Lighting          = game:GetService("Lighting")
+-- ========================================
+--         DEMONTIME - Roblox Script
+--       Script de habilidades demoníacas
+-- ========================================
 
-local player    = Players.LocalPlayer
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local HRP       = character:WaitForChild("HumanoidRootPart", 5)
-local Camera    = workspace.CurrentCamera
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+
+-- ========================================
+--            CONFIGURACIÓN
+-- ========================================
+
+local CONFIG = {
+    -- Modo Demonio
+    DEMON_SPEED       = 28,       -- Velocidad en modo demonio
+    NORMAL_SPEED      = 16,       -- Velocidad normal
+    DEMON_JUMP        = 70,       -- Poder de salto en modo demonio
+    NORMAL_JUMP       = 50,       -- Salto normal
+    DEMON_DURATION    = 15,       -- Duración en segundos del modo demonio
+    DEMON_COOLDOWN    = 30,       -- Cooldown en segundos
+
+    -- Dash / Embestida
+    DASH_POWER        = 120,      -- Fuerza del dash
+    DASH_COOLDOWN     = 3,        -- Cooldown del dash (segundos)
+
+    -- Aura de fuego
+    AURA_ENABLED      = true,
+    AURA_COLOR        = Color3.fromRGB(180, 0, 255),   -- Morado demoníaco
+    AURA_FIRE_COLOR   = Color3.fromRGB(255, 50, 0),    -- Naranja/rojo
+
+    -- Teclas
+    KEY_DEMON_MODE    = Enum.KeyCode.E,
+    KEY_DASH          = Enum.KeyCode.Q,
+    KEY_SHOCKWAVE     = Enum.KeyCode.F,
+
+    -- Shockwave
+    SHOCKWAVE_RADIUS  = 20,
+    SHOCKWAVE_FORCE   = 80,
+    SHOCKWAVE_COOLDOWN = 8,
+}
+
+-- ========================================
+--              ESTADO
+-- ========================================
+
+local State = {
+    isDemonMode   = false,
+    demonTimer    = 0,
+    demonCooldown = 0,
+    dashCooldown  = 0,
+    shockwaveCooldown = 0,
+    auraParticles = {},
+}
+
+-- ========================================
+--           FUNCIONES DE UI
+-- ========================================
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DemonTimeUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player.PlayerGui
+
+-- Panel principal
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 220, 0, 130)
+panel.Position = UDim2.new(0, 20, 0.5, -65)
+panel.BackgroundColor3 = Color3.fromRGB(15, 5, 25)
+panel.BackgroundTransparency = 0.3
+panel.BorderSizePixel = 0
+panel.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = panel
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = CONFIG.AURA_COLOR
+stroke.Thickness = 2
+stroke.Parent = panel
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "👿 DEMON TIME"
+title.TextColor3 = CONFIG.AURA_COLOR
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = panel
+
+-- Barra de modo demonio
+local demonLabel = Instance.new("TextLabel")
+demonLabel.Size = UDim2.new(1, -20, 0, 18)
+demonLabel.Position = UDim2.new(0, 10, 0, 35)
+demonLabel.BackgroundTransparency = 1
+demonLabel.Text = "[E] Modo Demonio: LISTO"
+demonLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+demonLabel.TextScaled = true
+demonLabel.Font = Enum.Font.Gotham
+demonLabel.TextXAlignment = Enum.TextXAlignment.Left
+demonLabel.Parent = panel
+
+local demonBar = Instance.new("Frame")
+demonBar.Size = UDim2.new(0.95, 0, 0, 8)
+demonBar.Position = UDim2.new(0.025, 0, 0, 56)
+demonBar.BackgroundColor3 = CONFIG.AURA_COLOR
+demonBar.BorderSizePixel = 0
+demonBar.Parent = panel
+Instance.new("UICorner").Parent = demonBar
+
+-- Barra de dash
+local dashLabel = Instance.new("TextLabel")
+dashLabel.Size = UDim2.new(1, -20, 0, 18)
+dashLabel.Position = UDim2.new(0, 10, 0, 68)
+dashLabel.BackgroundTransparency = 1
+dashLabel.Text = "[Q] Dash: LISTO"
+dashLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+dashLabel.TextScaled = true
+dashLabel.Font = Enum.Font.Gotham
+dashLabel.TextXAlignment = Enum.TextXAlignment.Left
+dashLabel.Parent = panel
+
+local dashBar = Instance.new("Frame")
+dashBar.Size = UDim2.new(0.95, 0, 0, 8)
+dashBar.Position = UDim2.new(0.025, 0, 0, 89)
+dashBar.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+dashBar.BorderSizePixel = 0
+dashBar.Parent = panel
+Instance.new("UICorner").Parent = dashBar
+
+-- Shockwave label
+local shockLabel = Instance.new("TextLabel")
+shockLabel.Size = UDim2.new(1, -20, 0, 18)
+shockLabel.Position = UDim2.new(0, 10, 0, 103)
+shockLabel.BackgroundTransparency = 1
+shockLabel.Text = "[F] Shockwave: LISTO"
+shockLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+shockLabel.TextScaled = true
+shockLabel.Font = Enum.Font.Gotham
+shockLabel.TextXAlignment = Enum.TextXAlignment.Left
+shockLabel.Parent = panel
+
+-- ========================================
+--        EFECTOS VISUALES
+-- ========================================
+
+local function createAura(part)
+    -- Fuego demoníaco
+    local fire = Instance.new("Fire")
+    fire.Color = CONFIG.AURA_FIRE_COLOR
+    fire.SecondaryColor = CONFIG.AURA_COLOR
+    fire.Size = 3
+    fire.Heat = 8
+    fire.Parent = part
+    table.insert(State.auraParticles, fire)
+
+    -- Partículas adicionales
+    local attachment = Instance.new("Attachment")
+    attachment.Parent = part
+
+    local sparkles = Instance.new("Sparkles")
+    sparkles.SparkleColor = CONFIG.AURA_COLOR
+    sparkles.Parent = part
+    table.insert(State.auraParticles, sparkles)
+
+    return fire, sparkles
+end
+
+local function removeAura()
+    for _, effect in ipairs(State.auraParticles) do
+        if effect and effect.Parent then
+            effect:Destroy()
+        end
+    end
+    State.auraParticles = {}
+end
+
+local function flashScreen(color, duration)
+    local flash = Instance.new("Frame")
+    flash.Size = UDim2.new(1, 0, 1, 0)
+    flash.BackgroundColor3 = color
+    flash.BackgroundTransparency = 0.4
+    flash.BorderSizePixel = 0
+    flash.ZIndex = 10
+    flash.Parent = screenGui
+
+    TweenService:Create(flash, TweenInfo.new(duration), {
+        BackgroundTransparency = 1
+    }):Play()
+
+    game:GetService("Debris"):AddItem(flash, duration + 0.1)
+end
+
+local function changeAtmosphere(isDemon)
+    if isDemon then
+        TweenService:Create(Lighting, TweenInfo.new(1), {
+            Ambient = Color3.fromRGB(80, 0, 80),
+            OutdoorAmbient = Color3.fromRGB(100, 20, 20),
+            Brightness = 0.5,
+        }):Play()
+    else
+        TweenService:Create(Lighting, TweenInfo.new(1.5), {
+            Ambient = Color3.fromRGB(70, 70, 70),
+            OutdoorAmbient = Color3.fromRGB(127, 127, 127),
+            Brightness = 2,
+        }):Play()
+    end
+end
+
+-- ========================================
+--          MODO DEMONIO
+-- ========================================
+
+local function activateDemonMode()
+    if State.isDemonMode or State.demonCooldown > 0 then return end
+
+    State.isDemonMode = true
+    State.demonTimer = CONFIG.DEMON_DURATION
+
+    -- Estadísticas
+    humanoid.WalkSpeed = CONFIG.DEMON_SPEED
+    humanoid.JumpPower = CONFIG.DEMON_JUMP
+
+    -- Efectos
+    createAura(rootPart)
+    flashScreen(CONFIG.AURA_COLOR, 0.5)
+    changeAtmosphere(true)
+
+    -- Color del personaje
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            TweenService:Create(part, TweenInfo.new(0.5), {
+                Color = Color3.fromRGB(60, 0, 80)
+            }):Play()
+        end
+    end
+
+    title.Text = "😈 DEMON TIME ACTIVO"
+    title.TextColor3 = CONFIG.AURA_FIRE_COLOR
+    stroke.Color = CONFIG.AURA_FIRE_COLOR
+
+    print("[DemonTime] ¡MODO DEMONIO ACTIVADO!")
+end
+
+local function deactivateDemonMode()
+    State.isDemonMode = false
+    State.demonCooldown = CONFIG.DEMON_COOLDOWN
+
+    -- Estadísticas normales
+    humanoid.WalkSpeed = CONFIG.NORMAL_SPEED
+    humanoid.JumpPower = CONFIG.NORMAL_JUMP
+
+    -- Quitar efectos
+    removeAura()
+    changeAtmosphere(false)
+
+    -- Restaurar color
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            TweenService:Create(part, TweenInfo.new(0.5), {
+                Color = Color3.fromRGB(163, 162, 165)
+            }):Play()
+        end
+    end
+
+    title.Text = "👿 DEMON TIME"
+    title.TextColor3 = CONFIG.AURA_COLOR
+    stroke.Color = CONFIG.AURA_COLOR
+
+    print("[DemonTime] Modo demonio desactivado. Cooldown: " .. CONFIG.DEMON_COOLDOWN .. "s")
+end
+
+-- ========================================
+--              DASH
+-- ========================================
+
+local function performDash()
+    if State.dashCooldown > 0 then return end
+
+    State.dashCooldown = CONFIG.DASH_COOLDOWN
+
+    local direction = humanoid.MoveDirection
+    if direction.Magnitude == 0 then
+        direction = rootPart.CFrame.LookVector
+    end
+
+    -- Aplicar fuerza
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = direction * CONFIG.DASH_POWER
+    bodyVelocity.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bodyVelocity.Parent = rootPart
+
+    -- Efecto visual de dash
+    local dashTrail = Instance.new("SelectionBox")
+    dashTrail.Adornee = rootPart
+    dashTrail.Color3 = CONFIG.AURA_COLOR
+    dashTrail.SurfaceTransparency = 0.8
+    dashTrail.Parent = workspace
+
+    flashScreen(Color3.fromRGB(150, 0, 255), 0.2)
+
+    -- Limpiar
+    game:GetService("Debris"):AddItem(bodyVelocity, 0.15)
+    game:GetService("Debris"):AddItem(dashTrail, 0.3)
+
+    print("[DemonTime] ¡DASH!")
+end
+
+-- ========================================
+--            SHOCKWAVE
+-- ========================================
+
+local function performShockwave()
+    if State.shockwaveCooldown > 0 then return end
+    if not State.isDemonMode then
+        print("[DemonTime] Necesitas el modo demonio para usar Shockwave")
+        return
+    end
+
+    State.shockwaveCooldown = CONFIG.SHOCKWAVE_COOLDOWN
+
+    local origin = rootPart.Position
+
+    -- Onda visual expansiva
+    local wave = Instance.new("Part")
+    wave.Shape = Enum.PartType.Cylinder
+    wave.Size = Vector3.new(1, CONFIG.SHOCKWAVE_RADIUS * 2, CONFIG.SHOCKWAVE_RADIUS * 2)
+    wave.CFrame = CFrame.new(origin) * CFrame.Angles(0, 0, math.pi / 2)
+    wave.Anchored = true
+    wave.CanCollide = false
+    wave.Material = Enum.Material.Neon
+    wave.Color = CONFIG.AURA_COLOR
+    wave.Transparency = 0.3
+    wave.Parent = workspace
+
+    TweenService:Create(wave, TweenInfo.new(0.6), {
+        Size = Vector3.new(1, CONFIG.SHOCKWAVE_RADIUS * 2, CONFIG.SHOCKWAVE_RADIUS * 2),
+        Transparency = 1,
+        Color = CONFIG.AURA_FIRE_COLOR,
+    }):Play()
+
+    game:GetService("Debris"):AddItem(wave, 0.7)
+
+    -- Empujar jugadores cercanos
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            local otherRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if otherRoot then
+                local dist = (otherRoot.Position - origin).Magnitude
+                if dist <= CONFIG.SHOCKWAVE_RADIUS then
+                    local direction = (otherRoot.Position - origin).Unit
+                    local bv = Instance.new("BodyVelocity")
+                    bv.Velocity = direction * CONFIG.SHOCKWAVE_FORCE
+                    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+                    bv.Parent = otherRoot
+                    game:GetService("Debris"):AddItem(bv, 0.3)
+                end
+            end
+        end
+    end
+
+    flashScreen(CONFIG.AURA_FIRE_COLOR, 0.3)
+    print("[DemonTime] ¡SHOCKWAVE lanzado!")
+end
+
+-- ========================================
+--         INPUT (TECLAS)
+-- ========================================
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == CONFIG.KEY_DEMON_MODE then
+        if not State.isDemonMode then
+            activateDemonMode()
+        end
+
+    elseif input.KeyCode == CONFIG.KEY_DASH then
+        performDash()
+
+    elseif input.KeyCode == CONFIG.KEY_SHOCKWAVE then
+        performShockwave()
+    end
+end)
+
+-- ========================================
+--           LOOP PRINCIPAL
+-- ========================================
+
+RunService.Heartbeat:Connect(function(dt)
+    -- Timer del modo demonio
+    if State.isDemonMode then
+        State.demonTimer = State.demonTimer - dt
+        local progress = math.clamp(State.demonTimer / CONFIG.DEMON_DURATION, 0, 1)
+        demonBar.Size = UDim2.new(0.95 * progress, 0, 0, 8)
+        demonLabel.Text = string.format("[E] Demonio: %.1fs", State.demonTimer)
+
+        if State.demonTimer <= 0 then
+            deactivateDemonMode()
+        end
+    else
+        -- Cooldown del modo demonio
+        if State.demonCooldown > 0 then
+            State.demonCooldown = State.demonCooldown - dt
+            local progress = math.clamp(1 - (State.demonCooldown / CONFIG.DEMON_COOLDOWN), 0, 1)
+            demonBar.Size = UDim2.new(0.95 * progress, 0, 0, 8)
+            demonBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            demonLabel.Text = string.format("[E] Cooldown: %.1fs", math.max(0, State.demonCooldown))
+        else
+            demonBar.Size = UDim2.new(0.95, 0, 0, 8)
+            demonBar.BackgroundColor3 = CONFIG.AURA_COLOR
+            demonLabel.Text = "[E] Modo Demonio: LISTO"
+        end
+    end
+
+    -- Cooldown del dash
+    if State.dashCooldown > 0 then
+        State.dashCooldown = State.dashCooldown - dt
+        local progress = math.clamp(1 - (State.dashCooldown / CONFIG.DASH_COOLDOWN), 0, 1)
+        dashBar.Size = UDim2.new(0.95 * progress, 0, 0, 8)
+        dashBar.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+        dashLabel.Text = string.format("[Q] Dash: %.1fs", math.max(0, State.dashCooldown))
+    else
+        dashBar.Size = UDim2.new(0.95, 0, 0, 8)
+        dashBar.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+        dashLabel.Text = "[Q] Dash: LISTO"
+    end
+
+    -- Cooldown del shockwave
+    if State.shockwaveCooldown > 0 then
+        State.shockwaveCooldown = State.shockwaveCooldown - dt
+        shockLabel.Text = string.format("[F] Shockwave: %.1fs", math.max(0, State.shockwaveCooldown))
+        shockLabel.TextColor3 = Color3.fromRGB(130, 130, 130)
+    else
+        shockLabel.Text = "[F] Shockwave: LISTO"
+        shockLabel.TextColor3 = State.isDemonMode 
+            and Color3.fromRGB(255, 100, 0) 
+            or Color3.fromRGB(130, 130, 130)
+    end
+end)
+
+-- ========================================
+--        RESET AL MORIR
+-- ========================================
+
+humanoid.Died:Connect(function()
+    removeAura()
+    State.isDemonMode = false
+    State.demonCooldown = 0
+    changeAtmosphere(false)
+end)
 
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
-    HRP       = newChar:WaitForChild("HumanoidRootPart", 5)
+    humanoid = newChar:WaitForChild("Humanoid")
+    rootPart = newChar:WaitForChild("HumanoidRootPart")
+    State.isDemonMode = false
+    State.demonCooldown = 0
+    State.dashCooldown = 0
+    State.shockwaveCooldown = 0
+    State.auraParticles = {}
+    print("[DemonTime] Personaje respawneado.")
 end)
 
--- ─── AUTO STEAL ────────────────────────────────────────────────
-local stealEnabled  = false
-local stealCooldown = 0.2
-local HOLD_DURATION = 0.5
-local stealThread   = nil
-
-local function getPromptPart(prompt)
-    local p = prompt.Parent
-    if p:IsA("BasePart")   then return p end
-    if p:IsA("Model")      then return p.PrimaryPart or p:FindFirstChildWhichIsA("BasePart") end
-    if p:IsA("Attachment") then return p.Parent end
-    return p:FindFirstChildWhichIsA("BasePart", true)
-end
-
-local function findNearestStealPrompt()
-    if not HRP then return nil end
-    local nearest, minDist = nil, math.huge
-    local plots = workspace:FindFirstChild("Plots")
-    if not plots then return nil end
-    for _, desc in pairs(plots:GetDescendants()) do
-        if desc:IsA("ProximityPrompt") and desc.Enabled and desc.ActionText == "Steal" then
-            local part = getPromptPart(desc)
-            if part then
-                local dist = (HRP.Position - part.Position).Magnitude
-                if dist < minDist then minDist = dist; nearest = desc end
-            end
-        end
-    end
-    return nearest
-end
-
-local function triggerStealPrompt(prompt)
-    if not prompt or not prompt:IsDescendantOf(workspace) then return end
-    prompt.MaxActivationDistance = 9e9
-    prompt.RequiresLineOfSight   = false
-    prompt.ClickablePrompt       = true
-    local ok = pcall(function() fireproximityprompt(prompt, 9e9, HOLD_DURATION) end)
-    if not ok then
-        pcall(function()
-            prompt:InputHoldBegin()
-            task.wait(HOLD_DURATION)
-            prompt:InputHoldEnd()
-        end)
-    end
-end
-
-local function startAutoSteal()
-    if stealThread then return end
-    stealThread = task.spawn(function()
-        while stealEnabled do
-            local p = findNearestStealPrompt()
-            if p then triggerStealPrompt(p) end
-            task.wait(stealCooldown)
-        end
-        stealThread = nil
-    end)
-end
-
-local function stopAutoSteal()
-    stealEnabled = false
-    stealThread  = nil
-end
-
--- ─── ANTI RAGDOLL ──────────────────────────────────────────────
-local antiRagdollEnabled      = false
-local RAGDOLL_SPEED           = 16
-local currentCharacter        = nil
-local ragdollRemoteConnection = nil
-local moveConnection          = nil
-local playerModule, controls  = nil, nil
-
-pcall(function()
-    playerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
-    controls     = playerModule:GetControls()
-end)
-
-local function cleanupRagdoll()
-    if currentCharacter then
-        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
-        if root then
-            local anchor = root:FindFirstChild("RagdollAnchor")
-            if anchor then anchor:Destroy() end
-        end
-    end
-    if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
-end
-
-local function disconnectRemote()
-    if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
-end
-
-local function setupAntiRagdoll(char)
-    currentCharacter = char
-    cleanupRagdoll()
-    disconnectRemote()
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    local root     = char:WaitForChild("HumanoidRootPart", 5)
-    local head     = char:WaitForChild("Head", 5)
-    if not (humanoid and root and head) then return end
-    local ragdollRemote
-    pcall(function()
-        ragdollRemote = ReplicatedStorage:WaitForChild("Packages", 8)
-                            :WaitForChild("Ragdoll", 5)
-                            :WaitForChild("Ragdoll", 5)
-    end)
-    if not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then return end
-    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
-        if not antiRagdollEnabled then return end
-        if arg1 == "Make" or arg2 == "manualM" then
-            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-            Camera.CameraSubject = head
-            root.CanCollide = false
-            if controls then pcall(controls.Enable, controls) end
-            cleanupRagdoll()
-            local anchor = Instance.new("BodyPosition")
-            anchor.Name = "RagdollAnchor"; anchor.MaxForce = Vector3.new(1e5,1e5,1e5)
-            anchor.Position = root.Position; anchor.D = 200; anchor.P = 5000
-            anchor.Parent = root
-            moveConnection = RunService.Heartbeat:Connect(function()
-                if not antiRagdollEnabled then cleanupRagdoll(); return end
-                local moveDir = Vector3.zero
-                if controls then pcall(function() moveDir = controls:GetMoveVector() end) end
-                if moveDir.Magnitude > 0.1 then
-                    local cf = Camera.CFrame
-                    local fwd = Vector3.new(cf.LookVector.X,0,cf.LookVector.Z).Unit
-                    local rgt = Vector3.new(cf.RightVector.X,0,cf.RightVector.Z).Unit
-                    anchor.Position = root.Position + (fwd*-moveDir.Z+rgt*moveDir.X).Unit*RAGDOLL_SPEED*0.1
-                else
-                    anchor.Position = root.Position
-                end
-            end)
-        elseif arg1 == "Destroy" or arg2 == "manualD" then
-            cleanupRagdoll()
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-            root.CanCollide = true
-            Camera.CameraSubject = humanoid
-            if controls then pcall(controls.Enable, controls) end
-        end
-    end)
-end
-
-player.CharacterAdded:Connect(function(newChar)
-    if antiRagdollEnabled then task.wait(1); setupAntiRagdoll(newChar) end
-end)
-
--- ─── XRAY ──────────────────────────────────────────────────────
-local unwalkEnabled        = false
-local originalTransparency = {}
-local unwalkDescConn       = nil
-local unwalkCharConn       = nil
-
-local function startUnwalk()
-    pcall(function()
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        Lighting.GlobalShadows = false
-        Lighting.Brightness    = 3
-        Lighting.FogEnd        = 9e9
-    end)
-    pcall(function()
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            pcall(function()
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-                    obj:Destroy()
-                elseif obj:IsA("BasePart") then
-                    obj.CastShadow = false
-                    obj.Material   = Enum.Material.Plastic
-                end
-            end)
-        end
-    end)
-    local function cleanCharacter(char)
-        if char == player.Character then return end
-        pcall(function()
-            for _, a in ipairs(char:GetChildren()) do
-                if a:IsA("Accessory") then a:Destroy() end
-            end
-            char.ChildAdded:Connect(function(c)
-                if unwalkEnabled and c:IsA("Accessory") then c:Destroy() end
-            end)
-        end)
-    end
-    pcall(function()
-        for _, h in ipairs(workspace:GetDescendants()) do
-            if h:IsA("Humanoid") then cleanCharacter(h.Parent) end
-        end
-    end)
-    pcall(function()
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and obj.Anchored and
-               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
-               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
-                originalTransparency[obj] = obj.LocalTransparencyModifier
-                obj.LocalTransparencyModifier = 0.85
-            end
-        end
-    end)
-    unwalkDescConn = workspace.DescendantAdded:Connect(function(obj)
-        if not unwalkEnabled then return end
-        pcall(function()
-            if obj:IsA("BasePart") and obj.Anchored and
-               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
-               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
-                originalTransparency[obj] = obj.LocalTransparencyModifier
-                obj.LocalTransparencyModifier = 0.85
-            end
-        end)
-    end)
-    unwalkCharConn = player.CharacterAdded:Connect(function()
-        task.wait(0.5); if unwalkEnabled then startUnwalk() end
-    end)
-end
-
-local function stopUnwalk()
-    if unwalkDescConn then unwalkDescConn:Disconnect(); unwalkDescConn = nil end
-    if unwalkCharConn then unwalkCharConn:Disconnect(); unwalkCharConn = nil end
-    for obj, val in pairs(originalTransparency) do
-        pcall(function() obj.LocalTransparencyModifier = val end)
-    end
-    originalTransparency = {}
-end
-
--- ─── DARK MODE ─────────────────────────────────────────────────
-local darkModeEnabled  = false
-local darkModeObjects  = {}
-local originalLighting = {}
-
-local function saveLightingState()
-    originalLighting = {
-        FogStart = Lighting.FogStart,
-    }
-end
-
-local function startDarkMode()
-    saveLightingState()
-    darkModeObjects = {}
-    for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(darkModeObjects, {removed = true, instance = child, parent = Lighting})
-            child.Parent = nil
-        end
-    end
-    local sky = Instance.new("Sky")
-    sky.Name                 = "BlackSky"
-    sky.SkyboxBk             = "rbxassetid://2013298"
-    sky.SkyboxDn             = "rbxassetid://2013298"
-    sky.SkyboxFt             = "rbxassetid://2013298"
-    sky.SkyboxLf             = "rbxassetid://2013298"
-    sky.SkyboxRt             = "rbxassetid://2013298"
-    sky.SkyboxUp             = "rbxassetid://2013298"
-    sky.StarCount            = 0
-    sky.CelestialBodiesShown = false
-    sky.Parent               = Lighting
-    table.insert(darkModeObjects, sky)
-    Lighting.FogStart = 10000
-end
-
-local function stopDarkMode()
-    for _, obj in ipairs(darkModeObjects) do
-        pcall(function()
-            if obj.removed then
-                obj.instance.Parent = obj.parent
-            else
-                obj:Destroy()
-            end
-        end)
-    end
-    darkModeObjects = {}
-    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
-end
-
--- ─── GALAXY MODE ───────────────────────────────────────────────
-local galaxyModeEnabled = false
-local galaxyModeObjects = {}
-local originalGalaxyLighting = {}
-
-local function saveGalaxyLightingState()
-    originalGalaxyLighting = {
-        FogStart = Lighting.FogStart,
-    }
-end
-
-local function startGalaxyMode()
-    saveGalaxyLightingState()
-    galaxyModeObjects = {}
-    -- Guardar y remover skies existentes
-    for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(galaxyModeObjects, {removed = true, instance = child, parent = Lighting})
-            child.Parent = nil
-        end
-    end
-    -- Crear sky galaxia
-    local sky = Instance.new("Sky")
-    sky.Name                 = "GalaxySky"
-    sky.StarCount            = 3000
-    sky.MoonAngularSize      = 0
-    sky.SunAngularSize       = 0
-    sky.CelestialBodiesShown = true
-    sky.SkyboxUp             = "rbxassetid://14940000257"
-    sky.SkyboxDn             = "rbxassetid://14939714090"
-    sky.SkyboxFt             = "rbxassetid://14939997943"
-    sky.SkyboxBk             = "rbxassetid://14939997943"
-    sky.SkyboxLf             = "rbxassetid://14939997943"
-    sky.SkyboxRt             = "rbxassetid://14939997943"
-    sky.MoonTextureId        = "rbxassetid://14940062085"
-    sky.SunTextureId         = "rbxasset://sky/sun.jpg"
-    sky.Parent               = Lighting
-    table.insert(galaxyModeObjects, sky)
-    Lighting.FogStart = 10000
-end
-
-local function stopGalaxyMode()
-    for _, obj in ipairs(galaxyModeObjects) do
-        pcall(function()
-            if obj.removed then
-                obj.instance.Parent = obj.parent
-            else
-                obj:Destroy()
-            end
-        end)
-    end
-    galaxyModeObjects = {}
-    pcall(function() Lighting.FogStart = originalGalaxyLighting.FogStart or 0 end)
-end
-
--- ─── SAVE / LOAD ───────────────────────────────────────────────
-local CONFIG_FILE = "KMoneyHub_config.json"
-
-local function saveConfig()
-    pcall(function()
-        writefile(CONFIG_FILE, HttpService:JSONEncode({
-            AutoSteal   = stealEnabled,
-            AntiRagdoll = antiRagdollEnabled,
-            XRAY        = unwalkEnabled,
-            DarkMode    = darkModeEnabled,
-            GalaxyMode  = galaxyModeEnabled,
-        }))
-    end)
-end
-
-local savedCfg = {}
-pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
-
--- ─── PALETA ────────────────────────────────────────────────────
-local WHITE       = Color3.fromRGB(255, 255, 255)
-local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 427  -- +56 para la fila de Galaxy Mode
-
--- ─── GUI ───────────────────────────────────────────────────────
-if CoreGui:FindFirstChild("KMoneyHub") then
-    CoreGui:FindFirstChild("KMoneyHub"):Destroy()
-end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name           = "KMoneyHub"
-ScreenGui.ResetOnSpawn   = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder   = 999
-pcall(function() ScreenGui.Parent = CoreGui end)
-
-local Main = Instance.new("Frame", ScreenGui)
-Main.Name                   = "Main"
-Main.Size                   = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position               = UDim2.new(0.5, -135, 0.5, -213)
-Main.BackgroundTransparency = 1
-Main.BorderSizePixel        = 0
-Main.ClipsDescendants       = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
-
-local grimStroke = Instance.new("UIStroke", Main)
-grimStroke.Color        = BLACK
-grimStroke.Thickness    = 2
-grimStroke.Transparency = 0
-
-local TopLine = Instance.new("Frame", Main)
-TopLine.Size             = UDim2.new(1, 0, 0, 2)
-TopLine.BackgroundColor3 = BLACK
-TopLine.BorderSizePixel  = 0
-
-local TitleBar = Instance.new("Frame", Main)
-TitleBar.Size                   = UDim2.new(1, 0, 0, 48)
-TitleBar.Position               = UDim2.new(0, 0, 0, 2)
-TitleBar.BackgroundTransparency = 1
-TitleBar.BorderSizePixel        = 0
-
-local TitleLbl = Instance.new("TextLabel", TitleBar)
-TitleLbl.Size                   = UDim2.new(1, -46, 1, 0)
-TitleLbl.Position               = UDim2.new(0, 14, 0, 0)
-TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text                   = "KMONEY HUB"
-TitleLbl.TextColor3             = WHITE
-TitleLbl.TextStrokeColor3       = BLACK
-TitleLbl.TextStrokeTransparency = 0
-TitleLbl.Font                   = Enum.Font.GothamBlack
-TitleLbl.TextSize               = 16
-TitleLbl.TextXAlignment         = Enum.TextXAlignment.Left
-
-local MinBtn = Instance.new("TextButton", TitleBar)
-MinBtn.Size                   = UDim2.new(0, 26, 0, 26)
-MinBtn.Position               = UDim2.new(1, -36, 0.5, -13)
-MinBtn.BackgroundTransparency = 1
-MinBtn.Text                   = "—"
-MinBtn.TextColor3             = WHITE
-MinBtn.Font                   = Enum.Font.GothamBold
-MinBtn.TextSize               = 13
-MinBtn.BorderSizePixel        = 0
-Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
-local minStroke = Instance.new("UIStroke", MinBtn)
-minStroke.Color = BLACK; minStroke.Thickness = 1.5; minStroke.Transparency = 0
-
-local Content = Instance.new("Frame", Main)
-Content.Size                   = UDim2.new(1, 0, 1, -52)
-Content.Position               = UDim2.new(0, 0, 0, 52)
-Content.BackgroundTransparency = 1
-
-local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
-
--- ─── TOGGLE ROW HELPER ─────────────────────────────────────────
-local function makeToggleRow(labelText, yOffset)
-    local Row = Instance.new("Frame", Content)
-    Row.Size                   = UDim2.new(1, -24, 0, 46)
-    Row.Position               = UDim2.new(0, 12, 0, yOffset)
-    Row.BackgroundTransparency = 1
-    Row.BorderSizePixel        = 0
-    Instance.new("UICorner", Row).CornerRadius = UDim.new(0, 8)
-
-    local rowStroke = Instance.new("UIStroke", Row)
-    rowStroke.Color = BLACK; rowStroke.Thickness = 1.5; rowStroke.Transparency = 0
-
-    local Lbl = Instance.new("TextLabel", Row)
-    Lbl.Size                   = UDim2.new(1, -70, 1, 0)
-    Lbl.Position               = UDim2.new(0, 14, 0, 0)
-    Lbl.BackgroundTransparency = 1
-    Lbl.Text                   = labelText
-    Lbl.TextColor3             = WHITE
-    Lbl.TextStrokeColor3       = BLACK
-    Lbl.TextStrokeTransparency = 0
-    Lbl.Font                   = Enum.Font.GothamBold
-    Lbl.TextSize               = 13
-    Lbl.TextXAlignment         = Enum.TextXAlignment.Left
-
-    local Btn = Instance.new("TextButton", Row)
-    Btn.Size                   = UDim2.new(0, 46, 0, 24)
-    Btn.Position               = UDim2.new(1, -56, 0.5, -12)
-    Btn.BackgroundTransparency = 1
-    Btn.Text                   = ""
-    Btn.BorderSizePixel        = 0
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
-    local bStroke = Instance.new("UIStroke", Btn)
-    bStroke.Color = BLACK; bStroke.Thickness = 1.5; bStroke.Transparency = 0
-
-    local Knob = Instance.new("Frame", Btn)
-    Knob.Size             = UDim2.new(0, 18, 0, 18)
-    Knob.Position         = UDim2.new(0, 3, 0.5, -9)
-    Knob.BackgroundColor3 = WHITE
-    Knob.BorderSizePixel  = 0
-    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-    local kStroke = Instance.new("UIStroke", Knob)
-    kStroke.Color = BLACK; kStroke.Thickness = 1; kStroke.Transparency = 0
-
-    return Btn, Knob, bStroke, rowStroke
-end
-
-local function applyOn(b, k, s, rs)
-    k.Position         = UDim2.new(1, -21, 0.5, -9)
-    k.BackgroundColor3 = BLACK
-end
-
-local function applyOff(b, k, s, rs)
-    k.Position         = UDim2.new(0, 3, 0.5, -9)
-    k.BackgroundColor3 = WHITE
-end
-
--- ROW 1: Auto Steal
-local T1,K1,S1,RS1 = makeToggleRow("Auto Steal", 10)
-if savedCfg.AutoSteal then stealEnabled=true; startAutoSteal(); applyOn(T1,K1,S1,RS1) end
-T1.MouseButton1Click:Connect(function()
-    stealEnabled = not stealEnabled
-    if stealEnabled then
-        startAutoSteal()
-        TweenService:Create(K1,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        stopAutoSteal()
-        TweenService:Create(K1,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
--- ROW 2: Anti Ragdoll
-local T2,K2,S2,RS2 = makeToggleRow("Anti Ragdoll", 66)
-if savedCfg.AntiRagdoll then antiRagdollEnabled=true; task.delay(1,function() setupAntiRagdoll(character) end); applyOn(T2,K2,S2,RS2) end
-T2.MouseButton1Click:Connect(function()
-    antiRagdollEnabled = not antiRagdollEnabled
-    if antiRagdollEnabled then
-        task.wait(0.5); setupAntiRagdoll(character)
-        TweenService:Create(K2,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        cleanupRagdoll(); disconnectRemote()
-        TweenService:Create(K2,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
--- ROW 3: XRAY
-local T3,K3,S3,RS3 = makeToggleRow("XRAY", 122)
-if savedCfg.XRAY then unwalkEnabled=true; startUnwalk(); applyOn(T3,K3,S3,RS3) end
-T3.MouseButton1Click:Connect(function()
-    unwalkEnabled = not unwalkEnabled
-    if unwalkEnabled then
-        startUnwalk()
-        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        stopUnwalk()
-        TweenService:Create(K3,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
--- ROW 4: Dark Mode
-local T4,K4,S4,RS4 = makeToggleRow("Dark Mode", 178)
-if savedCfg.DarkMode then darkModeEnabled=true; startDarkMode(); applyOn(T4,K4,S4,RS4) end
-T4.MouseButton1Click:Connect(function()
-    darkModeEnabled = not darkModeEnabled
-    if darkModeEnabled then
-        startDarkMode()
-        TweenService:Create(K4,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        stopDarkMode()
-        TweenService:Create(K4,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
--- ROW 5: Galaxy Mode
-local T5,K5,S5,RS5 = makeToggleRow("Galaxy Mode", 234)
-if savedCfg.GalaxyMode then galaxyModeEnabled=true; startGalaxyMode(); applyOn(T5,K5,S5,RS5) end
-T5.MouseButton1Click:Connect(function()
-    galaxyModeEnabled = not galaxyModeEnabled
-    if galaxyModeEnabled then
-        startGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        stopGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
--- ─── SEPARATOR ─────────────────────────────────────────────────
-local Sep = Instance.new("Frame", Content)
-Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 300)  -- 234 + 46 + 20
-Sep.BackgroundColor3 = WHITE
-Sep.BorderSizePixel  = 0
-
--- ─── SAVE BUTTON ───────────────────────────────────────────────
-local SaveFrame = Instance.new("Frame", Content)
-SaveFrame.Size                   = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position               = UDim2.new(0, 12, 0, 312)
-SaveFrame.BackgroundTransparency = 1
-
-local SaveBtn = Instance.new("TextButton", SaveFrame)
-SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
-SaveBtn.BackgroundTransparency = 1
-SaveBtn.Text                   = "SAVE CONFIG"
-SaveBtn.Font                   = Enum.Font.GothamBlack
-SaveBtn.TextSize               = 13
-SaveBtn.TextColor3             = WHITE
-SaveBtn.TextStrokeColor3       = BLACK
-SaveBtn.TextStrokeTransparency = 0
-SaveBtn.BorderSizePixel        = 0
-Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 8)
-local saveStroke = Instance.new("UIStroke", SaveBtn)
-saveStroke.Color = BLACK; saveStroke.Thickness = 1.5; saveStroke.Transparency = 0
-
-SaveBtn.MouseButton1Click:Connect(function()
-    saveConfig()
-    SaveBtn.Text = "SAVED!"
-    task.wait(1)
-    SaveBtn.Text = "SAVE CONFIG"
-end)
-
--- ─── DRAGGABLE ─────────────────────────────────────────────────
-do
-    local dragging, dragStart, startPos = false, nil, nil
-    TitleBar.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging=true; dragStart=inp.Position; startPos=Main.Position
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end
-    end)
-    UserInputService.InputChanged:Connect(function(inp)
-        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local d = inp.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
-        end
-    end)
-end
-
--- ─── MINIMIZAR ─────────────────────────────────────────────────
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    MinBtn.Text = minimized and "+" or "—"
-    TweenService:Create(Main, TweenInfo.new(0.22, Enum.EasingStyle.Quad), {
-        Size = minimized and UDim2.new(0,270,0,52) or UDim2.new(0,270,0,FULL_HEIGHT)
-    }):Play()
-end)
-
--- ─── NEON PULSE ────────────────────────────────────────────────
-task.spawn(function()
-    local t = 0
-    while ScreenGui.Parent do
-        t = t + 0.04
-        local pulse = (math.sin(t) + 1) / 2
-        grimStroke.Transparency = 0.05 + pulse * 0.5
-        task.wait(0.03)
-    end
-end)
-
--- ─── OPEN ANIMATION ────────────────────────────────────────────
-Main.Size = UDim2.new(0,0,0,0)
-TweenService:Create(Main, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,270,0,FULL_HEIGHT)}):Play()
+-- ========================================
+print("========================================")
+print("   DEMONTIME cargado correctamente")
+print("   [E] Activar Modo Demonio")
+print("   [Q] Dash")
+print("   [F] Shockwave (requiere modo demonio)")
+print("========================================")
