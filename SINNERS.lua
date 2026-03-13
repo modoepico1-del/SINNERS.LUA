@@ -322,6 +322,75 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- ─── ESP ───────────────────────────────────────────────────────
+local espEnabled     = false
+local espObjects     = {}
+local espConnections = {}
+
+local function createESP(plr)
+    if plr == player then return end
+    if not plr.Character then return end
+    if plr.Character:FindFirstChild("NightESP") then return end
+    local c      = plr.Character
+    local charHrp = c:FindFirstChild("HumanoidRootPart")
+    if not charHrp then return end
+    local humanoid = c:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+    local hitbox = Instance.new("BoxHandleAdornment")
+    hitbox.Name        = "NightESP"
+    hitbox.Adornee     = charHrp
+    hitbox.Size        = Vector3.new(4, 6, 2)
+    hitbox.Color3      = Color3.fromRGB(160, 0, 255)
+    hitbox.Transparency = 0.5
+    hitbox.ZIndex      = 10
+    hitbox.AlwaysOnTop = true
+    hitbox.Parent      = c
+    espObjects[plr]    = {box = hitbox, character = c}
+end
+
+local function removeESP(plr)
+    pcall(function()
+        if plr.Character then
+            local hitbox = plr.Character:FindFirstChild("NightESP")
+            if hitbox then hitbox:Destroy() end
+            local humanoid = plr.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Automatic end
+        end
+        if espObjects[plr] then espObjects[plr] = nil end
+    end)
+end
+
+local function enableESP()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player then
+            if plr.Character then pcall(function() createESP(plr) end) end
+            local conn = plr.CharacterAdded:Connect(function()
+                task.wait(0.1)
+                if espEnabled then pcall(function() createESP(plr) end) end
+            end)
+            table.insert(espConnections, conn)
+        end
+    end
+    local playerAddedConn = Players.PlayerAdded:Connect(function(plr)
+        if plr == player then return end
+        local charAddedConn = plr.CharacterAdded:Connect(function()
+            task.wait(0.1)
+            if espEnabled then pcall(function() createESP(plr) end) end
+        end)
+        table.insert(espConnections, charAddedConn)
+    end)
+    table.insert(espConnections, playerAddedConn)
+end
+
+local function disableESP()
+    for _, plr in ipairs(Players:GetPlayers()) do pcall(function() removeESP(plr) end) end
+    for _, conn in ipairs(espConnections) do
+        if conn and conn.Connected then conn:Disconnect() end
+    end
+    espConnections = {}
+    espObjects     = {}
+end
+
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -330,6 +399,7 @@ local function saveConfig()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
             AutoSteal = AUTO_STEAL_ENABLED,
             Hitbox    = hitboxEnabled,
+            ESP       = espEnabled,
         }))
     end)
 end
@@ -340,7 +410,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 -- ─── PALETA ────────────────────────────────────────────────────
 local WHITE       = Color3.fromRGB(255, 255, 255)
 local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 270
+local FULL_HEIGHT = 330
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -481,17 +551,31 @@ T2.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ROW 3: ESP
+local T3,K3,S3,RS3 = makeToggleRow("ESP", 122)
+if savedCfg.ESP then espEnabled=true; enableESP(); applyOn(T3,K3,S3,RS3) end
+T3.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    if espEnabled then
+        enableESP()
+        TweenService:Create(K3,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
+    else
+        disableESP()
+        TweenService:Create(K3,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
+    end
+end)
+
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 132)
+Sep.Position         = UDim2.new(0, 12, 0, 188)
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 144)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 200)
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
