@@ -324,7 +324,8 @@ local function startGalaxyMode()
     Lighting.FogStart       = 9e9
     -- Crear sky galaxia
     local sky = Instance.new("Sky")
-    sky.Name                 = "GalaxySky"
+    sky.Name                 = "Sky"
+    sky.Parent               = Lighting
     sky.StarCount            = 3000
     sky.MoonAngularSize      = 0
     sky.SunAngularSize       = 0
@@ -337,7 +338,6 @@ local function startGalaxyMode()
     sky.SkyboxRt             = "rbxassetid://14939997943"
     sky.MoonTextureId        = "rbxassetid://14940062085"
     sky.SunTextureId         = "rbxasset://sky/sun.jpg"
-    sky.Parent               = Lighting
     table.insert(galaxyModeObjects, sky)
 end
 
