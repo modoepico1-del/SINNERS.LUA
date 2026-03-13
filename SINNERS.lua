@@ -288,86 +288,45 @@ local function stopDarkMode()
 end
 
 -- ─── GALAXY MODE ───────────────────────────────────────────────
-local galaxyModeEnabled      = false
-local galaxySky              = nil
-local originalSkyStore       = {}
-local galaxyOriginalLighting = {}
+local galaxyModeEnabled = false
+local galaxySky         = nil
+local originalSkyStore  = {}
 
 local function startGalaxyMode()
     originalSkyStore = {}
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") or child:IsA("Atmosphere") or child:IsA("BloomEffect") then
+        if child:IsA("Sky") then
             table.insert(originalSkyStore, {instance = child, parent = Lighting})
             child.Parent = nil
         end
     end
-    galaxyOriginalLighting = {
-        Ambient           = Lighting.Ambient,
-        OutdoorAmbient    = Lighting.OutdoorAmbient,
-        Brightness        = Lighting.Brightness,
-        ColorShift_Top    = Lighting.ColorShift_Top,
-        ColorShift_Bottom = Lighting.ColorShift_Bottom,
-        FogColor          = Lighting.FogColor,
-        FogEnd            = Lighting.FogEnd,
-        ClockTime         = Lighting.ClockTime,
-    }
-
-    -- Medianoche real para cielo oscuro
-    Lighting.ClockTime         = 0
-    Lighting.Ambient           = Color3.fromRGB(0, 0, 10)
-    Lighting.OutdoorAmbient    = Color3.fromRGB(0, 0, 20)
-    Lighting.Brightness        = 0
-    Lighting.ColorShift_Top    = Color3.fromRGB(0, 5, 40)
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 20)
-    Lighting.FogColor          = Color3.fromRGB(0, 0, 15)
-    Lighting.FogEnd            = 9e9
-
-    -- Bloom para brillo de estrellas
-    local bloom = Instance.new("BloomEffect")
-    bloom.Intensity  = 0.6
-    bloom.Size       = 24
-    bloom.Threshold  = 0.8
-    bloom.Parent     = Lighting
-    table.insert(originalSkyStore, {instance = bloom, isNew = true})
-
+    local skyId = "rbxassetid://14940021683"
     local sky = Instance.new("Sky")
-    sky.Name                 = "GalaxySky"
-    sky.SkyboxBk             = "rbxassetid://14940021683"
-    sky.SkyboxDn             = "rbxassetid://14940021683"
-    sky.SkyboxFt             = "rbxassetid://14940021683"
-    sky.SkyboxLf             = "rbxassetid://14940021683"
-    sky.SkyboxRt             = "rbxassetid://14940021683"
-    sky.SkyboxUp             = "rbxassetid://14940021683"
-    sky.MoonTextureId        = "rbxassetid://14940062085"
-    sky.MoonAngularSize      = 12
-    sky.StarCount            = 9000
-    sky.CelestialBodiesShown = true
-    sky.Parent               = Lighting
+    sky.Name = "GalaxySky"
+    -- Aplicar el ID 14940021683 a todas las texturas del skybox
+    sky.SkyboxUp      = skyId
+    sky.SkyboxDn      = skyId
+    sky.SkyboxLf      = skyId
+    sky.SkyboxRt      = skyId
+    sky.SkyboxFt      = skyId
+    sky.SkyboxBk      = skyId
+    -- Aplicar a la luna y el sol
+    sky.MoonTextureId = skyId
+    sky.SunTextureId  = skyId
+    -- Configurar tamaños
+    sky.MoonAngularSize = 11
+    sky.SunAngularSize  = 11
+    sky.StarCount       = 3000
+    sky.Parent          = Lighting
     galaxySky = sky
 end
 
 local function stopGalaxyMode()
     if galaxySky then pcall(function() galaxySky:Destroy() end); galaxySky = nil end
     for _, obj in ipairs(originalSkyStore) do
-        pcall(function()
-            if obj.isNew then
-                obj.instance:Destroy()
-            else
-                obj.instance.Parent = obj.parent
-            end
-        end)
+        pcall(function() obj.instance.Parent = obj.parent end)
     end
     originalSkyStore = {}
-    pcall(function()
-        Lighting.ClockTime         = galaxyOriginalLighting.ClockTime         or 14
-        Lighting.Ambient           = galaxyOriginalLighting.Ambient           or Color3.fromRGB(70,70,70)
-        Lighting.OutdoorAmbient    = galaxyOriginalLighting.OutdoorAmbient    or Color3.fromRGB(140,140,140)
-        Lighting.Brightness        = galaxyOriginalLighting.Brightness        or 1
-        Lighting.ColorShift_Top    = galaxyOriginalLighting.ColorShift_Top    or Color3.fromRGB(0,0,0)
-        Lighting.ColorShift_Bottom = galaxyOriginalLighting.ColorShift_Bottom or Color3.fromRGB(0,0,0)
-        Lighting.FogColor          = galaxyOriginalLighting.FogColor          or Color3.fromRGB(191,191,191)
-        Lighting.FogEnd            = galaxyOriginalLighting.FogEnd            or 100000
-    end)
 end
 
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
