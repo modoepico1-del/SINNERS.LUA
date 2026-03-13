@@ -235,7 +235,7 @@ initializeScanner()
 startAutoSteal()
 
 -- ─── HITBOX ────────────────────────────────────────────────────
-_G.HeadSize = 8
+_G.HeadSize = 1
 local SIDE_TEXT     = "SINNERS"
 local hitboxEnabled = false
 local hitboxCurrentTarget = nil
@@ -259,16 +259,16 @@ local function applyHitbox(plr)
         sg.Adornee        = hrp
         sg.AlwaysOnTop    = true
         sg.SizingMode     = Enum.SurfaceGuiSizingMode.PixelsPerStud
-        sg.CanvasSize     = Vector2.new(100, 100)
+        sg.CanvasSize     = Vector2.new(50, 50)
         sg.Parent         = hrp
         local txt = Instance.new("TextLabel")
-        txt.Size                  = UDim2.new(1,0,1,0)
+        txt.Size                   = UDim2.new(1,0,1,0)
         txt.BackgroundTransparency = 1
-        txt.Text                  = SIDE_TEXT
-        txt.TextColor3            = Color3.fromRGB(180, 0, 255)
-        txt.TextScaled            = true
-        txt.Font                  = Enum.Font.GothamBold
-        txt.Parent                = sg
+        txt.Text                   = SIDE_TEXT
+        txt.TextColor3             = Color3.fromRGB(180, 0, 255)
+        txt.TextScaled             = true
+        txt.Font                   = Enum.Font.GothamBold
+        txt.Parent                 = sg
     end
 end
 
@@ -280,7 +280,6 @@ local function clearHitbox(plr)
     for _, c in ipairs(hrp:GetChildren()) do
         if c:IsA("SurfaceGui") then c:Destroy() end
     end
-    -- restaurar tamaño original
     pcall(function() hrp.Size = Vector3.new(2, 2, 1) end)
 end
 
@@ -314,11 +313,11 @@ RunService.RenderStepped:Connect(function()
     if hitboxCurrentTarget and hitboxCurrentTarget.Character then
         local hrp = hitboxCurrentTarget.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
-            hrp.Size        = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+            hrp.Size         = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
             hrp.Transparency = 0.7
-            hrp.BrickColor  = BrickColor.new("Black")
-            hrp.Material    = Enum.Material.Neon
-            hrp.CanCollide  = false
+            hrp.BrickColor   = BrickColor.new("Bright red")
+            hrp.Material     = Enum.Material.Neon
+            hrp.CanCollide   = false
         end
     end
 end)
