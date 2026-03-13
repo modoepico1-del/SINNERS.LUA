@@ -6,12 +6,14 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
 
 local me = Players.LocalPlayer
+local player = me
 local RS = RunService
 
-local cfg = { Unwalk = false }
+local cfg = { Unwalk = false, Xray = false }
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
@@ -45,9 +47,8 @@ ToggleStroke.Thickness    = 1.5
 ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
--- ventana mas alta para ver opciones
 local MainFrame = Instance.new("Frame")
-MainFrame.Size             = UDim2.new(0, 480, 0, 400)
+MainFrame.Size             = UDim2.new(0, 480, 0, 460)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel  = 0
@@ -171,7 +172,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,480,0,400)
+        MainFrame.Size    = UDim2.new(0,480,0,460)
     end)
 end)
 
@@ -188,67 +189,73 @@ ContentArea.ZIndex           = 3
 ContentArea.Parent           = MainFrame
 
 -- ══════════════════════════════════════
---  FILA UNWALK
+--  HELPER: CREAR FILA OPCION
 -- ══════════════════════════════════════
 
-local UnwalkRow = Instance.new("Frame")
-UnwalkRow.Size             = UDim2.new(1, -20, 0, 44)
-UnwalkRow.Position         = UDim2.new(0, 10, 0, 10)
-UnwalkRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-UnwalkRow.BorderSizePixel  = 0
-UnwalkRow.ZIndex           = 4
-UnwalkRow.Parent           = ContentArea
+local function makeOptionRow(parent, labelText, yPos)
+    local row = Instance.new("Frame")
+    row.Size             = UDim2.new(1, -20, 0, 44)
+    row.Position         = UDim2.new(0, 10, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+    row.BorderSizePixel  = 0
+    row.ZIndex           = 4
+    row.Parent           = parent
 
-local UnwalkRowCorner = Instance.new("UICorner")
-UnwalkRowCorner.CornerRadius = UDim.new(0, 7)
-UnwalkRowCorner.Parent = UnwalkRow
+    local rc = Instance.new("UICorner")
+    rc.CornerRadius = UDim.new(0, 7)
+    rc.Parent = row
 
-local UnwalkRowStroke = Instance.new("UIStroke")
-UnwalkRowStroke.Color       = Color3.fromRGB(255, 0, 0)
-UnwalkRowStroke.Thickness   = 0.8
-UnwalkRowStroke.Transparency = 0.5
-UnwalkRowStroke.Parent      = UnwalkRow
+    local rs = Instance.new("UIStroke")
+    rs.Color       = Color3.fromRGB(255, 0, 0)
+    rs.Thickness   = 0.8
+    rs.Transparency = 0.5
+    rs.Parent      = row
 
-local UnwalkLabel = Instance.new("TextLabel")
-UnwalkLabel.Text               = "UNWALK"
-UnwalkLabel.Size               = UDim2.new(1, -70, 1, 0)
-UnwalkLabel.Position           = UDim2.new(0, 14, 0, 0)
-UnwalkLabel.BackgroundTransparency = 1
-UnwalkLabel.TextColor3         = Color3.fromRGB(220, 220, 220)
-UnwalkLabel.TextSize           = 14
-UnwalkLabel.Font               = Enum.Font.GothamBlack
-UnwalkLabel.TextXAlignment     = Enum.TextXAlignment.Left
-UnwalkLabel.ZIndex             = 5
-UnwalkLabel.Parent             = UnwalkRow
+    local lbl = Instance.new("TextLabel")
+    lbl.Text               = labelText
+    lbl.Size               = UDim2.new(1, -70, 1, 0)
+    lbl.Position           = UDim2.new(0, 14, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3         = Color3.fromRGB(220, 220, 220)
+    lbl.TextSize           = 14
+    lbl.Font               = Enum.Font.GothamBlack
+    lbl.TextXAlignment     = Enum.TextXAlignment.Left
+    lbl.ZIndex             = 5
+    lbl.Parent             = row
 
-local Track = Instance.new("TextButton")
-Track.Text             = ""
-Track.Size             = UDim2.new(0, 44, 0, 24)
-Track.Position         = UDim2.new(1, -54, 0.5, -12)
-Track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Track.BorderSizePixel  = 0
-Track.ZIndex           = 5
-Track.Parent           = UnwalkRow
+    local track = Instance.new("TextButton")
+    track.Text             = ""
+    track.Size             = UDim2.new(0, 44, 0, 24)
+    track.Position         = UDim2.new(1, -54, 0.5, -12)
+    track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    track.BorderSizePixel  = 0
+    track.ZIndex           = 5
+    track.Parent           = row
 
-local TrackCorner = Instance.new("UICorner")
-TrackCorner.CornerRadius = UDim.new(1, 0)
-TrackCorner.Parent = Track
+    local tc = Instance.new("UICorner")
+    tc.CornerRadius = UDim.new(1, 0)
+    tc.Parent = track
 
-local Thumb = Instance.new("Frame")
-Thumb.Size             = UDim2.new(0, 18, 0, 18)
-Thumb.Position         = UDim2.new(0, 3, 0.5, -9)
-Thumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-Thumb.BorderSizePixel  = 0
-Thumb.ZIndex           = 6
-Thumb.Parent           = Track
+    local thumb = Instance.new("Frame")
+    thumb.Size             = UDim2.new(0, 18, 0, 18)
+    thumb.Position         = UDim2.new(0, 3, 0.5, -9)
+    thumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    thumb.BorderSizePixel  = 0
+    thumb.ZIndex           = 6
+    thumb.Parent           = track
 
-local ThumbCorner = Instance.new("UICorner")
-ThumbCorner.CornerRadius = UDim.new(1, 0)
-ThumbCorner.Parent = Thumb
+    local thc = Instance.new("UICorner")
+    thc.CornerRadius = UDim.new(1, 0)
+    thc.Parent = thumb
+
+    return lbl, track, thumb
+end
 
 -- ══════════════════════════════════════
---  LOGICA UNWALK
+--  OPCION UNWALK
 -- ══════════════════════════════════════
+
+local unwalkLabel, unwalkTrack, unwalkThumb = makeOptionRow(ContentArea, "UNWALK", 10)
 
 local unwalkConn = nil
 local unwalkOn   = false
@@ -272,19 +279,116 @@ local function disableUnwalk()
     if unwalkConn then unwalkConn:Disconnect() unwalkConn = nil end
 end
 
-Track.MouseButton1Click:Connect(function()
+unwalkTrack.MouseButton1Click:Connect(function()
     unwalkOn   = not unwalkOn
     cfg.Unwalk = unwalkOn
     if unwalkOn then
-        TweenService:Create(Track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
-        TweenService:Create(Thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
+        TweenService:Create(unwalkTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+        TweenService:Create(unwalkThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+        TweenService:Create(unwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
         enableUnwalk()
     else
-        TweenService:Create(Track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
-        TweenService:Create(Thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
-        TweenService:Create(UnwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
+        TweenService:Create(unwalkTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+        TweenService:Create(unwalkThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
+        TweenService:Create(unwalkLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
         disableUnwalk()
+    end
+end)
+
+-- ══════════════════════════════════════
+--  OPCION XRAY
+-- ══════════════════════════════════════
+
+local xrayLabel, xrayTrack, xrayThumb = makeOptionRow(ContentArea, "XRAY", 64)
+
+local xrayOn               = false
+local originalTransparency = {}
+local unwalkDescConn       = nil
+local unwalkCharConn       = nil
+
+local function startUnwalk()
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        Lighting.GlobalShadows = false
+        Lighting.Brightness    = 3
+        Lighting.FogEnd        = 9e9
+    end)
+    pcall(function()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            pcall(function()
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+                    obj:Destroy()
+                elseif obj:IsA("BasePart") then
+                    obj.CastShadow = false
+                    obj.Material   = Enum.Material.Plastic
+                end
+            end)
+        end
+    end)
+    local function cleanCharacter(char)
+        if char == player.Character then return end
+        pcall(function()
+            for _, a in ipairs(char:GetChildren()) do
+                if a:IsA("Accessory") then a:Destroy() end
+            end
+            char.ChildAdded:Connect(function(c)
+                if xrayOn and c:IsA("Accessory") then c:Destroy() end
+            end)
+        end)
+    end
+    pcall(function()
+        for _, h in ipairs(workspace:GetDescendants()) do
+            if h:IsA("Humanoid") then cleanCharacter(h.Parent) end
+        end
+    end)
+    pcall(function()
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Anchored and
+               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
+               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
+                originalTransparency[obj] = obj.LocalTransparencyModifier
+                obj.LocalTransparencyModifier = 0.85
+            end
+        end
+    end)
+    unwalkDescConn = workspace.DescendantAdded:Connect(function(obj)
+        if not xrayOn then return end
+        pcall(function()
+            if obj:IsA("BasePart") and obj.Anchored and
+               (obj.Name:lower():find("base") or obj.Name:lower():find("claim") or
+               (obj.Parent and (obj.Parent.Name:lower():find("base") or obj.Parent.Name:lower():find("claim")))) then
+                originalTransparency[obj] = obj.LocalTransparencyModifier
+                obj.LocalTransparencyModifier = 0.85
+            end
+        end)
+    end)
+    unwalkCharConn = player.CharacterAdded:Connect(function()
+        task.wait(0.5) if xrayOn then startUnwalk() end
+    end)
+end
+
+local function stopUnwalk()
+    if unwalkDescConn then unwalkDescConn:Disconnect() unwalkDescConn = nil end
+    if unwalkCharConn then unwalkCharConn:Disconnect() unwalkCharConn = nil end
+    for obj, val in pairs(originalTransparency) do
+        pcall(function() obj.LocalTransparencyModifier = val end)
+    end
+    originalTransparency = {}
+end
+
+xrayTrack.MouseButton1Click:Connect(function()
+    xrayOn     = not xrayOn
+    cfg.Xray   = xrayOn
+    if xrayOn then
+        TweenService:Create(xrayTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+        TweenService:Create(xrayThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+        TweenService:Create(xrayLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
+        startUnwalk()
+    else
+        TweenService:Create(xrayTrack, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+        TweenService:Create(xrayThumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
+        TweenService:Create(xrayLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
+        stopUnwalk()
     end
 end)
 
@@ -297,12 +401,12 @@ ToggleBtn.MouseButton1Click:Connect(function()
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
         task.delay(0.27, function()
             MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0,480,0,400)
+            MainFrame.Size    = UDim2.new(0,480,0,460)
         end)
     else
         MainFrame.Size    = UDim2.new(0,480,0,0)
         MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,400)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,460)}):Play()
     end
 end)
 
@@ -340,7 +444,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0, 480, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,400)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,460)}):Play()
 
 local dragging, dragStart, startPos = false, nil, nil
 TitleBar.InputBegan:Connect(function(input)
