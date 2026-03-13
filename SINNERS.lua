@@ -287,53 +287,6 @@ local function stopDarkMode()
     pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
 end
 
--- ─── GALAXY MODE ───────────────────────────────────────────────
-local galaxyModeEnabled  = false
-local originalSkyTextures = {}
-
-local function startGalaxyMode()
-    local skyId = "rbxassetid://14940021683"
-    originalSkyTextures = {}
-    for _, sky in ipairs(Lighting:GetChildren()) do
-        if sky:IsA("Sky") then
-            originalSkyTextures[sky] = {
-                SkyboxUp        = sky.SkyboxUp,
-                SkyboxDn        = sky.SkyboxDn,
-                SkyboxLf        = sky.SkyboxLf,
-                SkyboxRt        = sky.SkyboxRt,
-                SkyboxFt        = sky.SkyboxFt,
-                SkyboxBk        = sky.SkyboxBk,
-                MoonTextureId   = sky.MoonTextureId,
-                SunTextureId    = sky.SunTextureId,
-            }
-            sky.SkyboxUp      = skyId
-            sky.SkyboxDn      = skyId
-            sky.SkyboxLf      = skyId
-            sky.SkyboxRt      = skyId
-            sky.SkyboxFt      = skyId
-            sky.SkyboxBk      = skyId
-            sky.MoonTextureId = skyId
-            sky.SunTextureId  = skyId
-        end
-    end
-end
-
-local function stopGalaxyMode()
-    for sky, original in pairs(originalSkyTextures) do
-        pcall(function()
-            sky.SkyboxUp      = original.SkyboxUp
-            sky.SkyboxDn      = original.SkyboxDn
-            sky.SkyboxLf      = original.SkyboxLf
-            sky.SkyboxRt      = original.SkyboxRt
-            sky.SkyboxFt      = original.SkyboxFt
-            sky.SkyboxBk      = original.SkyboxBk
-            sky.MoonTextureId = original.MoonTextureId
-            sky.SunTextureId  = original.SunTextureId
-        end)
-    end
-    originalSkyTextures = {}
-end
-
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
 local CONFIG_FILE = "KMoneyHub_config.json"
 
@@ -344,7 +297,6 @@ local function saveConfig()
             AntiRagdoll = antiRagdollEnabled,
             XRAY        = unwalkEnabled,
             DarkMode    = darkModeEnabled,
-            GalaxyMode  = galaxyModeEnabled,
         }))
     end)
 end
@@ -356,7 +308,7 @@ pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 local WHITE      = Color3.fromRGB(255, 255, 255)
 local BLACK      = Color3.fromRGB(0, 0, 0)
 local TRANSPARENT = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 427  -- aumentado para la nueva fila
+local FULL_HEIGHT = 371  -- aumentado para la nueva fila
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -374,7 +326,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 local Main = Instance.new("Frame", ScreenGui)
 Main.Name                 = "Main"
 Main.Size                 = UDim2.new(0, 270, 0, FULL_HEIGHT)
-Main.Position             = UDim2.new(0.5, -135, 0.5, -213)
+Main.Position             = UDim2.new(0.5, -135, 0.5, -185)
 Main.BackgroundTransparency = 1
 Main.BorderSizePixel      = 0
 Main.ClipsDescendants     = true
@@ -537,31 +489,17 @@ T4.MouseButton1Click:Connect(function()
     end
 end)
 
--- ROW 5: Galaxy Mode
-local T5,K5,S5,RS5 = makeToggleRow("Galaxy Mode", 234)
-if savedCfg.GalaxyMode then galaxyModeEnabled=true; startGalaxyMode(); applyOn(T5,K5,S5,RS5) end
-T5.MouseButton1Click:Connect(function()
-    galaxyModeEnabled = not galaxyModeEnabled
-    if galaxyModeEnabled then
-        startGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(1,-21,0.5,-9),BackgroundColor3=BLACK}):Play()
-    else
-        stopGalaxyMode()
-        TweenService:Create(K5,ti,{Position=UDim2.new(0,3,0.5,-9),BackgroundColor3=WHITE}):Play()
-    end
-end)
-
 -- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 300)
+Sep.Position         = UDim2.new(0, 12, 0, 244)  -- 178 + 46 + 20
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size               = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position           = UDim2.new(0, 12, 0, 312)
+SaveFrame.Position           = UDim2.new(0, 12, 0, 256)  -- sep + 12
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
