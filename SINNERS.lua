@@ -301,31 +301,14 @@ end
 local function startGalaxyMode()
     saveGalaxyLightingState()
     galaxyModeObjects = {}
-    -- Guardar y remover skies, atmósferas y efectos existentes
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") or child:IsA("Atmosphere") or child:IsA("BloomEffect") or child:IsA("ColorCorrectionEffect") then
+        if child:IsA("Sky") then
             table.insert(galaxyModeObjects, {removed = true, instance = child, parent = Lighting})
             child.Parent = nil
         end
     end
-    -- Guardar y ajustar propiedades de Lighting para sky correcto
-    originalGalaxyLighting.Brightness     = Lighting.Brightness
-    originalGalaxyLighting.Ambient        = Lighting.Ambient
-    originalGalaxyLighting.OutdoorAmbient = Lighting.OutdoorAmbient
-    originalGalaxyLighting.GlobalShadows  = Lighting.GlobalShadows
-    originalGalaxyLighting.ClockTime      = Lighting.ClockTime
-    originalGalaxyLighting.FogEnd         = Lighting.FogEnd
-    Lighting.Brightness     = 0
-    Lighting.Ambient        = Color3.fromRGB(0, 0, 0)
-    Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
-    Lighting.GlobalShadows  = false
-    Lighting.ClockTime      = 0
-    Lighting.FogEnd         = 9e9
-    Lighting.FogStart       = 9e9
-    -- Crear sky galaxia
     local sky = Instance.new("Sky")
-    sky.Name                 = "Sky"
-    sky.Parent               = Lighting
+    sky.Name                 = "GalaxySky"
     sky.StarCount            = 3000
     sky.MoonAngularSize      = 0
     sky.SunAngularSize       = 0
@@ -338,7 +321,9 @@ local function startGalaxyMode()
     sky.SkyboxRt             = "rbxassetid://14939997943"
     sky.MoonTextureId        = "rbxassetid://14940062085"
     sky.SunTextureId         = "rbxasset://sky/sun.jpg"
+    sky.Parent               = Lighting
     table.insert(galaxyModeObjects, sky)
+    Lighting.FogStart = 10000
 end
 
 local function stopGalaxyMode()
@@ -352,17 +337,7 @@ local function stopGalaxyMode()
         end)
     end
     galaxyModeObjects = {}
-    pcall(function()
-        Lighting.FogStart       = originalGalaxyLighting.FogStart      or 0
-        Lighting.FogEnd         = originalGalaxyLighting.FogEnd         or 9e9
-        Lighting.Brightness     = originalGalaxyLighting.Brightness     or 2
-        Lighting.Ambient        = originalGalaxyLighting.Ambient        or Color3.fromRGB(70,70,70)
-        Lighting.OutdoorAmbient = originalGalaxyLighting.OutdoorAmbient or Color3.fromRGB(140,140,140)
-        if originalGalaxyLighting.GlobalShadows ~= nil then
-            Lighting.GlobalShadows = originalGalaxyLighting.GlobalShadows
-        end
-        Lighting.ClockTime = originalGalaxyLighting.ClockTime or 14
-    end)
+    pcall(function() Lighting.FogStart = originalGalaxyLighting.FogStart or 0 end)
 end
 
 -- ─── SAVE / LOAD ───────────────────────────────────────────────
@@ -376,6 +351,7 @@ local function saveConfig()
             XRAY        = unwalkEnabled,
             DarkMode    = darkModeEnabled,
             GalaxyMode  = galaxyModeEnabled,
+            FOV         = currentFOV,  -- ← guardado
         }))
     end)
 end
@@ -383,10 +359,14 @@ end
 local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
+-- ─── FOV ───────────────────────────────────────────────────────
+local currentFOV = savedCfg.FOV or 90
+Camera.FieldOfView = currentFOV
+
 -- ─── PALETA ────────────────────────────────────────────────────
 local WHITE       = Color3.fromRGB(255, 255, 255)
 local BLACK       = Color3.fromRGB(0, 0, 0)
-local FULL_HEIGHT = 497  -- +70 para el slider de FOV
+local FULL_HEIGHT = 490  -- aumentado para la fila de FOV
 
 -- ─── GUI ───────────────────────────────────────────────────────
 if CoreGui:FindFirstChild("KMoneyHub") then
@@ -585,12 +565,10 @@ end)
 
 -- ─── FOV SLIDER ────────────────────────────────────────────────
 local FOV_MIN, FOV_MAX = 70, 120
-local currentFOV = 70
-Camera.FieldOfView = currentFOV
 
 local FovRow = Instance.new("Frame", Content)
-FovRow.Size                   = UDim2.new(1, -24, 0, 60)
-FovRow.Position               = UDim2.new(0, 12, 0, 290)
+FovRow.Size                   = UDim2.new(1, -24, 0, 58)
+FovRow.Position               = UDim2.new(0, 12, 0, 295)
 FovRow.BackgroundTransparency = 1
 FovRow.BorderSizePixel        = 0
 Instance.new("UICorner", FovRow).CornerRadius = UDim.new(0, 8)
@@ -598,10 +576,10 @@ local fovRowStroke = Instance.new("UIStroke", FovRow)
 fovRowStroke.Color = BLACK; fovRowStroke.Thickness = 1.5; fovRowStroke.Transparency = 0
 
 local FovLbl = Instance.new("TextLabel", FovRow)
-FovLbl.Size                   = UDim2.new(1, -14, 0, 22)
+FovLbl.Size                   = UDim2.new(0.55, 0, 0, 22)
 FovLbl.Position               = UDim2.new(0, 14, 0, 8)
 FovLbl.BackgroundTransparency = 1
-FovLbl.Text                   = "FOV: 70"
+FovLbl.Text                   = "FOV"
 FovLbl.TextColor3             = WHITE
 FovLbl.TextStrokeColor3       = BLACK
 FovLbl.TextStrokeTransparency = 0
@@ -609,75 +587,94 @@ FovLbl.Font                   = Enum.Font.GothamBold
 FovLbl.TextSize               = 13
 FovLbl.TextXAlignment         = Enum.TextXAlignment.Left
 
-local FovTrack = Instance.new("Frame", FovRow)
-FovTrack.Size             = UDim2.new(1, -28, 0, 6)
-FovTrack.Position         = UDim2.new(0, 14, 0, 38)
-FovTrack.BackgroundColor3 = BLACK
-FovTrack.BorderSizePixel  = 0
-Instance.new("UICorner", FovTrack).CornerRadius = UDim.new(1, 0)
-local trackStroke = Instance.new("UIStroke", FovTrack)
-trackStroke.Color = WHITE; trackStroke.Thickness = 1; trackStroke.Transparency = 0.6
+local FovVal = Instance.new("TextLabel", FovRow)
+FovVal.Size                   = UDim2.new(0.4, -14, 0, 22)
+FovVal.Position               = UDim2.new(0.6, 0, 0, 8)
+FovVal.BackgroundTransparency = 1
+FovVal.Text                   = tostring(currentFOV)
+FovVal.TextColor3             = WHITE
+FovVal.TextStrokeColor3       = BLACK
+FovVal.TextStrokeTransparency = 0
+FovVal.Font                   = Enum.Font.GothamBold
+FovVal.TextSize               = 13
+FovVal.TextXAlignment         = Enum.TextXAlignment.Right
 
-local FovFill = Instance.new("Frame", FovTrack)
-FovFill.Size             = UDim2.new(0, 0, 1, 0)
-FovFill.BackgroundColor3 = WHITE
-FovFill.BorderSizePixel  = 0
-Instance.new("UICorner", FovFill).CornerRadius = UDim.new(1, 0)
+-- Track (barra de fondo)
+local TrackBg = Instance.new("Frame", FovRow)
+TrackBg.Size             = UDim2.new(1, -28, 0, 8)
+TrackBg.Position         = UDim2.new(0, 14, 0, 40)
+TrackBg.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+TrackBg.BorderSizePixel  = 0
+Instance.new("UICorner", TrackBg).CornerRadius = UDim.new(1, 0)
+local trackStroke = Instance.new("UIStroke", TrackBg)
+trackStroke.Color = BLACK; trackStroke.Thickness = 1; trackStroke.Transparency = 0
 
-local FovKnob = Instance.new("Frame", FovTrack)
-FovKnob.Size             = UDim2.new(0, 14, 0, 14)
-FovKnob.Position         = UDim2.new(0, -7, 0.5, -7)
-FovKnob.BackgroundColor3 = WHITE
-FovKnob.BorderSizePixel  = 0
-Instance.new("UICorner", FovKnob).CornerRadius = UDim.new(1, 0)
-local knobStroke2 = Instance.new("UIStroke", FovKnob)
-knobStroke2.Color = BLACK; knobStroke2.Thickness = 1; knobStroke2.Transparency = 0
+-- Relleno del track
+local initRatio = (currentFOV - FOV_MIN) / (FOV_MAX - FOV_MIN)
+local TrackFill = Instance.new("Frame", TrackBg)
+TrackFill.Size             = UDim2.new(initRatio, 0, 1, 0)
+TrackFill.BackgroundColor3 = WHITE
+TrackFill.BorderSizePixel  = 0
+Instance.new("UICorner", TrackFill).CornerRadius = UDim.new(1, 0)
 
-local function updateFovSlider(alpha)
-    alpha = math.clamp(alpha, 0, 1)
-    currentFOV = math.floor(FOV_MIN + (FOV_MAX - FOV_MIN) * alpha)
-    Camera.FieldOfView = currentFOV
-    FovLbl.Text = "FOV: " .. currentFOV
-    FovFill.Size = UDim2.new(alpha, 0, 1, 0)
-    FovKnob.Position = UDim2.new(alpha, -7, 0.5, -7)
+-- Knob del slider
+local SliderKnob = Instance.new("Frame", TrackBg)
+SliderKnob.Size             = UDim2.new(0, 16, 0, 16)
+SliderKnob.AnchorPoint      = Vector2.new(0.5, 0.5)
+SliderKnob.Position         = UDim2.new(initRatio, 0, 0.5, 0)
+SliderKnob.BackgroundColor3 = WHITE
+SliderKnob.BorderSizePixel  = 0
+Instance.new("UICorner", SliderKnob).CornerRadius = UDim.new(1, 0)
+local knobStroke = Instance.new("UIStroke", SliderKnob)
+knobStroke.Color = BLACK; knobStroke.Thickness = 1.5; knobStroke.Transparency = 0
+
+-- Lógica del slider
+local slidingFOV = false
+
+local function updateFOVFromInput(inputPos)
+    local trackPos  = TrackBg.AbsolutePosition
+    local trackSize = TrackBg.AbsoluteSize
+    local ratio     = math.clamp((inputPos.X - trackPos.X) / trackSize.X, 0, 1)
+    currentFOV      = math.floor(FOV_MIN + ratio * (FOV_MAX - FOV_MIN))
+    FovVal.Text     = tostring(currentFOV)
+    TrackFill.Size  = UDim2.new(ratio, 0, 1, 0)
+    SliderKnob.Position = UDim2.new(ratio, 0, 0.5, 0)
+    Camera.FieldOfView  = currentFOV
 end
 
-local fovDragging = false
-FovKnob.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then fovDragging = true end
+TrackBg.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        slidingFOV = true
+        updateFOVFromInput(inp.Position)
+    end
+end)
+SliderKnob.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        slidingFOV = true
+    end
 end)
 UserInputService.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then fovDragging = false end
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        slidingFOV = false
+    end
 end)
 UserInputService.InputChanged:Connect(function(inp)
-    if fovDragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-        local trackPos  = FovTrack.AbsolutePosition.X
-        local trackSize = FovTrack.AbsoluteSize.X
-        local alpha     = (inp.Position.X - trackPos) / trackSize
-        updateFovSlider(alpha)
-    end
-end)
-FovTrack.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-        local trackPos  = FovTrack.AbsolutePosition.X
-        local trackSize = FovTrack.AbsoluteSize.X
-        local alpha     = (inp.Position.X - trackPos) / trackSize
-        updateFovSlider(alpha)
-        fovDragging = true
+    if slidingFOV and inp.UserInputType == Enum.UserInputType.MouseMovement then
+        updateFOVFromInput(inp.Position)
     end
 end)
 
-
+-- ─── SEPARATOR ─────────────────────────────────────────────────
 local Sep = Instance.new("Frame", Content)
 Sep.Size             = UDim2.new(1, -24, 0, 1)
-Sep.Position         = UDim2.new(0, 12, 0, 370)  -- 234 + 46 + FOV(70) + 20
+Sep.Position         = UDim2.new(0, 12, 0, 368)
 Sep.BackgroundColor3 = WHITE
 Sep.BorderSizePixel  = 0
 
 -- ─── SAVE BUTTON ───────────────────────────────────────────────
 local SaveFrame = Instance.new("Frame", Content)
 SaveFrame.Size                   = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position               = UDim2.new(0, 12, 0, 382)
+SaveFrame.Position               = UDim2.new(0, 12, 0, 380)
 SaveFrame.BackgroundTransparency = 1
 
 local SaveBtn = Instance.new("TextButton", SaveFrame)
