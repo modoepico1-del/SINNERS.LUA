@@ -331,21 +331,21 @@ local function createESP(plr)
     if plr == player then return end
     if not plr.Character then return end
     if plr.Character:FindFirstChild("NightESP") then return end
-    local c      = plr.Character
+    local c       = plr.Character
     local charHrp = c:FindFirstChild("HumanoidRootPart")
     if not charHrp then return end
     local humanoid = c:FindFirstChildOfClass("Humanoid")
     if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
     local hitbox = Instance.new("BoxHandleAdornment")
-    hitbox.Name        = "NightESP"
-    hitbox.Adornee     = charHrp
-    hitbox.Size        = Vector3.new(4, 6, 2)
-    hitbox.Color3       = Color3.fromRGB(160, 0, 255)
+    hitbox.Name         = "NightESP"
+    hitbox.Adornee      = charHrp
+    hitbox.Size         = Vector3.new(4, 6, 2)
+    hitbox.Color3       = Color3.fromRGB(0, 0, 0)
     hitbox.Transparency = 0.5
-    hitbox.ZIndex      = 10
-    hitbox.AlwaysOnTop = true
-    hitbox.Parent      = c
-    espObjects[plr]    = {box = hitbox, character = c}
+    hitbox.ZIndex       = 10
+    hitbox.AlwaysOnTop  = true
+    hitbox.Parent       = c
+    espObjects[plr]     = {box = hitbox, character = c}
 end
 
 local function removeESP(plr)
