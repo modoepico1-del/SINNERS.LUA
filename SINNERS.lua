@@ -340,7 +340,7 @@ local function createESP(plr)
     hitbox.Name        = "NightESP"
     hitbox.Adornee     = charHrp
     hitbox.Size        = Vector3.new(4, 6, 2)
-    hitbox.Color3      = Color3.fromRGB(160, 0, 255)
+    hitbox.Color3      = Color3.fromRGB(0, 0, 0)
     hitbox.Transparency = 0.5
     hitbox.ZIndex      = 10
     hitbox.AlwaysOnTop = true
