@@ -28,6 +28,8 @@ local espOn              = false
 local darkOn             = false
 local antiRagdollEnabled = false
 local fovValue           = 70  -- valor por defecto
+local apOn               = false
+local apConn             = nil
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -89,13 +91,16 @@ ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size             = UDim2.new(0, 480, 0, 640)
-MainFrame.Position         = UDim2.new(0, 10, 0, 48)
-MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-MainFrame.BorderSizePixel  = 0
-MainFrame.ClipsDescendants = false
-MainFrame.Visible          = true
-MainFrame.Parent           = ScreenGui
+MainFrame.Size               = UDim2.new(0, 300, 0, 680)
+MainFrame.Position           = UDim2.new(0, 16, 0.5, -340)
+MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0
+MainFrame.BorderSizePixel    = 0
+MainFrame.Active             = true
+MainFrame.Draggable          = true
+MainFrame.ClipsDescendants   = true
+MainFrame.Visible            = true
+MainFrame.Parent             = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
@@ -210,10 +215,10 @@ CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end)
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
+    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,480,0,640)
+        MainFrame.Size    = UDim2.new(0,300,0,680)
     end)
 end)
 
@@ -799,15 +804,15 @@ end)
 
 ToggleBtn.MouseButton1Click:Connect(function()
     if MainFrame.Visible then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
         task.delay(0.27, function()
             MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0,480,0,640)
+            MainFrame.Size    = UDim2.new(0,300,0,680)
         end)
     else
-        MainFrame.Size    = UDim2.new(0,480,0,0)
+        MainFrame.Size    = UDim2.new(0,300,0,0)
         MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,640)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
     end
 end)
 
@@ -844,8 +849,8 @@ end)
 --  APERTURA Y ARRASTRE
 -- ══════════════════════════════════════
 
-MainFrame.Size = UDim2.new(0, 480, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,640)}):Play()
+MainFrame.Size = UDim2.new(0, 300, 0, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
 
 local dragging, dragStart, startPos = false, nil, nil
 TitleBar.InputBegan:Connect(function(input)
