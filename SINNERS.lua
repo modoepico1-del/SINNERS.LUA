@@ -9,6 +9,7 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
 
 local me = Players.LocalPlayer
 local player = me
@@ -17,6 +18,31 @@ local RS = RunService
 local Camera = workspace.CurrentCamera
 
 local cfg = { Unwalk = false, Xray = false, ESP = false, Darkmode = false, AntiRagdoll = false }
+
+-- ══════════════════════════════════════
+--  SAVE / LOAD CONFIG
+-- ══════════════════════════════════════
+
+local CONFIG_FILE = "DEMONTIME_config.json"
+
+local function saveConfig()
+    pcall(function()
+        writefile(CONFIG_FILE, HttpService:JSONEncode({
+            Unwalk      = cfg.Unwalk,
+            Xray        = cfg.Xray,
+            ESP         = cfg.ESP,
+            Darkmode    = cfg.Darkmode,
+            AntiRagdoll = cfg.AntiRagdoll,
+        }))
+    end)
+end
+
+local savedCfg = {}
+pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
+
+-- ══════════════════════════════════════
+--  GUI SETUP
+-- ══════════════════════════════════════
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
@@ -299,7 +325,7 @@ local function startXray()
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         Lighting.GlobalShadows = false
-        Lighting.Brightness    = 1
+        Lighting.Brightness    = 3
         Lighting.FogEnd        = 9e9
     end)
     pcall(function()
@@ -490,7 +516,7 @@ local function startDarkMode()
     sky.CelestialBodiesShown = false
     sky.Parent               = Lighting
     table.insert(darkModeObjects, sky)
-    Lighting.FogStart = 300
+    Lighting.FogStart = 10000
 end
 local function stopDarkMode()
     for _, obj in ipairs(darkModeObjects) do
@@ -617,6 +643,54 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
+--  SAVE CONFIG BUTTON
+-- ══════════════════════════════════════
+
+local SaveFrame = Instance.new("Frame")
+SaveFrame.Size             = UDim2.new(1, -20, 0, 44)
+SaveFrame.Position         = UDim2.new(0, 10, 0, 280)
+SaveFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+SaveFrame.BorderSizePixel  = 0
+SaveFrame.ZIndex           = 4
+SaveFrame.Parent           = ContentArea
+
+local sfCorner = Instance.new("UICorner")
+sfCorner.CornerRadius = UDim.new(0, 7)
+sfCorner.Parent = SaveFrame
+
+local sfStroke = Instance.new("UIStroke")
+sfStroke.Color        = Color3.fromRGB(255, 0, 0)
+sfStroke.Thickness    = 0.8
+sfStroke.Transparency = 0.5
+sfStroke.Parent       = SaveFrame
+
+local SaveBtn = Instance.new("TextButton")
+SaveBtn.Text             = "SAVE CONFIG"
+SaveBtn.Size             = UDim2.new(1, 0, 1, 0)
+SaveBtn.BackgroundTransparency = 1
+SaveBtn.TextColor3       = Color3.fromRGB(255, 80, 80)
+SaveBtn.TextSize         = 13
+SaveBtn.Font             = Enum.Font.GothamBlack
+SaveBtn.BorderSizePixel  = 0
+SaveBtn.ZIndex           = 5
+SaveBtn.Parent           = SaveFrame
+
+SaveBtn.MouseEnter:Connect(function()
+    TweenService:Create(SaveFrame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
+    TweenService:Create(SaveBtn,  TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+end)
+SaveBtn.MouseLeave:Connect(function()
+    TweenService:Create(SaveFrame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(20, 0, 0)}):Play()
+    TweenService:Create(SaveBtn,  TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+end)
+SaveBtn.MouseButton1Click:Connect(function()
+    saveConfig()
+    SaveBtn.Text = "SAVED!"
+    task.wait(1.2)
+    SaveBtn.Text = "SAVE CONFIG"
+end)
+
+-- ══════════════════════════════════════
 --  TOGGLE VENTANA
 -- ══════════════════════════════════════
 
@@ -683,5 +757,42 @@ UserInputService.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Position - dragStart
         MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
+    end
+end)
+
+-- ══════════════════════════════════════
+--  AUTO-LOAD CONFIG AL INICIAR
+-- ══════════════════════════════════════
+
+task.defer(function()
+    if savedCfg.Unwalk then
+        unwalkOn   = true
+        cfg.Unwalk = true
+        toggleOn(unwalkLabel, unwalkTrack, unwalkThumb)
+        enableUnwalk()
+    end
+    if savedCfg.Xray then
+        xrayOn   = true
+        cfg.Xray = true
+        toggleOn(xrayLabel, xrayTrack, xrayThumb)
+        startXray()
+    end
+    if savedCfg.ESP then
+        espOn   = true
+        cfg.ESP = true
+        toggleOn(espLabel, espTrack, espThumb)
+        enableESP()
+    end
+    if savedCfg.Darkmode then
+        darkOn       = true
+        cfg.Darkmode = true
+        toggleOn(darkLabel, darkTrack, darkThumb)
+        startDarkMode()
+    end
+    if savedCfg.AntiRagdoll then
+        antiRagdollEnabled = true
+        cfg.AntiRagdoll    = true
+        toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
+        if player.Character then setupAntiRagdoll(player.Character) end
     end
 end)
