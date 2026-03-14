@@ -869,6 +869,66 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- ══════════════════════════════════════
+--  ANTI LAGBACK / GHOST CLEANER (automático, sin toggle)
+-- ══════════════════════════════════════
+
+local serverGhosts    = {}
+local lagbackCallCount = 0
+local lastLagbackTime  = 0
+
+local function clearErrorOrb()
+    pcall(function()
+        for _, c in pairs(workspace:GetDescendants()) do
+            if c.Name == "LagbackErrorOrb" then c:Destroy() end
+        end
+    end)
+end
+
+local function clearAllGhosts()
+    for _, ghost in pairs(serverGhosts) do
+        pcall(function() if ghost and ghost.Parent then ghost:Destroy() end end)
+    end
+    serverGhosts = {}
+    clearErrorOrb()
+    lagbackCallCount = 0
+    lastLagbackTime  = 0
+    pcall(function()
+        local pg = me:FindFirstChild("PlayerGui")
+        if pg then
+            for _, gui in pairs(pg:GetChildren()) do
+                if gui.Name == "LagbackNotification" then gui:Destroy() end
+            end
+        end
+    end)
+    pcall(function()
+        if workspace.CurrentCamera then
+            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do
+                if c.Name == "LagbackGhost" then c:Destroy() end
+            end
+        end
+    end)
+    pcall(function()
+        for _, c in pairs(workspace:GetDescendants()) do
+            if c.Name == "LagbackGhost" then c:Destroy() end
+        end
+    end)
+end
+
+-- Limpia ghosts cada vez que el personaje reaparece
+player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    clearAllGhosts()
+end)
+
+-- Limpia ghosts en loop cada 10 segundos por si quedan residuos
+task.spawn(function()
+    while ScreenGui.Parent do
+        clearAllGhosts()
+        task.wait(10)
+    end
+end)
+
+-- ══════════════════════════════════════
 --  AUTO-LOAD CONFIG AL INICIAR
 -- ══════════════════════════════════════
 
