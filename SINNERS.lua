@@ -25,6 +25,7 @@ local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
 local espOn              = false
+local darkOn             = false
 local antiRagdollEnabled = false
 local fpsBoostOn         = false
 local fovValue           = 70
@@ -41,6 +42,7 @@ local function saveConfig()
             Unwalk      = unwalkOn,
             Xray        = xrayOn,
             ESP         = espOn,
+            Darkmode    = darkOn,
             AntiRagdoll = antiRagdollEnabled,
             FPSBoost    = fpsBoostOn,
             FOV         = fovValue,
@@ -482,10 +484,60 @@ espTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
+--  DARKMODE
+-- ══════════════════════════════════════
+
+local darkLabel, darkTrack, darkThumb = makeOptionRow(ContentArea, "DARKMODE", 172)
+local darkModeObjects  = {}
+local originalLighting = {}
+
+local function saveLightingState()
+    originalLighting = { FogStart = Lighting.FogStart }
+end
+local function startDarkMode()
+    saveLightingState()
+    darkModeObjects = {}
+    for _, child in pairs(Lighting:GetChildren()) do
+        if child:IsA("Sky") then
+            table.insert(darkModeObjects, {removed = true, instance = child, parent = Lighting})
+            child.Parent = nil
+        end
+    end
+    local sky = Instance.new("Sky")
+    sky.Name                 = "BlackSky"
+    sky.SkyboxBk             = "rbxassetid://2013298"
+    sky.SkyboxDn             = "rbxassetid://2013298"
+    sky.SkyboxFt             = "rbxassetid://2013298"
+    sky.SkyboxLf             = "rbxassetid://2013298"
+    sky.SkyboxRt             = "rbxassetid://2013298"
+    sky.SkyboxUp             = "rbxassetid://2013298"
+    sky.StarCount            = 0
+    sky.CelestialBodiesShown = false
+    sky.Parent               = Lighting
+    table.insert(darkModeObjects, sky)
+    Lighting.FogStart = 10000
+end
+local function stopDarkMode()
+    for _, obj in ipairs(darkModeObjects) do
+        pcall(function()
+            if obj.removed then obj.instance.Parent = obj.parent
+            else obj:Destroy() end
+        end)
+    end
+    darkModeObjects = {}
+    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
+end
+darkTrack.MouseButton1Click:Connect(function()
+    darkOn = not darkOn
+    if darkOn then toggleOn(darkLabel, darkTrack, darkThumb); startDarkMode()
+    else toggleOff(darkLabel, darkTrack, darkThumb); stopDarkMode() end
+end)
+
+-- ══════════════════════════════════════
 --  ANTI RAGDOLL
 -- ══════════════════════════════════════
 
-local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
+local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 226)
 local RAGDOLL_SPEED           = 16
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
@@ -583,7 +635,7 @@ end)
 --  FPS BOOST
 -- ══════════════════════════════════════
 
-local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 226)
+local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 280)
 local fpsDescConn = nil
 
 local function stripVisuals(obj)
@@ -987,6 +1039,11 @@ task.defer(function()
         espOn = true
         toggleOn(espLabel, espTrack, espThumb)
         enableESP()
+    end
+    if savedCfg.Darkmode then
+        darkOn = true
+        toggleOn(darkLabel, darkTrack, darkThumb)
+        startDarkMode()
     end
     if savedCfg.AntiRagdoll then
         antiRagdollEnabled = true
