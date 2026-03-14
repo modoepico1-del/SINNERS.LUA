@@ -2,22 +2,20 @@
 -- ║           DEMONTIME HUB              ║
 -- ╚══════════════════════════════════════╝
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Lighting = game:GetService("Lighting")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
-local HttpService = game:GetService("HttpService")
+local RunService       = game:GetService("RunService")
+local Lighting         = game:GetService("Lighting")
+local ReplicatedStorage= game:GetService("ReplicatedStorage")
+local CoreGui          = game:GetService("CoreGui")
+local HttpService      = game:GetService("HttpService")
 
-local me = Players.LocalPlayer
-local player = me
+local me          = Players.LocalPlayer
+local player      = me
 local LocalPlayer = me
-local RS = RunService
-local Camera = workspace.CurrentCamera
-
-local cfg = { Unwalk = false, Xray = false, ESP = false, Darkmode = false, AntiRagdoll = false }
+local RS          = RunService
+local Camera      = workspace.CurrentCamera
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -28,11 +26,11 @@ local CONFIG_FILE = "DEMONTIME_config.json"
 local function saveConfig()
     pcall(function()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
-            Unwalk      = cfg.Unwalk,
-            Xray        = cfg.Xray,
-            ESP         = cfg.ESP,
-            Darkmode    = cfg.Darkmode,
-            AntiRagdoll = cfg.AntiRagdoll,
+            Unwalk      = unwalkOn,
+            Xray        = xrayOn,
+            ESP         = espOn,
+            Darkmode    = darkOn,
+            AntiRagdoll = antiRagdollEnabled,
         }))
     end)
 end
@@ -68,7 +66,7 @@ ToggleBtn.Parent           = ScreenGui
 
 local ToggleCorner = Instance.new("UICorner")
 ToggleCorner.CornerRadius = UDim.new(0, 6)
-ToggleCorner.Parent = ToggleBtn
+ToggleCorner.Parent       = ToggleBtn
 
 local ToggleStroke = Instance.new("UIStroke")
 ToggleStroke.Color        = Color3.fromRGB(255, 0, 0)
@@ -76,6 +74,7 @@ ToggleStroke.Thickness    = 1.5
 ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
+-- MainFrame
 local MainFrame = Instance.new("Frame")
 MainFrame.Size             = UDim2.new(0, 480, 0, 640)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
@@ -87,31 +86,31 @@ MainFrame.Parent           = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
-MainCorner.Parent = MainFrame
+MainCorner.Parent       = MainFrame
 
 local function addNeonBorder(parent, thickness, color)
     local glow = Instance.new("Frame")
-    glow.Size               = UDim2.new(1, thickness*6, 1, thickness*6)
-    glow.Position           = UDim2.new(0, -thickness*3, 0, -thickness*3)
-    glow.BackgroundColor3   = color
+    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
+    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
+    glow.BackgroundColor3       = color
     glow.BackgroundTransparency = 0.72
-    glow.BorderSizePixel    = 0
-    glow.ZIndex             = parent.ZIndex - 1
-    glow.Parent             = parent
+    glow.BorderSizePixel        = 0
+    glow.ZIndex                 = parent.ZIndex - 1
+    glow.Parent                 = parent
     local gc = Instance.new("UICorner")
     gc.CornerRadius = UDim.new(0, 14)
-    gc.Parent = glow
+    gc.Parent       = glow
     local mid = Instance.new("Frame")
-    mid.Size               = UDim2.new(1, thickness*3, 1, thickness*3)
-    mid.Position           = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
-    mid.BackgroundColor3   = color
+    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
+    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
+    mid.BackgroundColor3       = color
     mid.BackgroundTransparency = 0.50
-    mid.BorderSizePixel    = 0
-    mid.ZIndex             = parent.ZIndex - 1
-    mid.Parent             = parent
+    mid.BorderSizePixel        = 0
+    mid.ZIndex                 = parent.ZIndex - 1
+    mid.Parent                 = parent
     local mc = Instance.new("UICorner")
     mc.CornerRadius = UDim.new(0, 12)
-    mc.Parent = mid
+    mc.Parent       = mid
     local stroke = Instance.new("UIStroke")
     stroke.Color           = color
     stroke.Thickness       = thickness
@@ -122,6 +121,7 @@ end
 
 addNeonBorder(MainFrame, 2, Color3.fromRGB(255, 0, 0))
 
+-- ── TitleBar ──
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
 TitleBar.Position          = UDim2.new(0, 0, 0, 0)
@@ -132,7 +132,7 @@ TitleBar.Parent            = MainFrame
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
-TitleCorner.Parent = TitleBar
+TitleCorner.Parent       = TitleBar
 
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
@@ -143,31 +143,31 @@ TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
 
 local lineGlow = Instance.new("Frame")
-lineGlow.Size              = UDim2.new(1, 0, 0, 8)
-lineGlow.Position          = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3  = Color3.fromRGB(255, 0, 0)
+lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
+lineGlow.Position               = UDim2.new(0, 0, 1, -5)
+lineGlow.BackgroundColor3       = Color3.fromRGB(255, 0, 0)
 lineGlow.BackgroundTransparency = 0.6
-lineGlow.BorderSizePixel   = 0
-lineGlow.ZIndex            = 3
-lineGlow.Parent            = TitleBar
+lineGlow.BorderSizePixel        = 0
+lineGlow.ZIndex                 = 3
+lineGlow.Parent                 = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text            = "DEMONTIME"
-TitleLabel.Size            = UDim2.new(1, -50, 1, 0)
-TitleLabel.Position        = UDim2.new(0, 14, 0, 0)
+TitleLabel.Text                   = "DEMONTIME"
+TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
+TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3      = Color3.fromRGB(255, 0, 0)
-TitleLabel.TextSize        = 17
-TitleLabel.Font            = Enum.Font.GothamBlack
-TitleLabel.TextXAlignment  = Enum.TextXAlignment.Left
-TitleLabel.ZIndex          = 5
-TitleLabel.Parent          = TitleBar
+TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
+TitleLabel.TextSize               = 17
+TitleLabel.Font                   = Enum.Font.GothamBlack
+TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
+TitleLabel.ZIndex                 = 5
+TitleLabel.Parent                 = TitleBar
 
 local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Color       = Color3.fromRGB(0, 0, 0)
-TitleStroke.Thickness   = 2.5
+TitleStroke.Color        = Color3.fromRGB(0, 0, 0)
+TitleStroke.Thickness    = 2.5
 TitleStroke.Transparency = 0.0
-TitleStroke.Parent      = TitleLabel
+TitleStroke.Parent       = TitleLabel
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
@@ -183,7 +183,7 @@ CloseBtn.Parent            = TitleBar
 
 local CloseBtnCorner = Instance.new("UICorner")
 CloseBtnCorner.CornerRadius = UDim.new(0, 6)
-CloseBtnCorner.Parent = CloseBtn
+CloseBtnCorner.Parent       = CloseBtn
 
 local CloseBtnStroke = Instance.new("UIStroke")
 CloseBtnStroke.Color        = Color3.fromRGB(255, 0, 0)
@@ -205,8 +205,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
+-- ── ContentArea (deja 60px abajo para el botón Save) ──
 local ContentArea = Instance.new("Frame")
-ContentArea.Size             = UDim2.new(1, 0, 1, -42)
+ContentArea.Size             = UDim2.new(1, 0, 1, -102)  -- -42 TitleBar -60 SaveBar
 ContentArea.Position         = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ContentArea.BorderSizePixel  = 0
@@ -227,23 +228,23 @@ local function makeOptionRow(parent, labelText, yPos)
     row.Parent           = parent
     local rc = Instance.new("UICorner")
     rc.CornerRadius = UDim.new(0, 7)
-    rc.Parent = row
+    rc.Parent       = row
     local rs2 = Instance.new("UIStroke")
     rs2.Color        = Color3.fromRGB(255, 0, 0)
     rs2.Thickness    = 0.8
     rs2.Transparency = 0.5
     rs2.Parent       = row
     local lbl = Instance.new("TextLabel")
-    lbl.Text               = labelText
-    lbl.Size               = UDim2.new(1, -70, 1, 0)
-    lbl.Position           = UDim2.new(0, 14, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3         = Color3.fromRGB(220, 220, 220)
-    lbl.TextSize           = 14
-    lbl.Font               = Enum.Font.GothamBlack
-    lbl.TextXAlignment     = Enum.TextXAlignment.Left
-    lbl.ZIndex             = 5
-    lbl.Parent             = row
+    lbl.Text                  = labelText
+    lbl.Size                  = UDim2.new(1, -70, 1, 0)
+    lbl.Position              = UDim2.new(0, 14, 0, 0)
+    lbl.BackgroundTransparency= 1
+    lbl.TextColor3            = Color3.fromRGB(220, 220, 220)
+    lbl.TextSize              = 14
+    lbl.Font                  = Enum.Font.GothamBlack
+    lbl.TextXAlignment        = Enum.TextXAlignment.Left
+    lbl.ZIndex                = 5
+    lbl.Parent                = row
     local track = Instance.new("TextButton")
     track.Text             = ""
     track.Size             = UDim2.new(0, 44, 0, 24)
@@ -254,7 +255,7 @@ local function makeOptionRow(parent, labelText, yPos)
     track.Parent           = row
     local tc = Instance.new("UICorner")
     tc.CornerRadius = UDim.new(1, 0)
-    tc.Parent = track
+    tc.Parent       = track
     local thumb = Instance.new("Frame")
     thumb.Size             = UDim2.new(0, 18, 0, 18)
     thumb.Position         = UDim2.new(0, 3, 0.5, -9)
@@ -264,7 +265,7 @@ local function makeOptionRow(parent, labelText, yPos)
     thumb.Parent           = track
     local thc = Instance.new("UICorner")
     thc.CornerRadius = UDim.new(1, 0)
-    thc.Parent = thumb
+    thc.Parent       = thumb
     return lbl, track, thumb
 end
 
@@ -289,14 +290,14 @@ local unwalkOn   = false
 
 local function enableUnwalk()
     local char = me.Character if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid") if not hum then return end
+    local hum  = char:FindFirstChildOfClass("Humanoid") if not hum then return end
     local anim = hum:FindFirstChildOfClass("Animator") if not anim then return end
     for _, t in ipairs(anim:GetPlayingAnimationTracks()) do t:Stop(0) end
     if unwalkConn then unwalkConn:Disconnect() end
     unwalkConn = RS.Heartbeat:Connect(function()
-        if not cfg.Unwalk then unwalkConn:Disconnect() unwalkConn = nil return end
-        local c = me.Character if not c then return end
-        local h = c:FindFirstChildOfClass("Humanoid") if not h then return end
+        if not unwalkOn then unwalkConn:Disconnect() unwalkConn = nil return end
+        local c  = me.Character if not c then return end
+        local h  = c:FindFirstChildOfClass("Humanoid") if not h then return end
         local an = h:FindFirstChildOfClass("Animator") if not an then return end
         for _, t in ipairs(an:GetPlayingAnimationTracks()) do t:Stop(0) end
     end)
@@ -306,7 +307,6 @@ local function disableUnwalk()
 end
 unwalkTrack.MouseButton1Click:Connect(function()
     unwalkOn = not unwalkOn
-    cfg.Unwalk = unwalkOn
     if unwalkOn then toggleOn(unwalkLabel, unwalkTrack, unwalkThumb); enableUnwalk()
     else toggleOff(unwalkLabel, unwalkTrack, unwalkThumb); disableUnwalk() end
 end)
@@ -391,7 +391,6 @@ local function stopXray()
 end
 xrayTrack.MouseButton1Click:Connect(function()
     xrayOn = not xrayOn
-    cfg.Xray = xrayOn
     if xrayOn then toggleOn(xrayLabel, xrayTrack, xrayThumb); startXray()
     else toggleOff(xrayLabel, xrayTrack, xrayThumb); stopXray() end
 end)
@@ -409,21 +408,21 @@ local function createESP(plr)
     if plr == LocalPlayer then return end
     if not plr.Character then return end
     if plr.Character:FindFirstChild("NightESP") then return end
-    local c = plr.Character
+    local c       = plr.Character
     local charHrp = c:FindFirstChild("HumanoidRootPart")
     if not charHrp then return end
     local humanoid = c:FindFirstChildOfClass("Humanoid")
     if humanoid then humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
     local hitbox = Instance.new("BoxHandleAdornment")
-    hitbox.Name         = "NightESP"
-    hitbox.Adornee      = charHrp
-    hitbox.Size         = Vector3.new(4, 6, 2)
-    hitbox.Color3       = Color3.fromRGB(255, 0, 50)
-    hitbox.Transparency = 0.3
-    hitbox.ZIndex       = 10
-    hitbox.AlwaysOnTop  = true
-    hitbox.Parent       = c
-    espObjects[plr]     = {box = hitbox, character = c}
+    hitbox.Name        = "NightESP"
+    hitbox.Adornee     = charHrp
+    hitbox.Size        = Vector3.new(4, 6, 2)
+    hitbox.Color3      = Color3.fromRGB(255, 0, 50)
+    hitbox.Transparency= 0.3
+    hitbox.ZIndex      = 10
+    hitbox.AlwaysOnTop = true
+    hitbox.Parent      = c
+    espObjects[plr]    = {box = hitbox, character = c}
 end
 local function removeESP(plr)
     pcall(function()
@@ -466,8 +465,7 @@ local function disableESP()
     espObjects     = {}
 end
 espTrack.MouseButton1Click:Connect(function()
-    espOn   = not espOn
-    cfg.ESP = espOn
+    espOn = not espOn
     if espOn then toggleOn(espLabel, espTrack, espThumb); enableESP()
     else toggleOff(espLabel, espTrack, espThumb); disableESP() end
 end)
@@ -477,23 +475,12 @@ end)
 -- ══════════════════════════════════════
 
 local darkLabel, darkTrack, darkThumb = makeOptionRow(ContentArea, "DARKMODE", 172)
-local darkOn           = false
-local darkModeObjects  = {}
-local originalLighting = {}
+local darkOn          = false
+local darkModeObjects = {}
+local originalLighting= {}
 
 local function saveLightingState()
-    originalLighting = {
-        ClockTime                = Lighting.ClockTime,
-        Ambient                  = Lighting.Ambient,
-        Brightness               = Lighting.Brightness,
-        EnvironmentDiffuseScale  = Lighting.EnvironmentDiffuseScale,
-        EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
-        GlobalShadows            = Lighting.GlobalShadows,
-        OutdoorAmbient           = Lighting.OutdoorAmbient,
-        FogColor                 = Lighting.FogColor,
-        FogEnd                   = Lighting.FogEnd,
-        FogStart                 = Lighting.FogStart,
-    }
+    originalLighting = { FogStart = Lighting.FogStart }
 end
 local function startDarkMode()
     saveLightingState()
@@ -521,21 +508,15 @@ end
 local function stopDarkMode()
     for _, obj in ipairs(darkModeObjects) do
         pcall(function()
-            if obj.removed then
-                obj.instance.Parent = obj.parent
-            else
-                obj:Destroy()
-            end
+            if obj.removed then obj.instance.Parent = obj.parent
+            else obj:Destroy() end
         end)
     end
     darkModeObjects = {}
-    pcall(function()
-        Lighting.FogStart = originalLighting.FogStart or 0
-    end)
+    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
 end
 darkTrack.MouseButton1Click:Connect(function()
-    darkOn       = not darkOn
-    cfg.Darkmode = darkOn
+    darkOn = not darkOn
     if darkOn then toggleOn(darkLabel, darkTrack, darkThumb); startDarkMode()
     else toggleOff(darkLabel, darkTrack, darkThumb); stopDarkMode() end
 end)
@@ -567,11 +548,9 @@ local function cleanupRagdoll()
     end
     if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
 end
-
 local function disconnectRemote()
     if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
 end
-
 local function setupAntiRagdoll(char)
     currentCharacter = char
     cleanupRagdoll()
@@ -592,7 +571,7 @@ local function setupAntiRagdoll(char)
         if arg1 == "Make" or arg2 == "manualM" then
             humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
             Camera.CameraSubject = head
-            root.CanCollide = false
+            root.CanCollide      = false
             if controls then pcall(controls.Enable, controls) end
             cleanupRagdoll()
             local anchor = Instance.new("BodyPosition")
@@ -630,8 +609,7 @@ player.CharacterAdded:Connect(function(newChar)
 end)
 
 ragdollTrack.MouseButton1Click:Connect(function()
-    antiRagdollEnabled     = not antiRagdollEnabled
-    cfg.AntiRagdoll        = antiRagdollEnabled
+    antiRagdollEnabled = not antiRagdollEnabled
     if antiRagdollEnabled then
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
         if player.Character then setupAntiRagdoll(player.Character) end
@@ -643,50 +621,47 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  SAVE CONFIG BUTTON
+--  SAVE CONFIG  (anclado siempre al fondo de MainFrame)
 -- ══════════════════════════════════════
 
 local SaveFrame = Instance.new("Frame")
-SaveFrame.Size             = UDim2.new(1, -20, 0, 44)
-SaveFrame.Position         = UDim2.new(0, 10, 0, 280)
-SaveFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
-SaveFrame.BorderSizePixel  = 0
-SaveFrame.ZIndex           = 4
-SaveFrame.Parent           = ContentArea
-
-local sfCorner = Instance.new("UICorner")
-sfCorner.CornerRadius = UDim.new(0, 7)
-sfCorner.Parent = SaveFrame
-
-local sfStroke = Instance.new("UIStroke")
-sfStroke.Color        = Color3.fromRGB(255, 0, 0)
-sfStroke.Thickness    = 0.8
-sfStroke.Transparency = 0.5
-sfStroke.Parent       = SaveFrame
+SaveFrame.Size                   = UDim2.new(1, -24, 0, 40)
+SaveFrame.Position               = UDim2.new(0, 12, 1, -52)  -- Y=1 → fondo, -52 para que no se corte
+SaveFrame.BackgroundTransparency = 1
+SaveFrame.BorderSizePixel        = 0
+SaveFrame.ZIndex                 = 6
+SaveFrame.Parent                 = MainFrame  -- hijo de MainFrame, no ContentArea
 
 local SaveBtn = Instance.new("TextButton")
-SaveBtn.Text             = "SAVE CONFIG"
-SaveBtn.Size             = UDim2.new(1, 0, 1, 0)
+SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
 SaveBtn.BackgroundTransparency = 1
-SaveBtn.TextColor3       = Color3.fromRGB(255, 80, 80)
-SaveBtn.TextSize         = 13
-SaveBtn.Font             = Enum.Font.GothamBlack
-SaveBtn.BorderSizePixel  = 0
-SaveBtn.ZIndex           = 5
-SaveBtn.Parent           = SaveFrame
+SaveBtn.Text                   = "SAVE CONFIG"
+SaveBtn.Font                   = Enum.Font.GothamBlack
+SaveBtn.TextSize               = 13
+SaveBtn.TextColor3             = Color3.fromRGB(255, 80, 80)
+SaveBtn.TextStrokeColor3       = Color3.fromRGB(0, 0, 0)
+SaveBtn.TextStrokeTransparency = 0
+SaveBtn.BorderSizePixel        = 0
+SaveBtn.ZIndex                 = 7
+SaveBtn.Parent                 = SaveFrame
+
+Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 8)
+
+local saveStroke = Instance.new("UIStroke", SaveBtn)
+saveStroke.Color        = Color3.fromRGB(255, 0, 0)
+saveStroke.Thickness    = 1.5
+saveStroke.Transparency = 0
 
 SaveBtn.MouseEnter:Connect(function()
-    TweenService:Create(SaveFrame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
-    TweenService:Create(SaveBtn,  TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 end)
 SaveBtn.MouseLeave:Connect(function()
-    TweenService:Create(SaveFrame, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(20, 0, 0)}):Play()
-    TweenService:Create(SaveBtn,  TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
 end)
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig()
     SaveBtn.Text = "SAVED!"
-    task.wait(1.2)
+    task.wait(1)
     SaveBtn.Text = "SAVE CONFIG"
 end)
 
@@ -714,17 +689,17 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.6}):Play()
+        TweenService:Create(TitleStroke,  TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.6}):Play()
         task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.0}):Play()
+        TweenService:Create(TitleStroke,  TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency=0.0}):Play()
         task.wait(1.2)
     end
 end)
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.55}):Play()
+        TweenService:Create(TitleLine,    TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.55}):Play()
         task.wait(1.0)
-        TweenService:Create(TitleLine, TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.0}):Play()
+        TweenService:Create(TitleLine,    TweenInfo.new(1.0, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency=0.0}):Play()
         task.wait(1.0)
     end
 end)
@@ -747,11 +722,11 @@ TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.Ea
 local dragging, dragStart, startPos = false, nil, nil
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging=true dragStart=input.Position startPos=MainFrame.Position
+        dragging = true dragStart = input.Position startPos = MainFrame.Position
     end
 end)
 TitleBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
@@ -766,32 +741,27 @@ end)
 
 task.defer(function()
     if savedCfg.Unwalk then
-        unwalkOn   = true
-        cfg.Unwalk = true
+        unwalkOn = true
         toggleOn(unwalkLabel, unwalkTrack, unwalkThumb)
         enableUnwalk()
     end
     if savedCfg.Xray then
-        xrayOn   = true
-        cfg.Xray = true
+        xrayOn = true
         toggleOn(xrayLabel, xrayTrack, xrayThumb)
         startXray()
     end
     if savedCfg.ESP then
-        espOn   = true
-        cfg.ESP = true
+        espOn = true
         toggleOn(espLabel, espTrack, espThumb)
         enableESP()
     end
     if savedCfg.Darkmode then
-        darkOn       = true
-        cfg.Darkmode = true
+        darkOn = true
         toggleOn(darkLabel, darkTrack, darkThumb)
         startDarkMode()
     end
     if savedCfg.AntiRagdoll then
         antiRagdollEnabled = true
-        cfg.AntiRagdoll    = true
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
         if player.Character then setupAntiRagdoll(player.Character) end
     end
