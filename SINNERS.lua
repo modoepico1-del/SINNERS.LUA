@@ -299,7 +299,7 @@ local function startXray()
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
         Lighting.GlobalShadows = false
-        Lighting.Brightness    = 3
+        Lighting.Brightness    = 1
         Lighting.FogEnd        = 9e9
     end)
     pcall(function()
