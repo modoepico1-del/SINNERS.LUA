@@ -709,9 +709,6 @@ fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
 fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
-local fovRowCorner = Instance.new("UICorner")
-fovRowCorner.CornerRadius = UDim.new(0, 7)
-fovRowCorner.Parent       = fovRow
 
 -- Forzar negro siempre en FOV y SaveConfig
 RS.Heartbeat:Connect(function()
@@ -774,73 +771,40 @@ sfc.CornerRadius = UDim.new(1, 0)
 sfc.Parent       = sliderFill
 
 -- Thumb bonito: diamante rojo con borde blanco brillante
--- Thumb: círculo negro con símbolo ◀▶ indicando que se arrastra
+-- Thumb: corazón rojo ♥ simple y limpio
 local sliderThumb = Instance.new("Frame")
-sliderThumb.Size             = UDim2.new(0, 26, 0, 20)
-sliderThumb.Position         = UDim2.new(0, -13, 0.5, -10)
-sliderThumb.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+sliderThumb.Size             = UDim2.new(0, 22, 0, 22)
+sliderThumb.Position         = UDim2.new(0, -11, 0.5, -11)
+sliderThumb.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
 sliderThumb.BorderSizePixel  = 0
 sliderThumb.ZIndex           = 8
 sliderThumb.Rotation         = 0
 sliderThumb.Parent           = sliderTrack
 local thumbCorner = Instance.new("UICorner")
-thumbCorner.CornerRadius = UDim.new(0, 6)
+thumbCorner.CornerRadius = UDim.new(1, 0)
 thumbCorner.Parent       = sliderThumb
 
--- Anillo neon rojo
-local thumbStroke = Instance.new("UIStroke")
-thumbStroke.Color        = Color3.fromRGB(255, 0, 0)
-thumbStroke.Thickness    = 2
-thumbStroke.Transparency = 0
-thumbStroke.Parent       = sliderThumb
-
--- Símbolo ◀▶
 local thumbSymbol = Instance.new("TextLabel")
-thumbSymbol.Text                  = "◀▶"
+thumbSymbol.Text                  = "♥"
 thumbSymbol.Size                  = UDim2.new(1, 0, 1, 0)
 thumbSymbol.Position              = UDim2.new(0, 0, 0, 0)
 thumbSymbol.BackgroundTransparency= 1
-thumbSymbol.TextColor3            = Color3.fromRGB(255, 60, 60)
-thumbSymbol.TextSize              = 9
+thumbSymbol.TextColor3            = Color3.fromRGB(255, 255, 255)
+thumbSymbol.TextSize              = 12
 thumbSymbol.Font                  = Enum.Font.GothamBlack
 thumbSymbol.TextXAlignment        = Enum.TextXAlignment.Center
 thumbSymbol.TextYAlignment        = Enum.TextYAlignment.Center
 thumbSymbol.ZIndex                = 9
 thumbSymbol.Parent                = sliderThumb
 
--- Halo exterior difuso
-local thumbHalo = Instance.new("Frame")
-thumbHalo.Size                   = UDim2.new(0, 34, 0, 28)
-thumbHalo.Position               = UDim2.new(0.5, -17, 0.5, -14)
-thumbHalo.BackgroundColor3       = Color3.fromRGB(255, 0, 0)
-thumbHalo.BackgroundTransparency = 0.78
-thumbHalo.BorderSizePixel        = 0
-thumbHalo.ZIndex                 = 7
-thumbHalo.Parent                 = sliderThumb
-local haloCorner = Instance.new("UICorner")
-haloCorner.CornerRadius = UDim.new(0, 8)
-haloCorner.Parent       = thumbHalo
-
 local function updateFOVVisual(pct)
     sliderFill.Size      = UDim2.new(pct, 0, 1, 0)
-    sliderThumb.Position = UDim2.new(pct, -13, 0.5, -10)
+    sliderThumb.Position = UDim2.new(pct, -11, 0.5, -11)
     fovValLabel.Text     = tostring(fovValue)
 end
 
 local initPct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
 updateFOVVisual(initPct)
-
--- Animación pulse del anillo
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(thumbStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.6}):Play()
-        TweenService:Create(thumbHalo,   TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.92}):Play()
-        task.wait(0.8)
-        TweenService:Create(thumbStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0}):Play()
-        TweenService:Create(thumbHalo,   TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.70}):Play()
-        task.wait(0.8)
-    end
-end)
 
 local draggingFOV = false
 
@@ -848,16 +812,14 @@ sliderTrack.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or
        input.UserInputType == Enum.UserInputType.Touch then
         draggingFOV = true
-        TweenService:Create(thumbSymbol, TweenInfo.new(0.1), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
-        TweenService:Create(thumbStroke, TweenInfo.new(0.1), {Color = Color3.fromRGB(255,100,100)}):Play()
+        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 0, 0)}):Play()
     end
 end)
 sliderTrack.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or
        input.UserInputType == Enum.UserInputType.Touch then
         draggingFOV = false
-        TweenService:Create(thumbSymbol, TweenInfo.new(0.1), {TextColor3 = Color3.fromRGB(255,60,60)}):Play()
-        TweenService:Create(thumbStroke, TweenInfo.new(0.1), {Color = Color3.fromRGB(255,0,0)}):Play()
+        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
@@ -884,14 +846,6 @@ SaveFrame.BackgroundTransparency = 0
 SaveFrame.BorderSizePixel        = 0
 SaveFrame.ZIndex                 = 6
 SaveFrame.Parent                 = MainFrame
-local sfCorner = Instance.new("UICorner")
-sfCorner.CornerRadius = UDim.new(0, 7)
-sfCorner.Parent       = SaveFrame
-local sfStroke = Instance.new("UIStroke")
-sfStroke.Color        = Color3.fromRGB(255, 0, 0)
-sfStroke.Thickness    = 0.8
-sfStroke.Transparency = 0.5
-sfStroke.Parent       = SaveFrame
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
