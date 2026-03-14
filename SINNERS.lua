@@ -21,12 +21,13 @@ local Camera      = workspace.CurrentCamera
 --  VARIABLES DE ESTADO (declaradas antes de saveConfig)
 -- ══════════════════════════════════════
 
-local unwalkOn         = false
-local unwalkConn       = nil
-local xrayOn           = false
-local espOn            = false
-local darkOn           = false
+local unwalkOn           = false
+local unwalkConn         = nil
+local xrayOn             = false
+local espOn              = false
+local darkOn             = false
 local antiRagdollEnabled = false
+local fovValue           = 70  -- valor por defecto
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -43,6 +44,7 @@ local function saveConfig()
             ESP         = espOn,
             Darkmode    = darkOn,
             AntiRagdoll = antiRagdollEnabled,
+            FOV         = fovValue,
         }))
     end)
 end
@@ -625,6 +627,128 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
+--  FOV SLIDER
+-- ══════════════════════════════════════
+
+local fovRow = Instance.new("Frame")
+fovRow.Size             = UDim2.new(1, -20, 0, 56)
+fovRow.Position         = UDim2.new(0, 10, 0, 280)
+fovRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+fovRow.BorderSizePixel  = 0
+fovRow.ZIndex           = 4
+fovRow.Parent           = ContentArea
+local frc = Instance.new("UICorner")
+frc.CornerRadius = UDim.new(0, 7)
+frc.Parent       = fovRow
+local frs = Instance.new("UIStroke")
+frs.Color        = Color3.fromRGB(255, 0, 0)
+frs.Thickness    = 0.8
+frs.Transparency = 0.5
+frs.Parent       = fovRow
+
+-- Label + valor actual
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Text                  = "FOV"
+fovLabel.Size                  = UDim2.new(0, 120, 0, 22)
+fovLabel.Position              = UDim2.new(0, 14, 0, 4)
+fovLabel.BackgroundTransparency= 1
+fovLabel.TextColor3            = Color3.fromRGB(220, 220, 220)
+fovLabel.TextSize              = 14
+fovLabel.Font                  = Enum.Font.GothamBlack
+fovLabel.TextXAlignment        = Enum.TextXAlignment.Left
+fovLabel.ZIndex                = 5
+fovLabel.Parent                = fovRow
+
+local fovValLabel = Instance.new("TextLabel")
+fovValLabel.Text                  = tostring(fovValue)
+fovValLabel.Size                  = UDim2.new(0, 50, 0, 22)
+fovValLabel.Position              = UDim2.new(1, -62, 0, 4)
+fovValLabel.BackgroundTransparency= 1
+fovValLabel.TextColor3            = Color3.fromRGB(255, 80, 80)
+fovValLabel.TextSize              = 13
+fovValLabel.Font                  = Enum.Font.GothamBlack
+fovValLabel.TextXAlignment        = Enum.TextXAlignment.Right
+fovValLabel.ZIndex                = 5
+fovValLabel.Parent                = fovRow
+
+-- Track del slider
+local sliderTrack = Instance.new("Frame")
+sliderTrack.Size             = UDim2.new(1, -28, 0, 8)
+sliderTrack.Position         = UDim2.new(0, 14, 0, 34)
+sliderTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+sliderTrack.BorderSizePixel  = 0
+sliderTrack.ZIndex           = 5
+sliderTrack.Parent           = fovRow
+local stc = Instance.new("UICorner")
+stc.CornerRadius = UDim.new(1, 0)
+stc.Parent       = sliderTrack
+
+-- Fill del slider
+local sliderFill = Instance.new("Frame")
+sliderFill.Size             = UDim2.new(0, 0, 1, 0)  -- se actualiza abajo
+sliderFill.Position         = UDim2.new(0, 0, 0, 0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+sliderFill.BorderSizePixel  = 0
+sliderFill.ZIndex           = 6
+sliderFill.Parent           = sliderTrack
+local sfc = Instance.new("UICorner")
+sfc.CornerRadius = UDim.new(1, 0)
+sfc.Parent       = sliderFill
+
+-- Thumb del slider
+local sliderThumb = Instance.new("Frame")
+sliderThumb.Size             = UDim2.new(0, 16, 0, 16)
+sliderThumb.Position         = UDim2.new(0, -8, 0.5, -8)
+sliderThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+sliderThumb.BorderSizePixel  = 0
+sliderThumb.ZIndex           = 7
+sliderThumb.Parent           = sliderTrack
+local sthc = Instance.new("UICorner")
+sthc.CornerRadius = UDim.new(1, 0)
+sthc.Parent       = sliderThumb
+
+local FOV_MIN  = 70
+local FOV_MAX  = 120
+
+local function updateFOVVisual(pct)
+    sliderFill.Size          = UDim2.new(pct, 0, 1, 0)
+    sliderThumb.Position     = UDim2.new(pct, -8, 0.5, -8)
+    fovValLabel.Text         = tostring(fovValue)
+end
+
+-- Inicializar posición según fovValue
+local initPct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
+updateFOVVisual(initPct)
+
+-- Lógica de arrastre del slider
+local draggingFOV = false
+
+sliderTrack.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        draggingFOV = true
+    end
+end)
+sliderTrack.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        draggingFOV = false
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if draggingFOV and (input.UserInputType == Enum.UserInputType.MouseMovement or
+       input.UserInputType == Enum.UserInputType.Touch) then
+        local trackPos   = sliderTrack.AbsolutePosition.X
+        local trackWidth = sliderTrack.AbsoluteSize.X
+        local mouseX     = input.Position.X
+        local pct        = math.clamp((mouseX - trackPos) / trackWidth, 0, 1)
+        fovValue         = math.floor(FOV_MIN + pct * (FOV_MAX - FOV_MIN))
+        Camera.FieldOfView = fovValue
+        updateFOVVisual(pct)
+    end
+end)
+
+-- ══════════════════════════════════════
 --  SAVE CONFIG (anclado al fondo, hijo de MainFrame)
 -- ══════════════════════════════════════
 
@@ -768,5 +892,11 @@ task.defer(function()
         antiRagdollEnabled = true
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
         if player.Character then setupAntiRagdoll(player.Character) end
+    end
+    if savedCfg.FOV then
+        fovValue = math.clamp(savedCfg.FOV, 70, 120)
+        Camera.FieldOfView = fovValue
+        local pct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
+        updateFOVVisual(pct)
     end
 end)
