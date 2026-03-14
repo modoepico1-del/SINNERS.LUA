@@ -89,12 +89,12 @@ ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 680)
-MainFrame.Position           = UDim2.new(0, 16, 0.5, -340)
+MainFrame.Position           = UDim2.new(0, 4, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
-MainFrame.Active             = false   -- no movible
-MainFrame.Draggable          = false   -- no movible
+MainFrame.Active             = false
+MainFrame.Draggable          = false
 MainFrame.ClipsDescendants   = true
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
@@ -224,6 +224,7 @@ local ContentArea = Instance.new("Frame")
 ContentArea.Size             = UDim2.new(1, 0, 1, -170)
 ContentArea.Position         = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ContentArea.BackgroundTransparency = 0
 ContentArea.BorderSizePixel  = 0
 ContentArea.ZIndex           = 3
 ContentArea.Parent           = MainFrame
@@ -659,6 +660,12 @@ fovRow.Parent                 = MainFrame
 local fovRowCorner = Instance.new("UICorner")
 fovRowCorner.CornerRadius = UDim.new(0, 7)
 fovRowCorner.Parent       = fovRow
+
+-- Forzar negro siempre
+RS.Heartbeat:Connect(function()
+    fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+    fovRow.BackgroundTransparency = 0
+end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text                  = "FOV"
