@@ -7,14 +7,16 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 
 local me = Players.LocalPlayer
 local player = me
 local LocalPlayer = me
 local RS = RunService
+local Camera = workspace.CurrentCamera
 
-local cfg = { Unwalk = false, Xray = false, ESP = false, Darkmode = false }
+local cfg = { Unwalk = false, Xray = false, ESP = false, Darkmode = false, AntiRagdoll = false }
 
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
@@ -49,7 +51,7 @@ ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size             = UDim2.new(0, 480, 0, 580)
+MainFrame.Size             = UDim2.new(0, 480, 0, 640)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
 MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 MainFrame.BorderSizePixel  = 0
@@ -173,7 +175,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
     task.delay(0.27, function()
         MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,480,0,580)
+        MainFrame.Size    = UDim2.new(0,480,0,640)
     end)
 end)
 
@@ -467,7 +469,6 @@ local function saveLightingState()
         FogStart                 = Lighting.FogStart,
     }
 end
-
 local function startDarkMode()
     saveLightingState()
     darkModeObjects = {}
@@ -491,7 +492,6 @@ local function startDarkMode()
     table.insert(darkModeObjects, sky)
     Lighting.FogStart = 10000
 end
-
 local function stopDarkMode()
     for _, obj in ipairs(darkModeObjects) do
         pcall(function()
@@ -507,12 +507,113 @@ local function stopDarkMode()
         Lighting.FogStart = originalLighting.FogStart or 0
     end)
 end
-
 darkTrack.MouseButton1Click:Connect(function()
-    darkOn        = not darkOn
-    cfg.Darkmode  = darkOn
+    darkOn       = not darkOn
+    cfg.Darkmode = darkOn
     if darkOn then toggleOn(darkLabel, darkTrack, darkThumb); startDarkMode()
     else toggleOff(darkLabel, darkTrack, darkThumb); stopDarkMode() end
+end)
+
+-- ══════════════════════════════════════
+--  ANTI RAGDOLL
+-- ══════════════════════════════════════
+
+local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 226)
+local antiRagdollEnabled      = false
+local RAGDOLL_SPEED           = 16
+local currentCharacter        = nil
+local ragdollRemoteConnection = nil
+local moveConnection          = nil
+local playerModule, controls  = nil, nil
+
+pcall(function()
+    playerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+    controls     = playerModule:GetControls()
+end)
+
+local function cleanupRagdoll()
+    if currentCharacter then
+        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
+        if root then
+            local anchor = root:FindFirstChild("RagdollAnchor")
+            if anchor then anchor:Destroy() end
+        end
+    end
+    if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
+end
+
+local function disconnectRemote()
+    if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
+end
+
+local function setupAntiRagdoll(char)
+    currentCharacter = char
+    cleanupRagdoll()
+    disconnectRemote()
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    local root     = char:WaitForChild("HumanoidRootPart", 5)
+    local head     = char:WaitForChild("Head", 5)
+    if not (humanoid and root and head) then return end
+    local ragdollRemote
+    pcall(function()
+        ragdollRemote = ReplicatedStorage:WaitForChild("Packages", 8)
+                            :WaitForChild("Ragdoll", 5)
+                            :WaitForChild("Ragdoll", 5)
+    end)
+    if not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then return end
+    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
+        if not antiRagdollEnabled then return end
+        if arg1 == "Make" or arg2 == "manualM" then
+            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+            Camera.CameraSubject = head
+            root.CanCollide = false
+            if controls then pcall(controls.Enable, controls) end
+            cleanupRagdoll()
+            local anchor = Instance.new("BodyPosition")
+            anchor.Name     = "RagdollAnchor"
+            anchor.MaxForce = Vector3.new(1e5,1e5,1e5)
+            anchor.Position = root.Position
+            anchor.D        = 200
+            anchor.P        = 5000
+            anchor.Parent   = root
+            moveConnection = RunService.Heartbeat:Connect(function()
+                if not antiRagdollEnabled then cleanupRagdoll(); return end
+                local moveDir = Vector3.zero
+                if controls then pcall(function() moveDir = controls:GetMoveVector() end) end
+                if moveDir.Magnitude > 0.1 then
+                    local cf  = Camera.CFrame
+                    local fwd = Vector3.new(cf.LookVector.X,0,cf.LookVector.Z).Unit
+                    local rgt = Vector3.new(cf.RightVector.X,0,cf.RightVector.Z).Unit
+                    anchor.Position = root.Position + (fwd*-moveDir.Z+rgt*moveDir.X).Unit*RAGDOLL_SPEED*0.1
+                else
+                    anchor.Position = root.Position
+                end
+            end)
+        elseif arg1 == "Destroy" or arg2 == "manualD" then
+            cleanupRagdoll()
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            root.CanCollide      = true
+            Camera.CameraSubject = humanoid
+            if controls then pcall(controls.Enable, controls) end
+        end
+    end)
+end
+
+player.CharacterAdded:Connect(function(newChar)
+    if antiRagdollEnabled then task.wait(1); setupAntiRagdoll(newChar) end
+end)
+
+ragdollTrack.MouseButton1Click:Connect(function()
+    antiRagdollEnabled     = not antiRagdollEnabled
+    cfg.AntiRagdoll        = antiRagdollEnabled
+    if antiRagdollEnabled then
+        toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
+        if player.Character then setupAntiRagdoll(player.Character) end
+    else
+        toggleOff(ragdollLabel, ragdollTrack, ragdollThumb)
+        cleanupRagdoll()
+        disconnectRemote()
+    end
 end)
 
 -- ══════════════════════════════════════
@@ -524,12 +625,12 @@ ToggleBtn.MouseButton1Click:Connect(function()
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,480,0,0)}):Play()
         task.delay(0.27, function()
             MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0,480,0,580)
+            MainFrame.Size    = UDim2.new(0,480,0,640)
         end)
     else
         MainFrame.Size    = UDim2.new(0,480,0,0)
         MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,580)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,640)}):Play()
     end
 end)
 
@@ -567,7 +668,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0, 480, 0, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,580)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,480,0,640)}):Play()
 
 local dragging, dragStart, startPos = false, nil, nil
 TitleBar.InputBegan:Connect(function(input)
