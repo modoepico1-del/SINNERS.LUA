@@ -749,7 +749,6 @@ local sfc = Instance.new("UICorner")
 sfc.CornerRadius = UDim.new(1, 0)
 sfc.Parent       = sliderFill
 
--- Thumb bonito: diamante rojo con borde blanco brillante
 -- Thumb: demonio neon rojo (imagen)
 local sliderThumb = Instance.new("Frame")
 sliderThumb.Size             = UDim2.new(0, 28, 0, 28)
