@@ -18,19 +18,16 @@ local RS          = RunService
 local Camera      = workspace.CurrentCamera
 
 -- ══════════════════════════════════════
---  VARIABLES DE ESTADO (declaradas antes de saveConfig)
+--  VARIABLES DE ESTADO
 -- ══════════════════════════════════════
 
 local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
 local espOn              = false
-local darkOn             = false
 local antiRagdollEnabled = false
-local fovValue           = 70
 local fpsBoostOn         = false
-local apOn               = false
-local apConn             = nil
+local fovValue           = 70
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -38,17 +35,15 @@ local apConn             = nil
 
 local CONFIG_FILE = "DEMONTIME_config.json"
 
--- saveConfig declarada AQUI, despues de las variables, para que lea valores reales
 local function saveConfig()
     pcall(function()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
             Unwalk      = unwalkOn,
             Xray        = xrayOn,
             ESP         = espOn,
-            Darkmode    = darkOn,
             AntiRagdoll = antiRagdollEnabled,
-            FOV         = fovValue,
             FPSBoost    = fpsBoostOn,
+            FOV         = fovValue,
         }))
     end)
 end
@@ -98,8 +93,8 @@ MainFrame.Position           = UDim2.new(0, 16, 0.5, -340)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
-MainFrame.Active             = true
-MainFrame.Draggable          = true
+MainFrame.Active             = false   -- no movible
+MainFrame.Draggable          = false   -- no movible
 MainFrame.ClipsDescendants   = true
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
@@ -224,9 +219,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- ContentArea deja 60px abajo para el botón Save
+-- ContentArea: deja espacio abajo para FOV + Save
 local ContentArea = Instance.new("Frame")
-ContentArea.Size             = UDim2.new(1, 0, 1, -102)
+ContentArea.Size             = UDim2.new(1, 0, 1, -170)
 ContentArea.Position         = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ContentArea.BorderSizePixel  = 0
@@ -486,60 +481,10 @@ espTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  DARKMODE
--- ══════════════════════════════════════
-
-local darkLabel, darkTrack, darkThumb = makeOptionRow(ContentArea, "DARKMODE", 172)
-local darkModeObjects  = {}
-local originalLighting = {}
-
-local function saveLightingState()
-    originalLighting = { FogStart = Lighting.FogStart }
-end
-local function startDarkMode()
-    saveLightingState()
-    darkModeObjects = {}
-    for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(darkModeObjects, {removed = true, instance = child, parent = Lighting})
-            child.Parent = nil
-        end
-    end
-    local sky = Instance.new("Sky")
-    sky.Name                 = "BlackSky"
-    sky.SkyboxBk             = "rbxassetid://2013298"
-    sky.SkyboxDn             = "rbxassetid://2013298"
-    sky.SkyboxFt             = "rbxassetid://2013298"
-    sky.SkyboxLf             = "rbxassetid://2013298"
-    sky.SkyboxRt             = "rbxassetid://2013298"
-    sky.SkyboxUp             = "rbxassetid://2013298"
-    sky.StarCount            = 0
-    sky.CelestialBodiesShown = false
-    sky.Parent               = Lighting
-    table.insert(darkModeObjects, sky)
-    Lighting.FogStart = 10000
-end
-local function stopDarkMode()
-    for _, obj in ipairs(darkModeObjects) do
-        pcall(function()
-            if obj.removed then obj.instance.Parent = obj.parent
-            else obj:Destroy() end
-        end)
-    end
-    darkModeObjects = {}
-    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
-end
-darkTrack.MouseButton1Click:Connect(function()
-    darkOn = not darkOn
-    if darkOn then toggleOn(darkLabel, darkTrack, darkThumb); startDarkMode()
-    else toggleOff(darkLabel, darkTrack, darkThumb); stopDarkMode() end
-end)
-
--- ══════════════════════════════════════
 --  ANTI RAGDOLL
 -- ══════════════════════════════════════
 
-local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 226)
+local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 local RAGDOLL_SPEED           = 16
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
@@ -634,132 +579,10 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  FOV SLIDER
--- ══════════════════════════════════════
-
-local fovRow = Instance.new("Frame")
-fovRow.Size             = UDim2.new(1, -20, 0, 56)
-fovRow.Position         = UDim2.new(0, 10, 0, 280)
-fovRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-fovRow.BorderSizePixel  = 0
-fovRow.ZIndex           = 4
-fovRow.Parent           = ContentArea
-local frc = Instance.new("UICorner")
-frc.CornerRadius = UDim.new(0, 7)
-frc.Parent       = fovRow
-local frs = Instance.new("UIStroke")
-frs.Color        = Color3.fromRGB(255, 0, 0)
-frs.Thickness    = 0.8
-frs.Transparency = 0.5
-frs.Parent       = fovRow
-
--- Label + valor actual
-local fovLabel = Instance.new("TextLabel")
-fovLabel.Text                  = "FOV"
-fovLabel.Size                  = UDim2.new(0, 120, 0, 22)
-fovLabel.Position              = UDim2.new(0, 14, 0, 4)
-fovLabel.BackgroundTransparency= 1
-fovLabel.TextColor3            = Color3.fromRGB(220, 220, 220)
-fovLabel.TextSize              = 14
-fovLabel.Font                  = Enum.Font.GothamBlack
-fovLabel.TextXAlignment        = Enum.TextXAlignment.Left
-fovLabel.ZIndex                = 5
-fovLabel.Parent                = fovRow
-
-local fovValLabel = Instance.new("TextLabel")
-fovValLabel.Text                  = tostring(fovValue)
-fovValLabel.Size                  = UDim2.new(0, 50, 0, 22)
-fovValLabel.Position              = UDim2.new(1, -62, 0, 4)
-fovValLabel.BackgroundTransparency= 1
-fovValLabel.TextColor3            = Color3.fromRGB(255, 80, 80)
-fovValLabel.TextSize              = 13
-fovValLabel.Font                  = Enum.Font.GothamBlack
-fovValLabel.TextXAlignment        = Enum.TextXAlignment.Right
-fovValLabel.ZIndex                = 5
-fovValLabel.Parent                = fovRow
-
--- Track del slider
-local sliderTrack = Instance.new("Frame")
-sliderTrack.Size             = UDim2.new(1, -28, 0, 8)
-sliderTrack.Position         = UDim2.new(0, 14, 0, 34)
-sliderTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-sliderTrack.BorderSizePixel  = 0
-sliderTrack.ZIndex           = 5
-sliderTrack.Parent           = fovRow
-local stc = Instance.new("UICorner")
-stc.CornerRadius = UDim.new(1, 0)
-stc.Parent       = sliderTrack
-
--- Fill del slider
-local sliderFill = Instance.new("Frame")
-sliderFill.Size             = UDim2.new(0, 0, 1, 0)  -- se actualiza abajo
-sliderFill.Position         = UDim2.new(0, 0, 0, 0)
-sliderFill.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-sliderFill.BorderSizePixel  = 0
-sliderFill.ZIndex           = 6
-sliderFill.Parent           = sliderTrack
-local sfc = Instance.new("UICorner")
-sfc.CornerRadius = UDim.new(1, 0)
-sfc.Parent       = sliderFill
-
--- Thumb del slider
-local sliderThumb = Instance.new("Frame")
-sliderThumb.Size             = UDim2.new(0, 16, 0, 16)
-sliderThumb.Position         = UDim2.new(0, -8, 0.5, -8)
-sliderThumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-sliderThumb.BorderSizePixel  = 0
-sliderThumb.ZIndex           = 7
-sliderThumb.Parent           = sliderTrack
-local sthc = Instance.new("UICorner")
-sthc.CornerRadius = UDim.new(1, 0)
-sthc.Parent       = sliderThumb
-
-local FOV_MIN  = 70
-local FOV_MAX  = 120
-
-local function updateFOVVisual(pct)
-    sliderFill.Size          = UDim2.new(pct, 0, 1, 0)
-    sliderThumb.Position     = UDim2.new(pct, -8, 0.5, -8)
-    fovValLabel.Text         = tostring(fovValue)
-end
-
--- Inicializar posición según fovValue
-local initPct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
-updateFOVVisual(initPct)
-
--- Lógica de arrastre del slider
-local draggingFOV = false
-
-sliderTrack.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or
-       input.UserInputType == Enum.UserInputType.Touch then
-        draggingFOV = true
-    end
-end)
-sliderTrack.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or
-       input.UserInputType == Enum.UserInputType.Touch then
-        draggingFOV = false
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if draggingFOV and (input.UserInputType == Enum.UserInputType.MouseMovement or
-       input.UserInputType == Enum.UserInputType.Touch) then
-        local trackPos   = sliderTrack.AbsolutePosition.X
-        local trackWidth = sliderTrack.AbsoluteSize.X
-        local mouseX     = input.Position.X
-        local pct        = math.clamp((mouseX - trackPos) / trackWidth, 0, 1)
-        fovValue         = math.floor(FOV_MIN + pct * (FOV_MAX - FOV_MIN))
-        Camera.FieldOfView = fovValue
-        updateFOVVisual(pct)
-    end
-end)
-
--- ══════════════════════════════════════
 --  FPS BOOST
 -- ══════════════════════════════════════
 
-local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 346)
+local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 226)
 local fpsDescConn = nil
 
 local function stripVisuals(obj)
@@ -819,7 +642,144 @@ fpsTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  SAVE CONFIG (anclado al fondo, hijo de MainFrame)
+--  FOV SLIDER (anclado abajo, sin borde, thumb bonito)
+-- ══════════════════════════════════════
+
+local FOV_MIN = 70
+local FOV_MAX = 120
+
+local fovRow = Instance.new("Frame")
+fovRow.Size                   = UDim2.new(1, -20, 0, 54)
+fovRow.Position               = UDim2.new(0, 10, 1, -118)  -- anclado abajo
+fovRow.BackgroundTransparency = 1                           -- sin cuadrado
+fovRow.BorderSizePixel        = 0
+fovRow.ZIndex                 = 4
+fovRow.Parent                 = MainFrame                   -- hijo de MainFrame → siempre abajo
+
+local fovTitleLabel = Instance.new("TextLabel")
+fovTitleLabel.Text                  = "FOV"
+fovTitleLabel.Size                  = UDim2.new(0, 80, 0, 20)
+fovTitleLabel.Position              = UDim2.new(0, 4, 0, 2)
+fovTitleLabel.BackgroundTransparency= 1
+fovTitleLabel.TextColor3            = Color3.fromRGB(220, 220, 220)
+fovTitleLabel.TextSize              = 13
+fovTitleLabel.Font                  = Enum.Font.GothamBlack
+fovTitleLabel.TextXAlignment        = Enum.TextXAlignment.Left
+fovTitleLabel.ZIndex                = 5
+fovTitleLabel.Parent                = fovRow
+
+local fovValLabel = Instance.new("TextLabel")
+fovValLabel.Text                  = tostring(fovValue)
+fovValLabel.Size                  = UDim2.new(0, 50, 0, 20)
+fovValLabel.Position              = UDim2.new(1, -54, 0, 2)
+fovValLabel.BackgroundTransparency= 1
+fovValLabel.TextColor3            = Color3.fromRGB(255, 80, 80)
+fovValLabel.TextSize              = 13
+fovValLabel.Font                  = Enum.Font.GothamBlack
+fovValLabel.TextXAlignment        = Enum.TextXAlignment.Right
+fovValLabel.ZIndex                = 5
+fovValLabel.Parent                = fovRow
+
+-- Track
+local sliderTrack = Instance.new("Frame")
+sliderTrack.Size             = UDim2.new(1, -8, 0, 6)
+sliderTrack.Position         = UDim2.new(0, 4, 0, 30)
+sliderTrack.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+sliderTrack.BorderSizePixel  = 0
+sliderTrack.ZIndex           = 5
+sliderTrack.Parent           = fovRow
+local stc = Instance.new("UICorner")
+stc.CornerRadius = UDim.new(1, 0)
+stc.Parent       = sliderTrack
+
+-- Fill
+local sliderFill = Instance.new("Frame")
+sliderFill.Size             = UDim2.new(0, 0, 1, 0)
+sliderFill.Position         = UDim2.new(0, 0, 0, 0)
+sliderFill.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+sliderFill.BorderSizePixel  = 0
+sliderFill.ZIndex           = 6
+sliderFill.Parent           = sliderTrack
+local sfc = Instance.new("UICorner")
+sfc.CornerRadius = UDim.new(1, 0)
+sfc.Parent       = sliderFill
+
+-- Thumb bonito: diamante rojo con borde blanco brillante
+local sliderThumb = Instance.new("Frame")
+sliderThumb.Size             = UDim2.new(0, 18, 0, 18)
+sliderThumb.Position         = UDim2.new(0, -9, 0.5, -9)
+sliderThumb.BackgroundColor3 = Color3.fromRGB(220, 0, 0)
+sliderThumb.BorderSizePixel  = 0
+sliderThumb.ZIndex           = 8
+sliderThumb.Rotation         = 45  -- forma de diamante
+sliderThumb.Parent           = sliderTrack
+
+-- Borde blanco brillante del thumb
+local thumbStroke = Instance.new("UIStroke")
+thumbStroke.Color        = Color3.fromRGB(255, 255, 255)
+thumbStroke.Thickness    = 2
+thumbStroke.Transparency = 0
+thumbStroke.Parent       = sliderThumb
+
+-- Brillo interior del thumb
+local thumbGlow = Instance.new("Frame")
+thumbGlow.Size                   = UDim2.new(0, 8, 0, 8)
+thumbGlow.Position               = UDim2.new(0.5, -4, 0.5, -4)
+thumbGlow.BackgroundColor3       = Color3.fromRGB(255, 100, 100)
+thumbGlow.BackgroundTransparency = 0.2
+thumbGlow.BorderSizePixel        = 0
+thumbGlow.ZIndex                 = 9
+thumbGlow.Parent                 = sliderThumb
+
+local function updateFOVVisual(pct)
+    sliderFill.Size      = UDim2.new(pct, 0, 1, 0)
+    sliderThumb.Position = UDim2.new(pct, -9, 0.5, -9)
+    fovValLabel.Text     = tostring(fovValue)
+end
+
+local initPct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
+updateFOVVisual(initPct)
+
+-- Animación pulse del thumb
+task.spawn(function()
+    while ScreenGui.Parent do
+        TweenService:Create(thumbStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.5}):Play()
+        task.wait(0.8)
+        TweenService:Create(thumbStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0}):Play()
+        task.wait(0.8)
+    end
+end)
+
+local draggingFOV = false
+
+sliderTrack.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        draggingFOV = true
+        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {Size = UDim2.new(0,22,0,22)}):Play()
+    end
+end)
+sliderTrack.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        draggingFOV = false
+        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {Size = UDim2.new(0,18,0,18)}):Play()
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if draggingFOV and (input.UserInputType == Enum.UserInputType.MouseMovement or
+       input.UserInputType == Enum.UserInputType.Touch) then
+        local trackPos   = sliderTrack.AbsolutePosition.X
+        local trackWidth = sliderTrack.AbsoluteSize.X
+        local pct        = math.clamp((input.Position.X - trackPos) / trackWidth, 0, 1)
+        fovValue         = math.floor(FOV_MIN + pct * (FOV_MAX - FOV_MIN))
+        Camera.FieldOfView = fovValue
+        updateFOVVisual(pct)
+    end
+end)
+
+-- ══════════════════════════════════════
+--  SAVE CONFIG (anclado al fondo)
 -- ══════════════════════════════════════
 
 local SaveFrame = Instance.new("Frame")
@@ -828,7 +788,7 @@ SaveFrame.Position               = UDim2.new(0, 12, 1, -52)
 SaveFrame.BackgroundTransparency = 1
 SaveFrame.BorderSizePixel        = 0
 SaveFrame.ZIndex                 = 6
-SaveFrame.Parent                 = MainFrame  -- hijo de MainFrame → siempre al fondo
+SaveFrame.Parent                 = MainFrame
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
@@ -911,33 +871,17 @@ task.spawn(function()
 end)
 
 -- ══════════════════════════════════════
---  APERTURA Y ARRASTRE
+--  APERTURA (sin arrastre)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0, 300, 0, 0)
 TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
 
-local dragging, dragStart, startPos = false, nil, nil
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true dragStart = input.Position startPos = MainFrame.Position
-    end
-end)
-TitleBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
-    end
-end)
-
 -- ══════════════════════════════════════
---  ANTI LAGBACK / GHOST CLEANER (automático, sin toggle)
+--  ANTI LAGBACK (automático)
 -- ══════════════════════════════════════
 
-local serverGhosts    = {}
+local serverGhosts     = {}
 local lagbackCallCount = 0
 local lastLagbackTime  = 0
 
@@ -953,44 +897,24 @@ local function clearAllGhosts()
     for _, ghost in pairs(serverGhosts) do
         pcall(function() if ghost and ghost.Parent then ghost:Destroy() end end)
     end
-    serverGhosts = {}
-    clearErrorOrb()
-    lagbackCallCount = 0
-    lastLagbackTime  = 0
+    serverGhosts = {}; clearErrorOrb(); lagbackCallCount = 0; lastLagbackTime = 0
     pcall(function()
         local pg = me:FindFirstChild("PlayerGui")
-        if pg then
-            for _, gui in pairs(pg:GetChildren()) do
-                if gui.Name == "LagbackNotification" then gui:Destroy() end
-            end
-        end
+        if pg then for _, gui in pairs(pg:GetChildren()) do if gui.Name == "LagbackNotification" then gui:Destroy() end end end
     end)
     pcall(function()
         if workspace.CurrentCamera then
-            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do
-                if c.Name == "LagbackGhost" then c:Destroy() end
-            end
+            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do if c.Name == "LagbackGhost" then c:Destroy() end end
         end
     end)
     pcall(function()
-        for _, c in pairs(workspace:GetDescendants()) do
-            if c.Name == "LagbackGhost" then c:Destroy() end
-        end
+        for _, c in pairs(workspace:GetDescendants()) do if c.Name == "LagbackGhost" then c:Destroy() end end
     end)
 end
 
--- Limpia ghosts cada vez que el personaje reaparece
-player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    clearAllGhosts()
-end)
-
--- Limpia ghosts en loop cada 10 segundos por si quedan residuos
+player.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
 task.spawn(function()
-    while ScreenGui.Parent do
-        clearAllGhosts()
-        task.wait(10)
-    end
+    while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end
 end)
 
 -- ══════════════════════════════════════
@@ -1013,25 +937,20 @@ task.defer(function()
         toggleOn(espLabel, espTrack, espThumb)
         enableESP()
     end
-    if savedCfg.Darkmode then
-        darkOn = true
-        toggleOn(darkLabel, darkTrack, darkThumb)
-        startDarkMode()
-    end
     if savedCfg.AntiRagdoll then
         antiRagdollEnabled = true
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
         if player.Character then setupAntiRagdoll(player.Character) end
     end
-    if savedCfg.FOV then
-        fovValue = math.clamp(savedCfg.FOV, 70, 120)
-        Camera.FieldOfView = fovValue
-        local pct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
-        updateFOVVisual(pct)
-    end
     if savedCfg.FPSBoost then
         fpsBoostOn = true
         toggleOn(fpsLabel, fpsTrack, fpsThumb)
         task.spawn(function() task.wait(1); enableFPSBoost() end)
+    end
+    if savedCfg.FOV then
+        fovValue = math.clamp(savedCfg.FOV, FOV_MIN, FOV_MAX)
+        Camera.FieldOfView = fovValue
+        local pct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
+        updateFOVVisual(pct)
     end
 end)
