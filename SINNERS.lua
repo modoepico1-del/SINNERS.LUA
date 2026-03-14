@@ -513,7 +513,6 @@ local function startDarkMode()
     Lighting.FogStart = 10000
 end
 
--- Se activa automáticamente al iniciar
 task.defer(function() task.wait(0.5); startDarkMode() end)
 player.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
@@ -662,11 +661,10 @@ local function enableFPSBoost()
     end)
 end
 
--- Se activa automáticamente al iniciar
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  FOV SLIDER (anclado abajo, sin borde, thumb bonito)
+--  FOV SLIDER (anclado abajo, thumb demonio)
 -- ══════════════════════════════════════
 
 local FOV_MIN = 70
@@ -689,15 +687,15 @@ fovRowStroke.Thickness    = 1.5
 fovRowStroke.Transparency = 0
 fovRowStroke.Parent       = fovRow
 
--- Forzar negro siempre en FOV y SaveConfig
+-- Forzar negro siempre
 RS.Heartbeat:Connect(function()
-    fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-    fovRow.BackgroundTransparency = 0
-    SaveFrame.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+    fovRow.BackgroundColor3        = Color3.fromRGB(0, 0, 0)
+    fovRow.BackgroundTransparency  = 0
+    SaveFrame.BackgroundColor3     = Color3.fromRGB(0, 0, 0)
     SaveFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+    MainFrame.BackgroundColor3     = Color3.fromRGB(0, 0, 0)
     MainFrame.BackgroundTransparency = 0
-    ContentArea.BackgroundColor3     = Color3.fromRGB(0, 0, 0)
+    ContentArea.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
     ContentArea.BackgroundTransparency = 0
 end)
 
@@ -725,7 +723,6 @@ fovValLabel.TextXAlignment        = Enum.TextXAlignment.Right
 fovValLabel.ZIndex                = 5
 fovValLabel.Parent                = fovRow
 
--- Track
 local sliderTrack = Instance.new("Frame")
 sliderTrack.Size             = UDim2.new(1, -8, 0, 6)
 sliderTrack.Position         = UDim2.new(0, 4, 0, 30)
@@ -737,7 +734,6 @@ local stc = Instance.new("UICorner")
 stc.CornerRadius = UDim.new(1, 0)
 stc.Parent       = sliderTrack
 
--- Fill
 local sliderFill = Instance.new("Frame")
 sliderFill.Size             = UDim2.new(0, 0, 1, 0)
 sliderFill.Position         = UDim2.new(0, 0, 0, 0)
@@ -749,15 +745,15 @@ local sfc = Instance.new("UICorner")
 sfc.CornerRadius = UDim.new(1, 0)
 sfc.Parent       = sliderFill
 
--- Thumb: demonio neon rojo (imagen)
+-- Thumb: demonio neon rojo
 local sliderThumb = Instance.new("Frame")
-sliderThumb.Size             = UDim2.new(0, 28, 0, 28)
-sliderThumb.Position         = UDim2.new(0, -14, 0.5, -14)
-sliderThumb.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+sliderThumb.Size                   = UDim2.new(0, 28, 0, 28)
+sliderThumb.Position               = UDim2.new(0, -14, 0.5, -14)
+sliderThumb.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 sliderThumb.BackgroundTransparency = 1
-sliderThumb.BorderSizePixel  = 0
-sliderThumb.ZIndex           = 8
-sliderThumb.Parent           = sliderTrack
+sliderThumb.BorderSizePixel        = 0
+sliderThumb.ZIndex                 = 8
+sliderThumb.Parent                 = sliderTrack
 
 local thumbImg = Instance.new("ImageLabel")
 thumbImg.Size                   = UDim2.new(1, 0, 1, 0)
