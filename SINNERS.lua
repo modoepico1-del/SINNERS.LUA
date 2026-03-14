@@ -25,9 +25,7 @@ local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
 local espOn              = false
-local darkOn             = false
 local antiRagdollEnabled = false
-local fpsBoostOn         = false
 local fovValue           = 70
 
 -- ══════════════════════════════════════
@@ -42,9 +40,7 @@ local function saveConfig()
             Unwalk      = unwalkOn,
             Xray        = xrayOn,
             ESP         = espOn,
-            Darkmode    = darkOn,
             AntiRagdoll = antiRagdollEnabled,
-            FPSBoost    = fpsBoostOn,
             FOV         = fovValue,
         }))
     end)
@@ -484,10 +480,9 @@ espTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  DARKMODE
+--  DARKMODE (automático, sin toggle)
 -- ══════════════════════════════════════
 
-local darkLabel, darkTrack, darkThumb = makeOptionRow(ContentArea, "DARKMODE", 172)
 local darkModeObjects  = {}
 local originalLighting = {}
 
@@ -517,27 +512,16 @@ local function startDarkMode()
     table.insert(darkModeObjects, sky)
     Lighting.FogStart = 10000
 end
-local function stopDarkMode()
-    for _, obj in ipairs(darkModeObjects) do
-        pcall(function()
-            if obj.removed then obj.instance.Parent = obj.parent
-            else obj:Destroy() end
-        end)
-    end
-    darkModeObjects = {}
-    pcall(function() Lighting.FogStart = originalLighting.FogStart or 0 end)
-end
-darkTrack.MouseButton1Click:Connect(function()
-    darkOn = not darkOn
-    if darkOn then toggleOn(darkLabel, darkTrack, darkThumb); startDarkMode()
-    else toggleOff(darkLabel, darkTrack, darkThumb); stopDarkMode() end
-end)
+
+-- Se activa automáticamente al iniciar
+task.defer(function() task.wait(0.5); startDarkMode() end)
+player.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
 -- ══════════════════════════════════════
 --  ANTI RAGDOLL
 -- ══════════════════════════════════════
 
-local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 226)
+local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 local RAGDOLL_SPEED           = 16
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
@@ -632,10 +616,9 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  FPS BOOST
+--  FPS BOOST (automático, sin toggle)
 -- ══════════════════════════════════════
 
-local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 280)
 local fpsDescConn = nil
 
 local function stripVisuals(obj)
@@ -675,24 +658,12 @@ local function enableFPSBoost()
     end)
     if fpsDescConn then fpsDescConn:Disconnect() end
     fpsDescConn = workspace.DescendantAdded:Connect(function(obj)
-        if fpsBoostOn then stripVisuals(obj) end
+        stripVisuals(obj)
     end)
 end
 
-local function disableFPSBoost()
-    if fpsDescConn then fpsDescConn:Disconnect() fpsDescConn = nil end
-end
-
-fpsTrack.MouseButton1Click:Connect(function()
-    fpsBoostOn = not fpsBoostOn
-    if fpsBoostOn then
-        toggleOn(fpsLabel, fpsTrack, fpsThumb)
-        enableFPSBoost()
-    else
-        toggleOff(fpsLabel, fpsTrack, fpsThumb)
-        disableFPSBoost()
-    end
-end)
+-- Se activa automáticamente al iniciar
+task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo, sin borde, thumb bonito)
@@ -709,6 +680,14 @@ fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
 fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
+local fovRowCorner = Instance.new("UICorner")
+fovRowCorner.CornerRadius = UDim.new(0, 7)
+fovRowCorner.Parent       = fovRow
+local fovRowStroke = Instance.new("UIStroke")
+fovRowStroke.Color        = Color3.fromRGB(0, 0, 0)
+fovRowStroke.Thickness    = 1.5
+fovRowStroke.Transparency = 0
+fovRowStroke.Parent       = fovRow
 
 -- Forzar negro siempre en FOV y SaveConfig
 RS.Heartbeat:Connect(function()
@@ -771,35 +750,29 @@ sfc.CornerRadius = UDim.new(1, 0)
 sfc.Parent       = sliderFill
 
 -- Thumb bonito: diamante rojo con borde blanco brillante
--- Thumb: corazón rojo ♥ simple y limpio
+-- Thumb: demonio neon rojo (imagen)
 local sliderThumb = Instance.new("Frame")
-sliderThumb.Size             = UDim2.new(0, 22, 0, 22)
-sliderThumb.Position         = UDim2.new(0, -11, 0.5, -11)
-sliderThumb.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+sliderThumb.Size             = UDim2.new(0, 28, 0, 28)
+sliderThumb.Position         = UDim2.new(0, -14, 0.5, -14)
+sliderThumb.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+sliderThumb.BackgroundTransparency = 1
 sliderThumb.BorderSizePixel  = 0
 sliderThumb.ZIndex           = 8
-sliderThumb.Rotation         = 0
 sliderThumb.Parent           = sliderTrack
-local thumbCorner = Instance.new("UICorner")
-thumbCorner.CornerRadius = UDim.new(1, 0)
-thumbCorner.Parent       = sliderThumb
 
-local thumbSymbol = Instance.new("TextLabel")
-thumbSymbol.Text                  = "♥"
-thumbSymbol.Size                  = UDim2.new(1, 0, 1, 0)
-thumbSymbol.Position              = UDim2.new(0, 0, 0, 0)
-thumbSymbol.BackgroundTransparency= 1
-thumbSymbol.TextColor3            = Color3.fromRGB(255, 255, 255)
-thumbSymbol.TextSize              = 12
-thumbSymbol.Font                  = Enum.Font.GothamBlack
-thumbSymbol.TextXAlignment        = Enum.TextXAlignment.Center
-thumbSymbol.TextYAlignment        = Enum.TextYAlignment.Center
-thumbSymbol.ZIndex                = 9
-thumbSymbol.Parent                = sliderThumb
+local thumbImg = Instance.new("ImageLabel")
+thumbImg.Size                   = UDim2.new(1, 0, 1, 0)
+thumbImg.Position               = UDim2.new(0, 0, 0, 0)
+thumbImg.BackgroundTransparency = 1
+thumbImg.Image                  = "rbxassetid://11662710259"
+thumbImg.ImageColor3            = Color3.fromRGB(255, 0, 0)
+thumbImg.ScaleType              = Enum.ScaleType.Fit
+thumbImg.ZIndex                 = 9
+thumbImg.Parent                 = sliderThumb
 
 local function updateFOVVisual(pct)
     sliderFill.Size      = UDim2.new(pct, 0, 1, 0)
-    sliderThumb.Position = UDim2.new(pct, -11, 0.5, -11)
+    sliderThumb.Position = UDim2.new(pct, -14, 0.5, -14)
     fovValLabel.Text     = tostring(fovValue)
 end
 
@@ -812,14 +785,14 @@ sliderTrack.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or
        input.UserInputType == Enum.UserInputType.Touch then
         draggingFOV = true
-        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 0, 0)}):Play()
+        TweenService:Create(thumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255, 80, 80)}):Play()
     end
 end)
 sliderTrack.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or
        input.UserInputType == Enum.UserInputType.Touch then
         draggingFOV = false
-        TweenService:Create(sliderThumb, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(180, 0, 0)}):Play()
+        TweenService:Create(thumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255, 0, 0)}):Play()
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
@@ -846,6 +819,14 @@ SaveFrame.BackgroundTransparency = 0
 SaveFrame.BorderSizePixel        = 0
 SaveFrame.ZIndex                 = 6
 SaveFrame.Parent                 = MainFrame
+local saveFrameCorner = Instance.new("UICorner")
+saveFrameCorner.CornerRadius = UDim.new(0, 7)
+saveFrameCorner.Parent       = SaveFrame
+local saveFrameStroke = Instance.new("UIStroke")
+saveFrameStroke.Color        = Color3.fromRGB(0, 0, 0)
+saveFrameStroke.Thickness    = 1.5
+saveFrameStroke.Transparency = 0
+saveFrameStroke.Parent       = SaveFrame
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
@@ -994,20 +975,10 @@ task.defer(function()
         toggleOn(espLabel, espTrack, espThumb)
         enableESP()
     end
-    if savedCfg.Darkmode then
-        darkOn = true
-        toggleOn(darkLabel, darkTrack, darkThumb)
-        startDarkMode()
-    end
     if savedCfg.AntiRagdoll then
         antiRagdollEnabled = true
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
         if player.Character then setupAntiRagdoll(player.Character) end
-    end
-    if savedCfg.FPSBoost then
-        fpsBoostOn = true
-        toggleOn(fpsLabel, fpsTrack, fpsThumb)
-        task.spawn(function() task.wait(1); enableFPSBoost() end)
     end
     if savedCfg.FOV then
         fovValue = math.clamp(savedCfg.FOV, FOV_MIN, FOV_MAX)
