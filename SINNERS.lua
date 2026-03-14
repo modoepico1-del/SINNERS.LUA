@@ -18,11 +18,23 @@ local RS          = RunService
 local Camera      = workspace.CurrentCamera
 
 -- ══════════════════════════════════════
+--  VARIABLES DE ESTADO (declaradas antes de saveConfig)
+-- ══════════════════════════════════════
+
+local unwalkOn         = false
+local unwalkConn       = nil
+local xrayOn           = false
+local espOn            = false
+local darkOn           = false
+local antiRagdollEnabled = false
+
+-- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
 -- ══════════════════════════════════════
 
 local CONFIG_FILE = "DEMONTIME_config.json"
 
+-- saveConfig declarada AQUI, despues de las variables, para que lea valores reales
 local function saveConfig()
     pcall(function()
         writefile(CONFIG_FILE, HttpService:JSONEncode({
@@ -74,7 +86,6 @@ ToggleStroke.Thickness    = 1.5
 ToggleStroke.Transparency = 0.0
 ToggleStroke.Parent       = ToggleBtn
 
--- MainFrame
 local MainFrame = Instance.new("Frame")
 MainFrame.Size             = UDim2.new(0, 480, 0, 640)
 MainFrame.Position         = UDim2.new(0, 10, 0, 48)
@@ -121,7 +132,6 @@ end
 
 addNeonBorder(MainFrame, 2, Color3.fromRGB(255, 0, 0))
 
--- ── TitleBar ──
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
 TitleBar.Position          = UDim2.new(0, 0, 0, 0)
@@ -205,9 +215,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- ── ContentArea (deja 60px abajo para el botón Save) ──
+-- ContentArea deja 60px abajo para el botón Save
 local ContentArea = Instance.new("Frame")
-ContentArea.Size             = UDim2.new(1, 0, 1, -102)  -- -42 TitleBar -60 SaveBar
+ContentArea.Size             = UDim2.new(1, 0, 1, -102)
 ContentArea.Position         = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ContentArea.BorderSizePixel  = 0
@@ -285,8 +295,6 @@ end
 -- ══════════════════════════════════════
 
 local unwalkLabel, unwalkTrack, unwalkThumb = makeOptionRow(ContentArea, "UNWALK", 10)
-local unwalkConn = nil
-local unwalkOn   = false
 
 local function enableUnwalk()
     local char = me.Character if not char then return end
@@ -316,7 +324,6 @@ end)
 -- ══════════════════════════════════════
 
 local xrayLabel, xrayTrack, xrayThumb = makeOptionRow(ContentArea, "XRAY", 64)
-local xrayOn               = false
 local originalTransparency = {}
 local xrayDescConn         = nil
 local xrayCharConn         = nil
@@ -400,7 +407,6 @@ end)
 -- ══════════════════════════════════════
 
 local espLabel, espTrack, espThumb = makeOptionRow(ContentArea, "ESP", 118)
-local espOn          = false
 local espObjects     = {}
 local espConnections = {}
 
@@ -475,9 +481,8 @@ end)
 -- ══════════════════════════════════════
 
 local darkLabel, darkTrack, darkThumb = makeOptionRow(ContentArea, "DARKMODE", 172)
-local darkOn          = false
-local darkModeObjects = {}
-local originalLighting= {}
+local darkModeObjects  = {}
+local originalLighting = {}
 
 local function saveLightingState()
     originalLighting = { FogStart = Lighting.FogStart }
@@ -526,7 +531,6 @@ end)
 -- ══════════════════════════════════════
 
 local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 226)
-local antiRagdollEnabled      = false
 local RAGDOLL_SPEED           = 16
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
@@ -621,16 +625,16 @@ ragdollTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  SAVE CONFIG  (anclado siempre al fondo de MainFrame)
+--  SAVE CONFIG (anclado al fondo, hijo de MainFrame)
 -- ══════════════════════════════════════
 
 local SaveFrame = Instance.new("Frame")
 SaveFrame.Size                   = UDim2.new(1, -24, 0, 40)
-SaveFrame.Position               = UDim2.new(0, 12, 1, -52)  -- Y=1 → fondo, -52 para que no se corte
+SaveFrame.Position               = UDim2.new(0, 12, 1, -52)
 SaveFrame.BackgroundTransparency = 1
 SaveFrame.BorderSizePixel        = 0
 SaveFrame.ZIndex                 = 6
-SaveFrame.Parent                 = MainFrame  -- hijo de MainFrame, no ContentArea
+SaveFrame.Parent                 = MainFrame  -- hijo de MainFrame → siempre al fondo
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size                   = UDim2.new(1, 0, 1, 0)
@@ -653,10 +657,10 @@ saveStroke.Thickness    = 1.5
 saveStroke.Transparency = 0
 
 SaveBtn.MouseEnter:Connect(function()
-    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 end)
 SaveBtn.MouseLeave:Connect(function()
-    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+    TweenService:Create(SaveBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
 end)
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig()
