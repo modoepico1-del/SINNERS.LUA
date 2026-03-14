@@ -27,7 +27,8 @@ local xrayOn             = false
 local espOn              = false
 local darkOn             = false
 local antiRagdollEnabled = false
-local fovValue           = 70  -- valor por defecto
+local fovValue           = 70
+local fpsBoostOn         = false
 local apOn               = false
 local apConn             = nil
 
@@ -47,6 +48,7 @@ local function saveConfig()
             Darkmode    = darkOn,
             AntiRagdoll = antiRagdollEnabled,
             FOV         = fovValue,
+            FPSBoost    = fpsBoostOn,
         }))
     end)
 end
@@ -754,6 +756,69 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 -- ══════════════════════════════════════
+--  FPS BOOST
+-- ══════════════════════════════════════
+
+local fpsLabel, fpsTrack, fpsThumb = makeOptionRow(ContentArea, "FPS BOOST", 346)
+local fpsDescConn = nil
+
+local function stripVisuals(obj)
+    pcall(function()
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")
+        or obj:IsA("BloomEffect") or obj:IsA("BlurEffect")
+        or obj:IsA("ColorCorrectionEffect") or obj:IsA("SunRaysEffect")
+        or obj:IsA("DepthOfFieldEffect") or obj:IsA("Atmosphere") then
+            obj:Destroy()
+        elseif obj:IsA("BasePart") then
+            obj.CastShadow = false
+        end
+    end)
+end
+
+local function enableFPSBoost()
+    pcall(function()
+        Lighting.GlobalShadows            = false
+        Lighting.FogEnd                   = 1000000
+        Lighting.FogStart                 = 0
+        Lighting.EnvironmentDiffuseScale  = 0
+        Lighting.EnvironmentSpecularScale = 0
+    end)
+    pcall(function()
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or
+               v:IsA("ColorCorrectionEffect") or v:IsA("SunRaysEffect") or
+               v:IsA("DepthOfFieldEffect") or v:IsA("Atmosphere") then
+                v:Destroy()
+            end
+        end
+    end)
+    pcall(function()
+        for _, obj in pairs(workspace:GetDescendants()) do
+            stripVisuals(obj)
+        end
+    end)
+    if fpsDescConn then fpsDescConn:Disconnect() end
+    fpsDescConn = workspace.DescendantAdded:Connect(function(obj)
+        if fpsBoostOn then stripVisuals(obj) end
+    end)
+end
+
+local function disableFPSBoost()
+    if fpsDescConn then fpsDescConn:Disconnect() fpsDescConn = nil end
+end
+
+fpsTrack.MouseButton1Click:Connect(function()
+    fpsBoostOn = not fpsBoostOn
+    if fpsBoostOn then
+        toggleOn(fpsLabel, fpsTrack, fpsThumb)
+        enableFPSBoost()
+    else
+        toggleOff(fpsLabel, fpsTrack, fpsThumb)
+        disableFPSBoost()
+    end
+end)
+
+-- ══════════════════════════════════════
 --  SAVE CONFIG (anclado al fondo, hijo de MainFrame)
 -- ══════════════════════════════════════
 
@@ -963,5 +1028,10 @@ task.defer(function()
         Camera.FieldOfView = fovValue
         local pct = (fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN)
         updateFOVVisual(pct)
+    end
+    if savedCfg.FPSBoost then
+        fpsBoostOn = true
+        toggleOn(fpsLabel, fpsTrack, fpsThumb)
+        task.spawn(function() task.wait(1); enableFPSBoost() end)
     end
 end)
