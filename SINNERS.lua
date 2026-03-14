@@ -650,11 +650,15 @@ local FOV_MAX = 120
 
 local fovRow = Instance.new("Frame")
 fovRow.Size                   = UDim2.new(1, -20, 0, 54)
-fovRow.Position               = UDim2.new(0, 10, 1, -118)  -- anclado abajo
-fovRow.BackgroundTransparency = 1                           -- sin cuadrado
+fovRow.Position               = UDim2.new(0, 10, 1, -118)
+fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
 fovRow.ZIndex                 = 4
-fovRow.Parent                 = MainFrame                   -- hijo de MainFrame → siempre abajo
+fovRow.Parent                 = MainFrame
+local fovRowCorner = Instance.new("UICorner")
+fovRowCorner.CornerRadius = UDim.new(0, 7)
+fovRowCorner.Parent       = fovRow
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text                  = "FOV"
