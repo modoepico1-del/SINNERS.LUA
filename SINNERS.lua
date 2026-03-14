@@ -490,7 +490,7 @@ local function startDarkMode()
     sky.CelestialBodiesShown = false
     sky.Parent               = Lighting
     table.insert(darkModeObjects, sky)
-    Lighting.FogStart = 500
+    Lighting.FogStart = 300
 end
 local function stopDarkMode()
     for _, obj in ipairs(darkModeObjects) do
