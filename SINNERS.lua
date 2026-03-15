@@ -12,6 +12,7 @@ local CoreGui          = game:GetService("CoreGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
+local RS          = RunService
 local Camera      = workspace.CurrentCamera
 
 -- ══════════════════════════════════════
@@ -24,6 +25,9 @@ local xrayOn             = false
 local espOn              = false
 local antiRagdollEnabled = false
 local fovValue           = 70
+local infJumpOn          = false
+local autoStealActive    = false
+local AUTO_STEAL_PROX_RADIUS = 7
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -39,9 +43,6 @@ local function saveConfig()
             ESP         = espOn,
             AntiRagdoll = antiRagdollEnabled,
             FOV         = fovValue,
-            InfJump     = infJumpOn,
-            AutoSteal   = autoStealActive,
-            StealRadius = AUTO_STEAL_PROX_RADIUS,
         }))
     end)
 end
@@ -63,9 +64,27 @@ ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Text             = "DEMONTIME"
+ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
+ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
+ToggleBtn.TextSize         = 12
+ToggleBtn.Font             = Enum.Font.GothamBlack
+ToggleBtn.BorderSizePixel  = 0
+ToggleBtn.ZIndex           = 10
+ToggleBtn.Parent           = ScreenGui
+
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
+
+local ToggleStroke = Instance.new("UIStroke")
+ToggleStroke.Color        = Color3.fromRGB(255, 0, 0)
+ToggleStroke.Thickness    = 1.5
+ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 760)
+MainFrame.Size               = UDim2.new(0, 300, 0, 820)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -78,6 +97,34 @@ MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
+local function addNeonBorder(parent, thickness, color)
+    local glow = Instance.new("Frame")
+    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
+    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
+    glow.BackgroundColor3       = color
+    glow.BackgroundTransparency = 0.72
+    glow.BorderSizePixel        = 0
+    glow.ZIndex                 = parent.ZIndex - 1
+    glow.Parent                 = parent
+    Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 14)
+    local mid = Instance.new("Frame")
+    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
+    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
+    mid.BackgroundColor3       = color
+    mid.BackgroundTransparency = 0.50
+    mid.BorderSizePixel        = 0
+    mid.ZIndex                 = parent.ZIndex - 1
+    mid.Parent                 = parent
+    Instance.new("UICorner", mid).CornerRadius = UDim.new(0, 12)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color           = color
+    stroke.Thickness       = thickness
+    stroke.Transparency    = 0.0
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent          = parent
+end
+
+addNeonBorder(MainFrame, 2, Color3.fromRGB(255, 0, 0))
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
@@ -95,17 +142,65 @@ TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
 
+local lineGlow = Instance.new("Frame")
+lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
+lineGlow.Position               = UDim2.new(0, 0, 1, -5)
+lineGlow.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
+lineGlow.BackgroundTransparency = 0.6
+lineGlow.BorderSizePixel        = 0
+lineGlow.ZIndex                 = 3
+lineGlow.Parent                 = TitleBar
+
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
+
+local TitleStroke = Instance.new("UIStroke")
+TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
+TitleStroke.Thickness    = 4
+TitleStroke.Transparency = 0.0
+TitleStroke.Parent       = TitleLabel
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Text              = "X"
+CloseBtn.Size              = UDim2.new(0, 28, 0, 28)
+CloseBtn.Position          = UDim2.new(1, -34, 0, 7)
+CloseBtn.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
+CloseBtn.TextColor3        = Color3.fromRGB(255, 0, 0)
+CloseBtn.TextSize          = 13
+CloseBtn.Font              = Enum.Font.GothamBlack
+CloseBtn.BorderSizePixel   = 0
+CloseBtn.ZIndex            = 6
+CloseBtn.Parent            = TitleBar
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+local CloseBtnStroke = Instance.new("UIStroke")
+CloseBtnStroke.Color        = Color3.fromRGB(255, 0, 0)
+CloseBtnStroke.Thickness    = 1.2
+CloseBtnStroke.Transparency = 0.1
+CloseBtnStroke.Parent       = CloseBtn
+
+CloseBtn.MouseEnter:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180,0,0), TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+end)
+CloseBtn.MouseLeave:Connect(function()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
+    task.delay(0.27, function()
+        MainFrame.Visible = false
+        MainFrame.Size    = UDim2.new(0,300,0,820)
+    end)
+end)
 
 local ContentArea = Instance.new("Frame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
@@ -150,13 +245,11 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,0,0)}):Play()
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
-    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
-    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
     TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
@@ -174,7 +267,7 @@ local function enableUnwalk()
     local anim = hum:FindFirstChildOfClass("Animator") if not anim then return end
     for _, t in ipairs(anim:GetPlayingAnimationTracks()) do t:Stop(0) end
     if unwalkConn then unwalkConn:Disconnect() end
-    unwalkConn = RunService.Heartbeat:Connect(function()
+    unwalkConn = RS.Heartbeat:Connect(function()
         if not unwalkOn then unwalkConn:Disconnect() unwalkConn = nil return end
         local c  = me.Character if not c then return end
         local h  = c:FindFirstChildOfClass("Humanoid") if not h then return end
@@ -202,7 +295,7 @@ local xrayDescConn, xrayCharConn = nil, nil
 local function startXray()
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        Lighting.GlobalShadows = false; Lighting.FogEnd = 9e9
+        Lighting.GlobalShadows = false; Lighting.Brightness = 3; Lighting.FogEnd = 9e9
     end)
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -324,15 +417,22 @@ end)
 --  DARKMODE (automático)
 -- ══════════════════════════════════════
 
+local darkModeObjects = {}
+
 local function startDarkMode()
+    darkModeObjects = {}
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then child.Parent = nil end
+        if child:IsA("Sky") then
+            table.insert(darkModeObjects, {removed=true, instance=child, parent=Lighting})
+            child.Parent = nil
+        end
     end
     local sky = Instance.new("Sky")
     sky.SkyboxBk="rbxassetid://2013298"; sky.SkyboxDn="rbxassetid://2013298"
     sky.SkyboxFt="rbxassetid://2013298"; sky.SkyboxLf="rbxassetid://2013298"
     sky.SkyboxRt="rbxassetid://2013298"; sky.SkyboxUp="rbxassetid://2013298"
     sky.StarCount=0; sky.CelestialBodiesShown=false; sky.Parent=Lighting
+    table.insert(darkModeObjects, sky)
     Lighting.FogStart = 10000
 end
 
@@ -380,6 +480,8 @@ infJumpTrack.MouseButton1Click:Connect(function()
     if infJumpOn then toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
     else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
 end)
+
+local RAGDOLL_SPEED           = 16
 
 -- ══════════════════════════════════════
 --  AUTO STEAL
@@ -607,10 +709,70 @@ autoStealTrack.MouseButton1Click:Connect(function()
         disableAutoSteal()
     end
 end)
+
+-- ══════════════════════════════════════
+--  GALAXY SKY
+-- ══════════════════════════════════════
+
+local galaxySkyOn = false
+local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
+
+local originalSkybox, galaxySkyBright, galaxySkyBrightConn
+local galaxyPlanets = {}
+local galaxyBloom, galaxyCC
+
+local function enableGalaxySkyBright()
+    if galaxySkyBright then return end
+    originalSkybox = Lighting:FindFirstChildOfClass("Sky")
+    if originalSkybox then originalSkybox.Parent = nil end
+    galaxySkyBright = Instance.new("Sky")
+    galaxySkyBright.SkyboxBk="rbxassetid://1534951537"; galaxySkyBright.SkyboxDn="rbxassetid://1534951537"
+    galaxySkyBright.SkyboxFt="rbxassetid://1534951537"; galaxySkyBright.SkyboxLf="rbxassetid://1534951537"
+    galaxySkyBright.SkyboxRt="rbxassetid://1534951537"; galaxySkyBright.SkyboxUp="rbxassetid://1534951537"
+    galaxySkyBright.StarCount=10000; galaxySkyBright.CelestialBodiesShown=false; galaxySkyBright.Parent=Lighting
+    galaxyBloom=Instance.new("BloomEffect"); galaxyBloom.Intensity=1.5; galaxyBloom.Size=40; galaxyBloom.Threshold=0.8; galaxyBloom.Parent=Lighting
+    galaxyCC=Instance.new("ColorCorrectionEffect"); galaxyCC.Saturation=0.8; galaxyCC.Contrast=0.3; galaxyCC.TintColor=Color3.fromRGB(200,150,255); galaxyCC.Parent=Lighting
+    Lighting.Ambient=Color3.fromRGB(120,60,180); Lighting.Brightness=3; Lighting.ClockTime=0
+    for i=1,2 do
+        local p=Instance.new("Part"); p.Shape=Enum.PartType.Ball
+        p.Size=Vector3.new(800+i*200,800+i*200,800+i*200); p.Anchored=true; p.CanCollide=false; p.CastShadow=false
+        p.Material=Enum.Material.Neon; p.Color=Color3.fromRGB(140+i*20,60+i*10,200+i*15); p.Transparency=0.3
+        p.Position=Vector3.new(math.cos(i*2)*(3000+i*500),1500+i*300,math.sin(i*2)*(3000+i*500)); p.Parent=workspace
+        table.insert(galaxyPlanets,p)
+    end
+    galaxySkyBrightConn=RunService.Heartbeat:Connect(function()
+        if not galaxySkyOn then return end
+        local t=tick()*0.5
+        Lighting.Ambient=Color3.fromRGB(120+math.sin(t)*60,50+math.sin(t*0.8)*40,180+math.sin(t*1.2)*50)
+        if galaxyBloom then galaxyBloom.Intensity=1.2+math.sin(t*2)*0.4 end
+    end)
+end
+
+local function disableGalaxySkyBright()
+    if galaxySkyBrightConn then galaxySkyBrightConn:Disconnect(); galaxySkyBrightConn=nil end
+    if galaxySkyBright then galaxySkyBright:Destroy(); galaxySkyBright=nil end
+    if originalSkybox then originalSkybox.Parent=Lighting end
+    if galaxyBloom then galaxyBloom:Destroy(); galaxyBloom=nil end
+    if galaxyCC then galaxyCC:Destroy(); galaxyCC=nil end
+    for _,obj in ipairs(galaxyPlanets) do if obj then obj:Destroy() end end
+    galaxyPlanets={}
+    Lighting.Ambient=Color3.fromRGB(127,127,127); Lighting.Brightness=2; Lighting.ClockTime=14
+end
+
+galaxySkyTrack.MouseButton1Click:Connect(function()
+    galaxySkyOn = not galaxySkyOn
+    if galaxySkyOn then
+        toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
+        enableGalaxySkyBright()
+    else
+        toggleOff(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
+        disableGalaxySkyBright()
+    end
+end)
+
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
-local RAGDOLL_SPEED           = 16
 local playerModule, controls  = nil, nil
 
 pcall(function()
@@ -708,8 +870,7 @@ end
 local function enableFPSBoost()
     pcall(function()
         Lighting.GlobalShadows=false; Lighting.FogEnd=1000000; Lighting.FogStart=0
-        Lighting.Brightness=2
-        Lighting.EnvironmentDiffuseScale=1; Lighting.EnvironmentSpecularScale=1
+        Lighting.EnvironmentDiffuseScale=0; Lighting.EnvironmentSpecularScale=0
     end)
     pcall(function()
         for _, v in pairs(Lighting:GetChildren()) do
@@ -729,55 +890,6 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  RADIUS INPUT (auto steal)
--- ══════════════════════════════════════
-
-local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
-radiusRow.Position               = UDim2.new(0, 10, 1, -182)
-radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-radiusRow.BackgroundTransparency = 0
-radiusRow.BorderSizePixel        = 0
-radiusRow.ZIndex                 = 4
-radiusRow.Parent                 = MainFrame
-Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
-local radiusStroke = Instance.new("UIStroke", radiusRow)
-radiusStroke.Color = Color3.fromRGB(0,0,0); radiusStroke.Thickness = 1.5
-
-local radiusTitleLabel = Instance.new("TextLabel")
-radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
-radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
-radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
-radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
-
-local radiusInput = Instance.new("TextBox")
-radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-radiusInput.Size = UDim2.new(0, 70, 0, 28)
-radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
-radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-radiusInput.BorderSizePixel = 0
-radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
-radiusInput.PlaceholderText = "7"
-radiusInput.TextSize = 13
-radiusInput.Font = Enum.Font.GothamBlack
-radiusInput.ClearTextOnFocus = true
-radiusInput.ZIndex = 6
-radiusInput.Parent = radiusRow
-Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
-local radiusInputStroke = Instance.new("UIStroke", radiusInput)
-radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
-
-radiusInput.FocusLost:Connect(function()
-    local val = tonumber(radiusInput.Text)
-    if val and val > 0 then
-        AUTO_STEAL_PROX_RADIUS = math.floor(val)
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-    else
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-    end
-end)
-
--- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
 -- ══════════════════════════════════════
 
@@ -785,7 +897,7 @@ local FOV_MIN, FOV_MAX = 70, 120
 
 local fovRow = Instance.new("Frame")
 fovRow.Size                   = UDim2.new(1, -20, 0, 54)
-fovRow.Position               = UDim2.new(0, 10, 1, -128)
+fovRow.Position               = UDim2.new(0, 10, 1, -118)
 fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
@@ -795,6 +907,17 @@ Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
 local fovStroke = Instance.new("UIStroke", fovRow)
 fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 1.5
 
+-- Forzar negro siempre
+RS.Heartbeat:Connect(function()
+    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
+    fovRow.BackgroundTransparency    = 0
+    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    SaveFrame.BackgroundTransparency = 0
+    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    MainFrame.BackgroundTransparency = 0
+    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
+    ContentArea.BackgroundTransparency = 0
+end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
@@ -804,7 +927,7 @@ fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; f
 
 local fovValLabel = Instance.new("TextLabel")
 fovValLabel.Text=tostring(fovValue); fovValLabel.Size=UDim2.new(0,50,0,20); fovValLabel.Position=UDim2.new(1,-54,0,2)
-fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(180,180,180)
+fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(255,80,80)
 fovValLabel.TextSize=13; fovValLabel.Font=Enum.Font.GothamBlack
 fovValLabel.TextXAlignment=Enum.TextXAlignment.Right; fovValLabel.ZIndex=5; fovValLabel.Parent=fovRow
 
@@ -887,51 +1010,72 @@ SaveBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  DRAG
+--  TOGGLE VENTANA
 -- ══════════════════════════════════════
 
-local dragging, dragInput, dragStart, startPos
-
-TitleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+ToggleBtn.MouseButton1Click:Connect(function()
+    if MainFrame.Visible then
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,0)}):Play()
+        task.delay(0.27, function() MainFrame.Visible=false; MainFrame.Size=UDim2.new(0,300,0,820) end)
+    else
+        MainFrame.Size=UDim2.new(0,300,0,0); MainFrame.Visible=true
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
     end
 end)
 
-TitleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+-- ══════════════════════════════════════
+--  ANIMACIONES NEON
+-- ══════════════════════════════════════
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
+        task.wait(1.2)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
+        task.wait(1.2)
     end
 end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+task.spawn(function()
+    while ScreenGui.Parent do
+        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.0)
+        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play(); task.wait(1.0)
     end
 end)
-
-
-
-
 
 -- ══════════════════════════════════════
 --  APERTURA
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,760)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
 
+-- ══════════════════════════════════════
+--  ANTI LAGBACK (automático)
+-- ══════════════════════════════════════
+
+local serverGhosts = {}
+
+local function clearAllGhosts()
+    for _, ghost in pairs(serverGhosts) do
+        pcall(function() if ghost and ghost.Parent then ghost:Destroy() end end)
+    end
+    serverGhosts = {}
+    pcall(function()
+        local pg = me:FindFirstChild("PlayerGui")
+        if pg then for _, gui in pairs(pg:GetChildren()) do if gui.Name=="LagbackNotification" then gui:Destroy() end end end
+    end)
+    pcall(function()
+        if workspace.CurrentCamera then
+            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do if c.Name=="LagbackGhost" then c:Destroy() end end
+        end
+        for _, c in pairs(workspace:GetDescendants()) do if c.Name=="LagbackGhost" or c.Name=="LagbackErrorOrb" then c:Destroy() end end
+    end)
+end
+
+me.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
+task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end end)
 
 -- ══════════════════════════════════════
 --  AUTO-LOAD CONFIG
