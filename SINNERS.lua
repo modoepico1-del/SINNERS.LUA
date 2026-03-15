@@ -136,13 +136,19 @@ TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextStrokeColor3       = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextStrokeTransparency = 1
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
-TitleLabel.TextStrokeColor3       = Color3.fromRGB(0, 0, 0)
-TitleLabel.TextStrokeTransparency = 0.2
+
+-- Forzar color blanco siempre para que no cambie
+RS.Heartbeat:Connect(function()
+    TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextStrokeTransparency = 1
+end)
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
