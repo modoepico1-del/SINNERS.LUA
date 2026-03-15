@@ -396,7 +396,42 @@ me.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 -- ══════════════════════════════════════
 
 local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
-local RAGDOLL_SPEED           = 16
+
+-- ══════════════════════════════════════
+--  INF JUMP
+-- ══════════════════════════════════════
+
+local infJumpOn = false
+local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
+
+local jumpForce = 50
+local clampFallSpeed = 80
+
+RunService.Heartbeat:Connect(function()
+    if not infJumpOn then return end
+    local char = me.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp and hrp.Velocity.Y < -clampFallSpeed then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if not infJumpOn then return end
+    local char = me.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z)
+    end
+end)
+
+infJumpTrack.MouseButton1Click:Connect(function()
+    infJumpOn = not infJumpOn
+    if infJumpOn then toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
+    else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
+end)
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
