@@ -118,7 +118,7 @@ Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 10)
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
 TitleLine.Position         = UDim2.new(0, 0, 1, -2)
-TitleLine.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleLine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
@@ -194,9 +194,9 @@ end
 
 local function toggleOn(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(0,0,0)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
