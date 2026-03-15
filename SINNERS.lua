@@ -61,7 +61,7 @@ ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
-local ToggleBtn = Instance.new("TextButton")
+local ToggleBtn = Instance.new("TextLabel")
 ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
 ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
@@ -649,16 +649,6 @@ end)
 -- ══════════════════════════════════════
 --  TOGGLE VENTANA
 -- ══════════════════════════════════════
-
-ToggleBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Visible then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,0)}):Play()
-        task.delay(0.27, function() MainFrame.Visible=false; MainFrame.Size=UDim2.new(0,300,0,680) end)
-    else
-        MainFrame.Size=UDim2.new(0,300,0,0); MainFrame.Visible=true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
-    end
-end)
 
 -- ══════════════════════════════════════
 --  ANIMACIONES NEON
