@@ -684,15 +684,28 @@ local MeleeAimbot = {
 }
 local MELEE_RADIUS = 20
 
-local function findNearestMeleeTarget(hrp)
-    local nearest, dmin = nil, MELEE_RADIUS
+local function findBat()
+    local c = me.Character
+    local bp = me:FindFirstChildOfClass("Backpack")
+    if c then for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
+    if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
+    return nil
+end
+
+local function findNearestEnemy(myHRP)
+    local nearest, nearestDist, nearestTorso = nil, MELEE_RADIUS, nil
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= me and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            if d <= dmin then dmin = d; nearest = p.Character.HumanoidRootPart end
+        if p ~= me and p.Character then
+            local eh = p.Character:FindFirstChild("HumanoidRootPart")
+            local tor = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            if eh and hum and hum.Health > 0 then
+                local d = (eh.Position - myHRP.Position).Magnitude
+                if d < nearestDist then nearestDist = d; nearest = eh; nearestTorso = tor or eh end
+            end
         end
     end
-    return nearest
+    return nearest, nearestDist, nearestTorso
 end
 
 local function EnableMeleeAimbot()
@@ -723,13 +736,19 @@ local function EnableMeleeAimbot()
         local h = c:FindFirstChild("HumanoidRootPart")
         local hum = c:FindFirstChildOfClass("Humanoid")
         if not h or not hum then return end
-        local target = findNearestMeleeTarget(h)
+        local target, _, targetTorso = findNearestEnemy(h)
         if target then
             hum.AutoRotate = false
             MeleeAimbot.Align.Enabled = true
             MeleeAimbot.Align.CFrame = CFrame.lookAt(h.Position, Vector3.new(target.Position.X, h.Position.Y, target.Position.Z))
-            local tool = c:FindFirstChild("Bat") or c:FindFirstChild("Medusa")
-            if tool then tool:Activate() end
+            local bat = findBat()
+            local tool = bat or c:FindFirstChild("Medusa")
+            if tool then
+                if tool.Parent == me:FindFirstChildOfClass("Backpack") then
+                    hum:EquipTool(tool)
+                end
+                tool:Activate()
+            end
         else
             MeleeAimbot.Align.Enabled = false
             hum.AutoRotate = true
