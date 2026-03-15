@@ -70,7 +70,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 820)
+MainFrame.Size               = UDim2.new(0, 300, 0, 880)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -841,6 +841,53 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
+--  RADIUS INPUT (steal radius)
+-- ══════════════════════════════════════
+
+local radiusRow = Instance.new("Frame")
+radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
+radiusRow.Position               = UDim2.new(0, 10, 1, -172)
+radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+radiusRow.BackgroundTransparency = 0
+radiusRow.BorderSizePixel        = 0
+radiusRow.ZIndex                 = 4
+radiusRow.Parent                 = MainFrame
+Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
+
+local radiusTitleLabel = Instance.new("TextLabel")
+radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
+radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
+radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
+radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
+
+local radiusInput = Instance.new("TextBox")
+radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+radiusInput.Size = UDim2.new(0, 70, 0, 28)
+radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
+radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+radiusInput.BorderSizePixel = 0
+radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+radiusInput.PlaceholderText = "7"
+radiusInput.TextSize = 13
+radiusInput.Font = Enum.Font.GothamBlack
+radiusInput.ClearTextOnFocus = true
+radiusInput.ZIndex = 6
+radiusInput.Parent = radiusRow
+Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
+local radiusInputStroke = Instance.new("UIStroke", radiusInput)
+radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
+
+radiusInput.FocusLost:Connect(function()
+    local val = tonumber(radiusInput.Text)
+    if val and val > 0 then
+        AUTO_STEAL_PROX_RADIUS = math.floor(val)
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    else
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    end
+end)
+
+-- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
 -- ══════════════════════════════════════
 
@@ -1000,7 +1047,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,880)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
@@ -1056,6 +1103,7 @@ task.defer(function()
     end
     if savedCfg.StealRadius then
         AUTO_STEAL_PROX_RADIUS = math.clamp(savedCfg.StealRadius, 1, 999)
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
     if savedCfg.AutoSteal then
         autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
