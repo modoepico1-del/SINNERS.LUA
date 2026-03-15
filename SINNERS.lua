@@ -875,7 +875,7 @@ end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
-fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
+fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
 fovTitleLabel.TextSize=13; fovTitleLabel.Font=Enum.Font.GothamBlack
 fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; fovTitleLabel.Parent=fovRow
 
