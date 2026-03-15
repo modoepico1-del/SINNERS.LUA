@@ -131,7 +131,7 @@ lineGlow.ZIndex                 = 3
 lineGlow.Parent                 = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text                   = "DEMONTIME"
+TitleLabel.Text                   = ""
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
