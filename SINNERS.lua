@@ -61,26 +61,15 @@ ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Text               = "DEMONTIME"
-ToggleBtn.Size               = UDim2.new(0, 110, 0, 28)
-ToggleBtn.Position           = UDim2.new(-1, 0, -1, 0)
-ToggleBtn.BackgroundTransparency = 1
-ToggleBtn.TextTransparency   = 1
-ToggleBtn.TextSize           = 1
-ToggleBtn.BorderSizePixel    = 0
-ToggleBtn.ZIndex             = 1
-ToggleBtn.Parent             = ScreenGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Name               = "Main"
 MainFrame.Size               = UDim2.new(0, 300, 0, 680)
-MainFrame.Position           = UDim2.new(0, 16, 0, 44)
+MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
-MainFrame.Active             = true
-MainFrame.Draggable          = true
+MainFrame.Active             = false
+MainFrame.Draggable          = false
 MainFrame.ClipsDescendants   = true
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
@@ -141,7 +130,7 @@ lineGlow.BorderSizePixel        = 0
 lineGlow.ZIndex                 = 3
 lineGlow.Parent                 = TitleBar
 
-local TitleLabel = Instance.new("TextButton")
+local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
@@ -153,52 +142,15 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
-TitleLabel.MouseButton1Click:Connect(function()
-    if MainFrame.Size.Y.Offset > 42 then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
-    else
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
-    end
-end)
-
 local TitleStroke = Instance.new("UIStroke")
 TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
 TitleStroke.Thickness    = 4
 TitleStroke.Transparency = 0.0
 TitleStroke.Parent       = TitleLabel
 
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Text              = "X"
-CloseBtn.Size              = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position          = UDim2.new(1, -34, 0, 7)
-CloseBtn.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
-CloseBtn.TextColor3        = Color3.fromRGB(255, 0, 0)
-CloseBtn.TextSize          = 13
-CloseBtn.Font              = Enum.Font.GothamBlack
-CloseBtn.BorderSizePixel   = 0
-CloseBtn.ZIndex            = 6
-CloseBtn.Parent            = TitleBar
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
-local CloseBtnStroke = Instance.new("UIStroke")
-CloseBtnStroke.Color        = Color3.fromRGB(255, 0, 0)
-CloseBtnStroke.Thickness    = 1.2
-CloseBtnStroke.Transparency = 0.1
-CloseBtnStroke.Parent       = CloseBtn
 
-CloseBtn.MouseEnter:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180,0,0), TextColor3 = Color3.fromRGB(255,255,255)}):Play()
-end)
-CloseBtn.MouseLeave:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
-end)
-CloseBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Size.Y.Offset > 42 then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
-    else
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
-    end
-end)
+
 
 local ContentArea = Instance.new("Frame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
@@ -686,13 +638,6 @@ end)
 --  TOGGLE VENTANA
 -- ══════════════════════════════════════
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Size.Y.Offset > 42 then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
-    else
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
-    end
-end)
 
 -- ══════════════════════════════════════
 --  ANIMACIONES NEON
@@ -708,6 +653,9 @@ task.spawn(function()
         task.wait(1.2)
     end
 end)
+
+
+
 -- ══════════════════════════════════════
 --  APERTURA
 -- ══════════════════════════════════════
