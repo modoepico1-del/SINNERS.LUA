@@ -82,7 +82,7 @@ ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 680)
-MainFrame.Position           = UDim2.new(0, 4, 0, 4)
+MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
@@ -153,7 +153,7 @@ TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
@@ -700,8 +700,8 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play(); task.wait(1.2)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6, Color=Color3.fromRGB(0,0,0)}):Play(); task.wait(1.2)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0, Color=Color3.fromRGB(0,0,0)}):Play(); task.wait(1.2)
     end
 end)
 task.spawn(function()
