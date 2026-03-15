@@ -114,35 +114,26 @@ TitleBar.Parent            = MainFrame
 Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 10)
 
 local TitleLine = Instance.new("Frame")
-TitleLine.Size             = UDim2.new(1, 0, 0, 2)
-TitleLine.Position         = UDim2.new(0, 0, 1, -2)
-TitleLine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+TitleLine.Size             = UDim2.new(1, 0, 0, 1)
+TitleLine.Position         = UDim2.new(0, 0, 1, -1)
+TitleLine.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
-
-local lineGlow = Instance.new("Frame")
-lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
-lineGlow.Position               = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-lineGlow.BackgroundTransparency = 0.6
-lineGlow.BorderSizePixel        = 0
-lineGlow.ZIndex                 = 3
-lineGlow.Parent                 = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 TitleLabel.TextStrokeColor3       = Color3.fromRGB(0, 0, 0)
-TitleLabel.TextStrokeTransparency = 0
+TitleLabel.TextStrokeTransparency = 0.3
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
