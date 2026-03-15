@@ -675,14 +675,9 @@ end)
 local meleeOn = false
 local meleeLabel, meleeTrack, meleeThumb = makeOptionRow(ContentArea, "MELEE [E]", 388)
 
-local MeleeAimbot = {
-    Enabled = false,
-    Circle = nil,
-    Align = nil,
-    Attach = nil,
-    Conn = nil,
-}
 local MELEE_RADIUS = 20
+local MeleeAimbot = { Enabled=false, Circle=nil, Align=nil, Attach=nil, Conn=nil }
+local batAimbotConnection = nil
 
 local function findBat()
     local c = me.Character
@@ -708,7 +703,7 @@ local function findNearestEnemy(myHRP)
     return nearest, nearestDist, nearestTorso
 end
 
-local function EnableMeleeAimbot()
+local function EnableMelee()
     if MeleeAimbot.Enabled then return end
     MeleeAimbot.Enabled = true
     local char = me.Character or me.CharacterAdded:Wait()
@@ -719,8 +714,7 @@ local function EnableMeleeAimbot()
     MeleeAimbot.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
     MeleeAimbot.Align.RigidityEnabled = true
     local circlePart = Instance.new("Part")
-    circlePart.Shape = Enum.PartType.Cylinder
-    circlePart.Material = Enum.Material.Neon
+    circlePart.Shape = Enum.PartType.Cylinder; circlePart.Material = Enum.Material.Neon
     circlePart.Size = Vector3.new(0.05, MELEE_RADIUS*2, MELEE_RADIUS*2)
     circlePart.Color = Color3.fromRGB(138,43,226)
     circlePart.CanCollide = false; circlePart.Massless = true; circlePart.Transparency = 1
@@ -730,6 +724,7 @@ local function EnableMeleeAimbot()
     weld.C0 = CFrame.new(0,-1,0) * CFrame.Angles(0,0,math.rad(90))
     weld.Parent = circlePart
     MeleeAimbot.Circle = circlePart
+    -- Melee aimbot: gira y activa arma
     MeleeAimbot.Conn = RunService.RenderStepped:Connect(function()
         if not MeleeAimbot.Enabled then return end
         local c = me.Character; if not c then return end
@@ -744,9 +739,7 @@ local function EnableMeleeAimbot()
             local bat = findBat()
             local tool = bat or c:FindFirstChild("Medusa")
             if tool then
-                if tool.Parent == me:FindFirstChildOfClass("Backpack") then
-                    hum:EquipTool(tool)
-                end
+                if tool.Parent == me:FindFirstChildOfClass("Backpack") then hum:EquipTool(tool) end
                 tool:Activate()
             end
         else
@@ -754,12 +747,37 @@ local function EnableMeleeAimbot()
             hum.AutoRotate = true
         end
     end)
+    -- Bat aimbot: mueve hacia el enemigo a velocidad
+    if batAimbotConnection then batAimbotConnection:Disconnect() end
+    batAimbotConnection = RunService.Heartbeat:Connect(function()
+        if not MeleeAimbot.Enabled then return end
+        local c = me.Character; if not c then return end
+        local h = c:FindFirstChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not h or not hum then return end
+        local bat = findBat()
+        if bat and bat.Parent ~= c then hum:EquipTool(bat) end
+        local target, _, torso = findNearestEnemy(h)
+        if target and torso then
+            local dir = torso.Position - h.Position
+            local flatDir = Vector3.new(dir.X, 0, dir.Z)
+            local flatDist = flatDir.Magnitude
+            local spd = 55
+            if flatDist > 1.5 then
+                local moveDir = flatDir.Unit
+                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*spd, h.AssemblyLinearVelocity.Y, moveDir.Z*spd)
+            else
+                local tv = target.AssemblyLinearVelocity
+                h.AssemblyLinearVelocity = Vector3.new(tv.X, h.AssemblyLinearVelocity.Y, tv.Z)
+            end
+        end
+    end)
 end
 
-local function DisableMeleeAimbot()
-    if not MeleeAimbot.Enabled then return end
+local function DisableMelee()
     MeleeAimbot.Enabled = false
     if MeleeAimbot.Conn then MeleeAimbot.Conn:Disconnect(); MeleeAimbot.Conn = nil end
+    if batAimbotConnection then batAimbotConnection:Disconnect(); batAimbotConnection = nil end
     if MeleeAimbot.Circle then MeleeAimbot.Circle:Destroy(); MeleeAimbot.Circle = nil end
     if MeleeAimbot.Align then MeleeAimbot.Align:Destroy(); MeleeAimbot.Align = nil end
     if MeleeAimbot.Attach then MeleeAimbot.Attach:Destroy(); MeleeAimbot.Attach = nil end
@@ -770,16 +788,16 @@ end
 
 meleeTrack.MouseButton1Click:Connect(function()
     meleeOn = not meleeOn
-    if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMeleeAimbot()
-    else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMeleeAimbot() end
+    if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMelee()
+    else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMelee() end
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.E then
         meleeOn = not meleeOn
-        if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMeleeAimbot()
-        else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMeleeAimbot() end
+        if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMelee()
+        else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMelee() end
     end
 end)
 local currentCharacter        = nil
