@@ -153,18 +153,12 @@ TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
-
-local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
-TitleStroke.Thickness    = 4
-TitleStroke.Transparency = 0.0
-TitleStroke.Parent       = TitleLabel
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
@@ -242,9 +236,9 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
@@ -575,9 +569,6 @@ fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
 fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
-Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
-local fovStroke = Instance.new("UIStroke", fovRow)
-fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 1.5
 
 -- Forzar negro siempre
 RS.Heartbeat:Connect(function()
@@ -662,9 +653,6 @@ local SaveFrame = Instance.new("Frame")
 SaveFrame.Size=UDim2.new(1,-24,0,40); SaveFrame.Position=UDim2.new(0,12,1,-52)
 SaveFrame.BackgroundColor3=Color3.fromRGB(0,0,0); SaveFrame.BackgroundTransparency=0
 SaveFrame.BorderSizePixel=0; SaveFrame.ZIndex=6; SaveFrame.Parent=MainFrame
-Instance.new("UICorner", SaveFrame).CornerRadius = UDim.new(0,7)
-local sfStroke = Instance.new("UIStroke", SaveFrame)
-sfStroke.Color=Color3.fromRGB(0,0,0); sfStroke.Thickness=1.5
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size=UDim2.new(1,0,1,0); SaveBtn.BackgroundTransparency=1
@@ -699,16 +687,6 @@ end)
 --  ANIMACIONES NEON
 -- ══════════════════════════════════════
 
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
-        task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
-        task.wait(1.2)
-    end
-end)
 task.spawn(function()
     while ScreenGui.Parent do
         TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.0)
