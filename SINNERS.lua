@@ -143,11 +143,12 @@ CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end)
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
-    task.delay(0.27, function()
-        MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,300,0,680)
-        BallBtn.Visible   = true
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Position = UDim2.new(0, 0, -1, 0)
+    }):Play()
+    task.delay(0.32, function()
+        MainFrame.Visible  = false
+        MainFrame.Position = UDim2.new(0, 0, 0, 4)
     end)
 end)
 
@@ -612,49 +613,6 @@ SaveBtn.MouseEnter:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(
 SaveBtn.MouseLeave:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,80,80)}):Play() end)
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig(); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG"
-end)
-
--- ══════════════════════════════════════
---  BOLITA (aparece al cerrar el hub)
--- ══════════════════════════════════════
-
-local BallBtn = Instance.new("ImageButton")
-BallBtn.Size                   = UDim2.new(0, 52, 0, 52)
-BallBtn.Position               = UDim2.new(0, 10, 0, 10)
-BallBtn.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-BallBtn.BackgroundTransparency = 0
-BallBtn.BorderSizePixel        = 0
-BallBtn.Image                  = "rbxassetid://11662710259"
-BallBtn.ImageColor3            = Color3.fromRGB(255, 0, 0)
-BallBtn.ScaleType              = Enum.ScaleType.Fit
-BallBtn.ZIndex                 = 10
-BallBtn.Visible                = false
-BallBtn.Parent                 = ScreenGui
-Instance.new("UICorner", BallBtn).CornerRadius = UDim.new(1, 0)
-
-local ballStroke = Instance.new("UIStroke", BallBtn)
-ballStroke.Color     = Color3.fromRGB(255, 0, 0)
-ballStroke.Thickness = 2
-
--- Pulse animación de la bolita
-task.spawn(function()
-    while ScreenGui.Parent do
-        if BallBtn.Visible then
-            TweenService:Create(ballStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.7}):Play()
-            task.wait(0.8)
-            TweenService:Create(ballStroke, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0}):Play()
-            task.wait(0.8)
-        else
-            task.wait(0.5)
-        end
-    end
-end)
-
-BallBtn.MouseButton1Click:Connect(function()
-    BallBtn.Visible   = false
-    MainFrame.Size    = UDim2.new(0,300,0,0)
-    MainFrame.Visible = true
-    TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
 end)
 
 -- ══════════════════════════════════════
