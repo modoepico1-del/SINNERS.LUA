@@ -1056,7 +1056,6 @@ task.defer(function()
     end
     if savedCfg.StealRadius then
         AUTO_STEAL_PROX_RADIUS = math.clamp(savedCfg.StealRadius, 1, 999)
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
     if savedCfg.AutoSteal then
         autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
