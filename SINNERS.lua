@@ -66,7 +66,9 @@ ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
 ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ToggleBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
+ToggleBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.TextStrokeTransparency = 0
 ToggleBtn.TextSize         = 12
 ToggleBtn.Font             = Enum.Font.GothamBlack
 ToggleBtn.BorderSizePixel  = 0
@@ -709,7 +711,7 @@ task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) 
 RS.Heartbeat:Connect(function()
     TitleLabel.TextColor3              = Color3.fromRGB(255, 255, 255)
     TitleLabel.TextStrokeTransparency  = 1
-    ToggleBtn.TextColor3               = Color3.fromRGB(255, 255, 255)
+    ToggleBtn.TextColor3               = Color3.fromRGB(255, 0, 0)
     TitleBar.BackgroundColor3          = Color3.fromRGB(0, 0, 0)
     MainFrame.BackgroundColor3         = Color3.fromRGB(0, 0, 0)
     MainFrame.BackgroundTransparency   = 0
