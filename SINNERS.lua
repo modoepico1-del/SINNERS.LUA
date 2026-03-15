@@ -131,7 +131,7 @@ lineGlow.ZIndex                 = 3
 lineGlow.Parent                 = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text                   = ""
+TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
@@ -141,6 +141,8 @@ TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
+TitleLabel.TextStrokeColor3       = Color3.fromRGB(0, 0, 0)
+TitleLabel.TextStrokeTransparency = 0
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
