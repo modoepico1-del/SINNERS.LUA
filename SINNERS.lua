@@ -544,7 +544,12 @@ local function enableFPSBoost()
         Lighting.EnvironmentDiffuseScale=0; Lighting.EnvironmentSpecularScale=0
     end)
     pcall(function()
-        for _, v in pairs(Lighting:GetChildren()) do stripVisuals(v) end
+        for _, v in pairs(Lighting:GetChildren()) do
+            if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect")
+            or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("Atmosphere") then
+                v:Destroy()
+            end
+        end
     end)
     pcall(function()
         for _, obj in pairs(workspace:GetDescendants()) do stripVisuals(obj) end
