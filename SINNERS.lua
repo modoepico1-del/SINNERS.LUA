@@ -728,6 +728,19 @@ end)
 local batAimbotOn = false
 local batAimbotLabel, batAimbotTrack, batAimbotThumb = makeOptionRow(ContentArea, "BAT AIMBOT", 388)
 
+-- Indicador tecla E
+local eHintLabel = Instance.new("TextLabel")
+eHintLabel.Text = "[E]"
+eHintLabel.Size = UDim2.new(0, 30, 0, 16)
+eHintLabel.Position = UDim2.new(0, 14, 1, -18)
+eHintLabel.BackgroundTransparency = 1
+eHintLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+eHintLabel.TextSize = 10
+eHintLabel.Font = Enum.Font.GothamBold
+eHintLabel.TextXAlignment = Enum.TextXAlignment.Left
+eHintLabel.ZIndex = 6
+eHintLabel.Parent = batAimbotLabel.Parent
+
 local batAimbotConnection = nil
 
 local function findBat()
