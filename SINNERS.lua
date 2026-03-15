@@ -80,7 +80,7 @@ MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
 MainFrame.Active             = false
 MainFrame.Draggable          = false
-MainFrame.ClipsDescendants   = true
+MainFrame.ClipsDescendants   = false
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
 
@@ -155,7 +155,15 @@ TitleLabel.Parent                 = TitleBar
 TitleLabel.MouseButton1Click:Connect(function()
     if MainFrame.Size.Y.Offset > 42 then
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
+        task.delay(0.26, function()
+            ContentArea.Visible = false
+            fovRow.Visible      = false
+            SaveFrame.Visible   = false
+        end)
     else
+        ContentArea.Visible = true
+        fovRow.Visible      = true
+        SaveFrame.Visible   = true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
     end
 end)
@@ -194,7 +202,15 @@ end)
 CloseBtn.MouseButton1Click:Connect(function()
     if MainFrame.Size.Y.Offset > 42 then
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
+        task.delay(0.26, function()
+            ContentArea.Visible = false
+            fovRow.Visible      = false
+            SaveFrame.Visible   = false
+        end)
     else
+        ContentArea.Visible = true
+        fovRow.Visible      = true
+        SaveFrame.Visible   = true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
     end
 end)
@@ -688,7 +704,15 @@ end)
 ToggleBtn.MouseButton1Click:Connect(function()
     if MainFrame.Size.Y.Offset > 42 then
         TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
+        task.delay(0.26, function()
+            ContentArea.Visible = false
+            fovRow.Visible      = false
+            SaveFrame.Visible   = false
+        end)
     else
+        ContentArea.Visible = true
+        fovRow.Visible      = true
+        SaveFrame.Visible   = true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
     end
 end)
