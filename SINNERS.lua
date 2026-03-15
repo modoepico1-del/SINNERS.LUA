@@ -192,7 +192,7 @@ local function makeOptionRow(parent, labelText, yPos)
     local row = Instance.new("Frame")
     row.Size             = UDim2.new(1, -20, 0, 44)
     row.Position         = UDim2.new(0, 10, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+    row.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     row.BorderSizePixel  = 0
     row.ZIndex           = 4
     row.Parent           = parent
@@ -201,7 +201,7 @@ local function makeOptionRow(parent, labelText, yPos)
     rs.Color = Color3.fromRGB(255,0,0); rs.Thickness = 0.8; rs.Transparency = 0.5; rs.Parent = row
     local lbl = Instance.new("TextLabel")
     lbl.Text = labelText; lbl.Size = UDim2.new(1,-70,1,0); lbl.Position = UDim2.new(0,14,0,0)
-    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(255,255,255)
     lbl.TextSize = 14; lbl.Font = Enum.Font.GothamBlack
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 5; lbl.Parent = row
     local track = Instance.new("TextButton")
@@ -225,7 +225,7 @@ end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 end
 
 -- ══════════════════════════════════════
