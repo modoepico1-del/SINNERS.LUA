@@ -61,14 +61,12 @@ ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
-local ToggleBtn = Instance.new("TextLabel")
+local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
 ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
-ToggleBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-ToggleBtn.TextStrokeTransparency = 0
 ToggleBtn.TextSize         = 12
 ToggleBtn.Font             = Enum.Font.GothamBlack
 ToggleBtn.BorderSizePixel  = 0
@@ -90,13 +88,31 @@ MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
 MainFrame.Active             = false
 MainFrame.Draggable          = false
-MainFrame.ClipsDescendants   = false
+MainFrame.ClipsDescendants   = true
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local function addNeonBorder(parent, thickness, color)
+    local glow = Instance.new("Frame")
+    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
+    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
+    glow.BackgroundColor3       = color
+    glow.BackgroundTransparency = 0.72
+    glow.BorderSizePixel        = 0
+    glow.ZIndex                 = parent.ZIndex - 1
+    glow.Parent                 = parent
+    Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 14)
+    local mid = Instance.new("Frame")
+    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
+    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
+    mid.BackgroundColor3       = color
+    mid.BackgroundTransparency = 0.50
+    mid.BorderSizePixel        = 0
+    mid.ZIndex                 = parent.ZIndex - 1
+    mid.Parent                 = parent
+    Instance.new("UICorner", mid).CornerRadius = UDim.new(0, 12)
     local stroke = Instance.new("UIStroke")
     stroke.Color           = color
     stroke.Thickness       = thickness
@@ -118,7 +134,7 @@ Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 10)
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
 TitleLine.Position         = UDim2.new(0, 0, 1, -2)
-TitleLine.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+TitleLine.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
@@ -126,7 +142,7 @@ TitleLine.Parent           = TitleBar
 local lineGlow = Instance.new("Frame")
 lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
 lineGlow.Position               = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+lineGlow.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
 lineGlow.BackgroundTransparency = 0.6
 lineGlow.BorderSizePixel        = 0
 lineGlow.ZIndex                 = 3
@@ -138,14 +154,17 @@ TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextStrokeColor3       = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextStrokeTransparency = 1
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
+local TitleStroke = Instance.new("UIStroke")
+TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
+TitleStroke.Thickness    = 4
+TitleStroke.Transparency = 0.0
+TitleStroke.Parent       = TitleLabel
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
@@ -197,7 +216,7 @@ local function makeOptionRow(parent, labelText, yPos)
     local row = Instance.new("Frame")
     row.Size             = UDim2.new(1, -20, 0, 44)
     row.Position         = UDim2.new(0, 10, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
     row.BorderSizePixel  = 0
     row.ZIndex           = 4
     row.Parent           = parent
@@ -206,7 +225,7 @@ local function makeOptionRow(parent, labelText, yPos)
     rs.Color = Color3.fromRGB(255,0,0); rs.Thickness = 0.8; rs.Transparency = 0.5; rs.Parent = row
     local lbl = Instance.new("TextLabel")
     lbl.Text = labelText; lbl.Size = UDim2.new(1,-70,1,0); lbl.Position = UDim2.new(0,14,0,0)
-    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(255,255,255)
+    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(220,220,220)
     lbl.TextSize = 14; lbl.Font = Enum.Font.GothamBlack
     lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 5; lbl.Parent = row
     local track = Instance.new("TextButton")
@@ -223,14 +242,14 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
 end
 
 -- ══════════════════════════════════════
@@ -556,12 +575,25 @@ fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
 fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
+Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
+local fovStroke = Instance.new("UIStroke", fovRow)
+fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 1.5
 
 -- Forzar negro siempre
+RS.Heartbeat:Connect(function()
+    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
+    fovRow.BackgroundTransparency    = 0
+    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    SaveFrame.BackgroundTransparency = 0
+    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    MainFrame.BackgroundTransparency = 0
+    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
+    ContentArea.BackgroundTransparency = 0
+end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
-fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
+fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
 fovTitleLabel.TextSize=13; fovTitleLabel.Font=Enum.Font.GothamBlack
 fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; fovTitleLabel.Parent=fovRow
 
@@ -630,6 +662,9 @@ local SaveFrame = Instance.new("Frame")
 SaveFrame.Size=UDim2.new(1,-24,0,40); SaveFrame.Position=UDim2.new(0,12,1,-52)
 SaveFrame.BackgroundColor3=Color3.fromRGB(0,0,0); SaveFrame.BackgroundTransparency=0
 SaveFrame.BorderSizePixel=0; SaveFrame.ZIndex=6; SaveFrame.Parent=MainFrame
+Instance.new("UICorner", SaveFrame).CornerRadius = UDim.new(0,7)
+local sfStroke = Instance.new("UIStroke", SaveFrame)
+sfStroke.Color=Color3.fromRGB(0,0,0); sfStroke.Thickness=1.5
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size=UDim2.new(1,0,1,0); SaveBtn.BackgroundTransparency=1
@@ -650,10 +685,30 @@ end)
 --  TOGGLE VENTANA
 -- ══════════════════════════════════════
 
+ToggleBtn.MouseButton1Click:Connect(function()
+    if MainFrame.Visible then
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,0)}):Play()
+        task.delay(0.27, function() MainFrame.Visible=false; MainFrame.Size=UDim2.new(0,300,0,680) end)
+    else
+        MainFrame.Size=UDim2.new(0,300,0,0); MainFrame.Visible=true
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
+    end
+end)
+
 -- ══════════════════════════════════════
 --  ANIMACIONES NEON
 -- ══════════════════════════════════════
 
+task.spawn(function()
+    while ScreenGui.Parent do
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
+        task.wait(1.2)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
+        task.wait(1.2)
+    end
+end)
 task.spawn(function()
     while ScreenGui.Parent do
         TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.0)
@@ -693,25 +748,6 @@ end
 
 me.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
 task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end end)
-
--- ══════════════════════════════════════
---  FORZAR COLORES (al final, todos los objetos ya existen)
--- ══════════════════════════════════════
-
-RS.Heartbeat:Connect(function()
-    TitleLabel.TextColor3              = Color3.fromRGB(255, 255, 255)
-    TitleLabel.TextStrokeTransparency  = 1
-    ToggleBtn.TextColor3               = Color3.fromRGB(255, 0, 0)
-    TitleBar.BackgroundColor3          = Color3.fromRGB(0, 0, 0)
-    MainFrame.BackgroundColor3         = Color3.fromRGB(0, 0, 0)
-    MainFrame.BackgroundTransparency   = 0
-    ContentArea.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-    ContentArea.BackgroundTransparency = 0
-    fovRow.BackgroundColor3            = Color3.fromRGB(0, 0, 0)
-    fovRow.BackgroundTransparency      = 0
-    SaveFrame.BackgroundColor3         = Color3.fromRGB(0, 0, 0)
-    SaveFrame.BackgroundTransparency   = 0
-end)
 
 -- ══════════════════════════════════════
 --  AUTO-LOAD CONFIG
