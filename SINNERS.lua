@@ -731,11 +731,11 @@ local batAimbotLabel, batAimbotTrack, batAimbotThumb = makeOptionRow(ContentArea
 -- Indicador tecla E
 local eHintLabel = Instance.new("TextLabel")
 eHintLabel.Text = "[E]"
-eHintLabel.Size = UDim2.new(0, 30, 0, 16)
-eHintLabel.Position = UDim2.new(0, 14, 1, -18)
+eHintLabel.Size = UDim2.new(0, 30, 0, 20)
+eHintLabel.Position = UDim2.new(0, 110, 0.5, -10)
 eHintLabel.BackgroundTransparency = 1
 eHintLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-eHintLabel.TextSize = 10
+eHintLabel.TextSize = 11
 eHintLabel.Font = Enum.Font.GothamBold
 eHintLabel.TextXAlignment = Enum.TextXAlignment.Left
 eHintLabel.ZIndex = 6
