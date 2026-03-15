@@ -24,6 +24,9 @@ local xrayOn             = false
 local espOn              = false
 local antiRagdollEnabled = false
 local fovValue           = 70
+local infJumpOn          = false
+local autoStealActive    = false
+local AUTO_STEAL_PROX_RADIUS = 7
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -349,7 +352,6 @@ local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANT
 --  INF JUMP
 -- ══════════════════════════════════════
 
-local infJumpOn = false
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
 
 local jumpForce = 50
@@ -385,7 +387,6 @@ end)
 --  AUTO STEAL
 -- ══════════════════════════════════════
 
-local autoStealActive = false
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
 
 local autoStealStealConnection = nil
@@ -394,7 +395,6 @@ local autoStealPromptCache = {}
 local autoStealInternalCache = {}
 local autoStealLastUID = nil
 local autoStealIsStealing = false
-local AUTO_STEAL_PROX_RADIUS = 7
 
 local animalsDataAS = {}
 pcall(function()
