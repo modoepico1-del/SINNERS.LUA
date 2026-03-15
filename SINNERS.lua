@@ -710,7 +710,7 @@ local function EnableMeleeAimbot()
     circlePart.Material = Enum.Material.Neon
     circlePart.Size = Vector3.new(0.05, MELEE_RADIUS*2, MELEE_RADIUS*2)
     circlePart.Color = Color3.fromRGB(138,43,226)
-    circlePart.CanCollide = false; circlePart.Massless = true; circlePart.Transparency = 0.4
+    circlePart.CanCollide = false; circlePart.Massless = true; circlePart.Transparency = 1
     circlePart.Parent = workspace
     local weld = Instance.new("Weld")
     weld.Part0 = hrp; weld.Part1 = circlePart
