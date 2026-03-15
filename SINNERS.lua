@@ -66,19 +66,15 @@ ToggleBtn.Text             = "DEMONTIME"
 ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
 ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.BackgroundTransparency = 1
 ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
+ToggleBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.TextStrokeTransparency = 0
 ToggleBtn.TextSize         = 12
 ToggleBtn.Font             = Enum.Font.GothamBlack
 ToggleBtn.BorderSizePixel  = 0
 ToggleBtn.ZIndex           = 10
 ToggleBtn.Parent           = ScreenGui
-
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color        = Color3.fromRGB(255, 0, 0)
-ToggleStroke.Thickness    = 1.5
-ToggleStroke.Parent       = ToggleBtn
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 680)
@@ -709,13 +705,6 @@ task.spawn(function()
         task.wait(1.2)
     end
 end)
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.0)
-        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play(); task.wait(1.0)
-    end
-end)
-
 -- ══════════════════════════════════════
 --  APERTURA
 -- ══════════════════════════════════════
