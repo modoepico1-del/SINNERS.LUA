@@ -70,7 +70,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 880)
+MainFrame.Size               = UDim2.new(0, 300, 0, 940)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -721,6 +721,81 @@ galaxySkyTrack.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ══════════════════════════════════════
+--  BAT AIMBOT
+-- ══════════════════════════════════════
+
+local batAimbotOn = false
+local batAimbotLabel, batAimbotTrack, batAimbotThumb = makeOptionRow(ContentArea, "BAT AIMBOT", 388)
+
+local batAimbotConnection = nil
+
+local function findBat()
+    local c = me.Character
+    local bp = me:FindFirstChildOfClass("Backpack")
+    if c then for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
+    if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
+    return nil
+end
+
+local function findNearestEnemy(myHRP)
+    local nearest, nearestDist, nearestTorso = nil, math.huge, nil
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= me and p.Character then
+            local eh = p.Character:FindFirstChild("HumanoidRootPart")
+            local tor = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            if eh and hum and hum.Health > 0 then
+                local d = (eh.Position - myHRP.Position).Magnitude
+                if d < nearestDist then nearestDist = d; nearest = eh; nearestTorso = tor or eh end
+            end
+        end
+    end
+    return nearest, nearestDist, nearestTorso
+end
+
+local function startBatAimbot()
+    if batAimbotConnection then return end
+    batAimbotConnection = RunService.Heartbeat:Connect(function()
+        if not batAimbotOn then return end
+        local c = me.Character; if not c then return end
+        local h = c:FindFirstChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not h or not hum then return end
+        local bat = findBat()
+        if bat and bat.Parent ~= c then hum:EquipTool(bat) end
+        local target, _, torso = findNearestEnemy(h)
+        if target and torso then
+            local dir = (torso.Position - h.Position)
+            local flatDir = Vector3.new(dir.X, 0, dir.Z)
+            local flatDist = flatDir.Magnitude
+            local spd = 55
+            if flatDist > 1.5 then
+                local moveDir = flatDir.Unit
+                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*spd, h.AssemblyLinearVelocity.Y, moveDir.Z*spd)
+            else
+                local tv = target.AssemblyLinearVelocity
+                h.AssemblyLinearVelocity = Vector3.new(tv.X, h.AssemblyLinearVelocity.Y, tv.Z)
+            end
+        end
+    end)
+end
+
+local function stopBatAimbot()
+    if batAimbotConnection then batAimbotConnection:Disconnect(); batAimbotConnection = nil end
+end
+
+batAimbotTrack.MouseButton1Click:Connect(function()
+    batAimbotOn = not batAimbotOn
+    if batAimbotOn then
+        toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+        startBatAimbot()
+    else
+        toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+        stopBatAimbot()
+    end
+end)
+
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
@@ -1047,7 +1122,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,880)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,940)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
