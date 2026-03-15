@@ -146,17 +146,11 @@ local minimized = false
 CloseBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
-        -- Minimizar: solo muestra la barra del título
-        CloseBtn.Text = "▲"
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 300, 0, 42)
-        }):Play()
+        CloseBtn.Text = "+"
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,42)}):Play()
     else
-        -- Expandir de vuelta
         CloseBtn.Text = "X"
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, 300, 0, 680)
-        }):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
     end
 end)
 
