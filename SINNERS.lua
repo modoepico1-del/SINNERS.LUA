@@ -147,21 +147,21 @@ CloseBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
         CloseBtn.Text = "+"
-        -- Mover CloseBtn fuera del MainFrame para que siga visible
-        CloseBtn.Parent = ScreenGui
-        CloseBtn.Position = UDim2.new(0, 4, 0, 4)
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0, 0, -1.1, 0)
+        }):Play()
         task.delay(0.27, function()
-            MainFrame.Visible = false
-            MainFrame.Size    = UDim2.new(0,300,0,680)
+            MainFrame.Visible  = false
+            MainFrame.Position = UDim2.new(0, 0, 0, 4)
+            ReopenBtn.Visible  = true
         end)
     else
         CloseBtn.Text = "X"
-        CloseBtn.Parent   = TitleBar
-        CloseBtn.Position = UDim2.new(1, -34, 0, 7)
-        MainFrame.Size    = UDim2.new(0,300,0,0)
-        MainFrame.Visible = true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
+        MainFrame.Position = UDim2.new(0, 0, -1.1, 0)
+        MainFrame.Visible  = true
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 0, 0, 4)
+        }):Play()
     end
 end)
 
@@ -626,6 +626,34 @@ SaveBtn.MouseEnter:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(
 SaveBtn.MouseLeave:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,80,80)}):Play() end)
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig(); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG"
+end)
+
+-- Botón para reabrir cuando el hub está cerrado
+local ReopenBtn = Instance.new("TextButton")
+ReopenBtn.Text             = "+"
+ReopenBtn.Size             = UDim2.new(0, 32, 0, 32)
+ReopenBtn.Position         = UDim2.new(0, 4, 0, 4)
+ReopenBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ReopenBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
+ReopenBtn.TextSize         = 18
+ReopenBtn.Font             = Enum.Font.GothamBlack
+ReopenBtn.BorderSizePixel  = 0
+ReopenBtn.ZIndex           = 10
+ReopenBtn.Visible          = false
+ReopenBtn.Parent           = ScreenGui
+Instance.new("UICorner", ReopenBtn).CornerRadius = UDim.new(1, 0)
+local reopenStroke = Instance.new("UIStroke", ReopenBtn)
+reopenStroke.Color = Color3.fromRGB(255,0,0); reopenStroke.Thickness = 1.5
+
+ReopenBtn.MouseButton1Click:Connect(function()
+    ReopenBtn.Visible  = false
+    minimized          = false
+    CloseBtn.Text      = "X"
+    MainFrame.Position = UDim2.new(0, 0, -1.1, 0)
+    MainFrame.Visible  = true
+    TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 0, 0, 4)
+    }):Play()
 end)
 
 -- ══════════════════════════════════════
