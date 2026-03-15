@@ -62,16 +62,15 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Text             = "DEMONTIME"
-ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
-ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
+ToggleBtn.Text               = "DEMONTIME"
+ToggleBtn.Size               = UDim2.new(0, 110, 0, 28)
+ToggleBtn.Position           = UDim2.new(-1, 0, -1, 0)
 ToggleBtn.BackgroundTransparency = 1
-ToggleBtn.TextTransparency = 1
-ToggleBtn.TextSize         = 12
-ToggleBtn.Font             = Enum.Font.GothamBlack
-ToggleBtn.BorderSizePixel  = 0
-ToggleBtn.ZIndex           = 10
-ToggleBtn.Parent           = ScreenGui
+ToggleBtn.TextTransparency   = 1
+ToggleBtn.TextSize           = 1
+ToggleBtn.BorderSizePixel    = 0
+ToggleBtn.ZIndex             = 1
+ToggleBtn.Parent             = ScreenGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 680)
