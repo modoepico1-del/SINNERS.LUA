@@ -758,15 +758,25 @@ local function EnableMelee()
             hum.AutoRotate = true
         end
     end)
-    -- Bat aimbot: solo equipa el bate, sin forzar movimiento
+    -- Bat aimbot: equipa bate y va directo al enemigo
     if batAimbotConnection then batAimbotConnection:Disconnect() end
     batAimbotConnection = RunService.Heartbeat:Connect(function()
         if not MeleeAimbot.Enabled then return end
         local c = me.Character; if not c then return end
+        local h = c:FindFirstChild("HumanoidRootPart")
         local hum = c:FindFirstChildOfClass("Humanoid")
-        if not hum then return end
+        if not h or not hum then return end
         local bat = findBat()
         if bat and bat.Parent ~= c then hum:EquipTool(bat) end
+        local target, _, torso = findNearestEnemy(h)
+        if target and torso then
+            local dir = torso.Position - h.Position
+            local flatDir = Vector3.new(dir.X, 0, dir.Z)
+            if flatDir.Magnitude > 3 then
+                local moveDir = flatDir.Unit
+                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*55, h.AssemblyLinearVelocity.Y, moveDir.Z*55)
+            end
+        end
     end)
 end
 
