@@ -675,7 +675,7 @@ end)
 local meleeOn = false
 local meleeLabel, meleeTrack, meleeThumb = makeOptionRow(ContentArea, "MELEE [E]", 388)
 
-local MELEE_RADIUS = 20
+local MELEE_RADIUS = 99999
 local MeleeAimbot = { Enabled=false, Circle=nil, Align=nil, Attach=nil, Conn=nil }
 local batAimbotConnection = nil
 
@@ -763,13 +763,11 @@ local function EnableMelee()
             local flatDir = Vector3.new(dir.X, 0, dir.Z)
             local flatDist = flatDir.Magnitude
             local spd = 55
-            if flatDist > 1.5 then
+            if flatDist > 4 then
                 local moveDir = flatDir.Unit
                 h.AssemblyLinearVelocity = Vector3.new(moveDir.X*spd, h.AssemblyLinearVelocity.Y, moveDir.Z*spd)
-            else
-                local tv = target.AssemblyLinearVelocity
-                h.AssemblyLinearVelocity = Vector3.new(tv.X, h.AssemblyLinearVelocity.Y, tv.Z)
             end
+            -- cuando esta cerca no forzamos velocidad, el jugador se puede mover solo
         end
     end)
 end
