@@ -43,6 +43,10 @@ local function saveConfig()
             ESP         = espOn,
             AntiRagdoll = antiRagdollEnabled,
             FOV         = fovValue,
+            InfJump     = infJumpOn,
+            AutoSteal   = autoStealActive,
+            StealRadius = AUTO_STEAL_PROX_RADIUS,
+            GalaxySky   = galaxySkyOn,
         }))
     end)
 end
