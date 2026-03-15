@@ -134,7 +134,7 @@ Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 10)
 local TitleLine = Instance.new("Frame")
 TitleLine.Size             = UDim2.new(1, 0, 0, 2)
 TitleLine.Position         = UDim2.new(0, 0, 1, -2)
-TitleLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+TitleLine.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
@@ -142,7 +142,7 @@ TitleLine.Parent           = TitleBar
 local lineGlow = Instance.new("Frame")
 lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
 lineGlow.Position               = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3       = Color3.fromRGB(255, 0, 0)
+lineGlow.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
 lineGlow.BackgroundTransparency = 0.6
 lineGlow.BorderSizePixel        = 0
 lineGlow.ZIndex                 = 3
@@ -161,8 +161,9 @@ TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
 local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Color        = Color3.fromRGB(0, 0, 0)
-TitleStroke.Thickness    = 2.5
+TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
+TitleStroke.Thickness    = 4
+TitleStroke.Transparency = 0.0
 TitleStroke.Parent       = TitleLabel
 
 local CloseBtn = Instance.new("TextButton")
@@ -700,14 +701,12 @@ end)
 
 task.spawn(function()
     while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6, Color=Color3.fromRGB(0,0,0)}):Play(); task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0, Color=Color3.fromRGB(0,0,0)}):Play(); task.wait(1.2)
-    end
-end)
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(TitleLine,   TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.55}):Play(); task.wait(1.0)
-        TweenService:Create(TitleLine,   TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play(); task.wait(1.0)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
+        task.wait(1.2)
+        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
+        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
+        task.wait(1.2)
     end
 end)
 task.spawn(function()
