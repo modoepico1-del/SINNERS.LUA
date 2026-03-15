@@ -88,31 +88,13 @@ MainFrame.BackgroundTransparency = 0
 MainFrame.BorderSizePixel    = 0
 MainFrame.Active             = false
 MainFrame.Draggable          = false
-MainFrame.ClipsDescendants   = true
+MainFrame.ClipsDescendants   = false
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
 local function addNeonBorder(parent, thickness, color)
-    local glow = Instance.new("Frame")
-    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
-    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
-    glow.BackgroundColor3       = color
-    glow.BackgroundTransparency = 0.72
-    glow.BorderSizePixel        = 0
-    glow.ZIndex                 = parent.ZIndex - 1
-    glow.Parent                 = parent
-    Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 14)
-    local mid = Instance.new("Frame")
-    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
-    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
-    mid.BackgroundColor3       = color
-    mid.BackgroundTransparency = 0.50
-    mid.BorderSizePixel        = 0
-    mid.ZIndex                 = parent.ZIndex - 1
-    mid.Parent                 = parent
-    Instance.new("UICorner", mid).CornerRadius = UDim.new(0, 12)
     local stroke = Instance.new("UIStroke")
     stroke.Color           = color
     stroke.Thickness       = thickness
