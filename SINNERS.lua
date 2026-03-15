@@ -432,6 +432,103 @@ infJumpTrack.MouseButton1Click:Connect(function()
     if infJumpOn then toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
     else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
 end)
+
+-- ══════════════════════════════════════
+--  AUTO STEAL
+-- ══════════════════════════════════════
+
+local autoStealOn = false
+local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
+
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local targetPositions = {}
+local pos1, pos2 = nil, nil
+local autoStealConn, stealPromptConn = nil, nil
+
+local function createBeam(targetPos, width)
+    pcall(function()
+        local char = me.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local existing = workspace:FindFirstChild("DEMONTIME_StealBeam")
+        if existing then existing:Destroy() end
+        local part = Instance.new("Part")
+        part.Name = "DEMONTIME_StealBeam"
+        part.Anchored = true; part.CanCollide = false
+        part.CastShadow = false; part.Transparency = 0.4
+        part.BrickColor = BrickColor.new("Bright red")
+        part.Material = Enum.Material.Neon
+        local dist = (hrp.Position - targetPos).Magnitude
+        part.Size = Vector3.new(width or 2, width or 2, dist)
+        part.CFrame = CFrame.new(hrp.Position, targetPos) * CFrame.new(0, 0, -dist/2)
+        part.Parent = workspace
+    end)
+end
+
+local function enableAutoSteal()
+    -- Recoger posiciones de targets en el workspace
+    targetPositions = {}
+    pcall(function()
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and (v.Name:lower():find("target") or v.Name:lower():find("chest") or v.Name:lower():find("loot") or v.Name:lower():find("drop")) then
+                table.insert(targetPositions, v.Position)
+            end
+        end
+    end)
+
+    pos1 = me.Character and me.Character:FindFirstChild("HumanoidRootPart") and me.Character.HumanoidRootPart.CFrame
+
+    autoStealConn = task.spawn(function()
+        while autoStealOn and task.wait(1) do
+            local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local closest, dist2 = nil, math.huge
+                for _, v in ipairs(targetPositions) do
+                    local d = (hrp.Position - v).Magnitude
+                    if d < dist2 then dist2 = d; closest = v end
+                end
+                if closest then
+                    pos2 = CFrame.new(closest)
+                    createBeam(pos2.Position, 2)
+                end
+            end
+        end
+        pcall(function()
+            local b = workspace:FindFirstChild("DEMONTIME_StealBeam")
+            if b then b:Destroy() end
+        end)
+    end)
+
+    stealPromptConn = ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, who)
+        if who ~= me then return end
+        if prompt.Name ~= "Steal" and prompt.ActionText ~= "Steal" then return end
+        local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        if pos1 then hrp.CFrame = pos1 end
+        if pos2 then task.wait(0.05); hrp.CFrame = pos2 end
+    end)
+end
+
+local function disableAutoSteal()
+    autoStealOn = false
+    if stealPromptConn then stealPromptConn:Disconnect(); stealPromptConn = nil end
+    pcall(function()
+        local b = workspace:FindFirstChild("DEMONTIME_StealBeam")
+        if b then b:Destroy() end
+    end)
+end
+
+autoStealTrack.MouseButton1Click:Connect(function()
+    autoStealOn = not autoStealOn
+    if autoStealOn then
+        toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
+        enableAutoSteal()
+    else
+        toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
+        disableAutoSteal()
+    end
+end)
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
