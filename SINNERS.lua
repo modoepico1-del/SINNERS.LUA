@@ -81,6 +81,17 @@ MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
+local BgImage = Instance.new("ImageLabel")
+BgImage.Size = UDim2.new(1, 0, 1, 0)
+BgImage.Position = UDim2.new(0, 0, 0, 0)
+BgImage.BackgroundTransparency = 1
+BgImage.Image = "rbxassetid://81260402159389"
+BgImage.ImageTransparency = 0.3
+BgImage.ScaleType = Enum.ScaleType.Crop
+BgImage.ZIndex = 1
+BgImage.Parent = MainFrame
+Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
+
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
