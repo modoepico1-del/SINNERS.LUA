@@ -142,15 +142,22 @@ end)
 CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end)
+local minimized = false
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-        Position = UDim2.new(0, 0, -1, 0)
-    }):Play()
-    task.delay(0.32, function()
-        MainFrame.Visible  = false
-        MainFrame.Position = UDim2.new(0, 0, 0, 4)
-        ReopenBtn.Visible  = true
-    end)
+    minimized = not minimized
+    if minimized then
+        -- Minimizar: solo muestra la barra del título
+        CloseBtn.Text = "▲"
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 300, 0, 42)
+        }):Play()
+    else
+        -- Expandir de vuelta
+        CloseBtn.Text = "X"
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 300, 0, 680)
+        }):Play()
+    end
 end)
 
 local ContentArea = Instance.new("Frame")
@@ -614,32 +621,6 @@ SaveBtn.MouseEnter:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(
 SaveBtn.MouseLeave:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,80,80)}):Play() end)
 SaveBtn.MouseButton1Click:Connect(function()
     saveConfig(); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG"
-end)
-
--- Botón pequeño para reabrir el hub
-local ReopenBtn = Instance.new("TextButton")
-ReopenBtn.Text             = "▼"
-ReopenBtn.Size             = UDim2.new(0, 40, 0, 22)
-ReopenBtn.Position         = UDim2.new(0, 0, 0, 4)
-ReopenBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ReopenBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
-ReopenBtn.TextSize         = 13
-ReopenBtn.Font             = Enum.Font.GothamBlack
-ReopenBtn.BorderSizePixel  = 0
-ReopenBtn.ZIndex           = 10
-ReopenBtn.Visible          = false
-ReopenBtn.Parent           = ScreenGui
-Instance.new("UICorner", ReopenBtn).CornerRadius = UDim.new(0, 6)
-local reopenStroke = Instance.new("UIStroke", ReopenBtn)
-reopenStroke.Color = Color3.fromRGB(255,0,0); reopenStroke.Thickness = 1.5
-
-ReopenBtn.MouseButton1Click:Connect(function()
-    ReopenBtn.Visible  = false
-    MainFrame.Position = UDim2.new(0, 0, -1, 0)
-    MainFrame.Visible  = true
-    TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0, 0, 0, 4)
-    }):Play()
 end)
 
 -- ══════════════════════════════════════
