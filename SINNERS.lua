@@ -144,20 +144,6 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
--- Forzar colores siempre
-RS.Heartbeat:Connect(function()
-    TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
-    TitleLabel.TextStrokeTransparency = 1
-    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
-    fovRow.BackgroundTransparency    = 0
-    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    SaveFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    MainFrame.BackgroundTransparency = 0
-    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
-    ContentArea.BackgroundTransparency = 0
-    TitleBar.BackgroundColor3        = Color3.fromRGB(0,0,0)
-end)
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
@@ -715,6 +701,24 @@ end
 
 me.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
 task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end end)
+
+-- ══════════════════════════════════════
+--  FORZAR COLORES (al final, todos los objetos ya existen)
+-- ══════════════════════════════════════
+
+RS.Heartbeat:Connect(function()
+    TitleLabel.TextColor3              = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextStrokeTransparency  = 1
+    TitleBar.BackgroundColor3          = Color3.fromRGB(0, 0, 0)
+    MainFrame.BackgroundColor3         = Color3.fromRGB(0, 0, 0)
+    MainFrame.BackgroundTransparency   = 0
+    ContentArea.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+    ContentArea.BackgroundTransparency = 0
+    fovRow.BackgroundColor3            = Color3.fromRGB(0, 0, 0)
+    fovRow.BackgroundTransparency      = 0
+    SaveFrame.BackgroundColor3         = Color3.fromRGB(0, 0, 0)
+    SaveFrame.BackgroundTransparency   = 0
+end)
 
 -- ══════════════════════════════════════
 --  AUTO-LOAD CONFIG
