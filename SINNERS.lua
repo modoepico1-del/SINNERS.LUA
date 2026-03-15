@@ -146,8 +146,8 @@ TitleLabel.Parent                 = TitleBar
 
 local TitleStroke = Instance.new("UIStroke")
 TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
-TitleStroke.Thickness    = 4
-TitleStroke.Transparency = 0.0
+TitleStroke.Thickness    = 0
+TitleStroke.Transparency = 1.0
 TitleStroke.Parent       = TitleLabel
 
 local ContentArea = Instance.new("Frame")
@@ -196,7 +196,7 @@ local function toggleOn(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(0,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
@@ -1060,5 +1060,9 @@ task.defer(function()
     if savedCfg.AutoSteal then
         autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
         enableAutoSteal()
+    end
+    if savedCfg.GalaxySky then
+        galaxySkyOn = true; toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
+        enableGalaxySkyBright()
     end
 end)
