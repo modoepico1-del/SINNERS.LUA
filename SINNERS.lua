@@ -135,7 +135,7 @@ TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(0, 0, 0)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
@@ -144,8 +144,8 @@ TitleLabel.Parent                 = TitleBar
 
 local TitleStroke = Instance.new("UIStroke")
 TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
-TitleStroke.Thickness    = 4
-TitleStroke.Transparency = 0.0
+TitleStroke.Thickness    = 0
+TitleStroke.Transparency = 1.0
 TitleStroke.Parent       = TitleLabel
 
 
@@ -195,10 +195,10 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180,0,0)}):Play()
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220,0,0)}):Play()
-    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
@@ -645,16 +645,7 @@ end)
 --  ANIMACIONES NEON
 -- ══════════════════════════════════════
 
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
-        task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
-        task.wait(1.2)
-    end
-end)
+
 
 
 
