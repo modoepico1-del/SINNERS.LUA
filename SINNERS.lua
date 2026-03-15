@@ -144,10 +144,19 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
--- Forzar color blanco siempre para que no cambie
+-- Forzar colores siempre
 RS.Heartbeat:Connect(function()
     TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
     TitleLabel.TextStrokeTransparency = 1
+    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
+    fovRow.BackgroundTransparency    = 0
+    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    SaveFrame.BackgroundTransparency = 0
+    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
+    MainFrame.BackgroundTransparency = 0
+    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
+    ContentArea.BackgroundTransparency = 0
+    TitleBar.BackgroundColor3        = Color3.fromRGB(0,0,0)
 end)
 
 local CloseBtn = Instance.new("TextButton")
@@ -561,16 +570,6 @@ fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
 
 -- Forzar negro siempre
-RS.Heartbeat:Connect(function()
-    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
-    fovRow.BackgroundTransparency    = 0
-    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    SaveFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    MainFrame.BackgroundTransparency = 0
-    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
-    ContentArea.BackgroundTransparency = 0
-end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
