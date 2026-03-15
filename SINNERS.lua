@@ -105,7 +105,7 @@ local function addNeonBorder(parent, thickness, color)
     stroke.Parent          = parent
 end
 
-addNeonBorder(MainFrame, 2, Color3.fromRGB(255, 0, 0))
+addNeonBorder(MainFrame, 2, Color3.fromRGB(0, 0, 0))
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
@@ -193,10 +193,10 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180,0,0)}):Play()
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220,0,0)}):Play()
+    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
     TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
@@ -855,7 +855,7 @@ fovRow.ZIndex                 = 4
 fovRow.Parent                 = MainFrame
 Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
 local fovStroke = Instance.new("UIStroke", fovRow)
-fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 1.5
+fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 0
 
 -- Forzar negro siempre
 RS.Heartbeat:Connect(function()
