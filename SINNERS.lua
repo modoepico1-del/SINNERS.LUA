@@ -63,7 +63,7 @@ ScreenGui.Parent         = CoreGui
 
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 680)
+MainFrame.Size               = UDim2.new(0, 300, 0, 760)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -437,91 +437,221 @@ end)
 --  AUTO STEAL
 -- ══════════════════════════════════════
 
-local autoStealOn = false
+local autoStealActive = false
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
 
-local ProximityPromptService = game:GetService("ProximityPromptService")
-local targetPositions = {}
-local pos1, pos2 = nil, nil
-local autoStealConn, stealPromptConn = nil, nil
+local autoStealStealConnection = nil
+local autoStealAnimalsCache = {}
+local autoStealPromptCache = {}
+local autoStealInternalCache = {}
+local autoStealLastUID = nil
+local autoStealIsStealing = false
+local AUTO_STEAL_PROX_RADIUS = 7
 
-local function createBeam(targetPos, width)
-    pcall(function()
-        local char = me.Character
-        if not char then return end
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        local existing = workspace:FindFirstChild("DEMONTIME_StealBeam")
-        if existing then existing:Destroy() end
-        local part = Instance.new("Part")
-        part.Name = "DEMONTIME_StealBeam"
-        part.Anchored = true; part.CanCollide = false
-        part.CastShadow = false; part.Transparency = 0.4
-        part.BrickColor = BrickColor.new("Bright red")
-        part.Material = Enum.Material.Neon
-        local dist = (hrp.Position - targetPos).Magnitude
-        part.Size = Vector3.new(width or 2, width or 2, dist)
-        part.CFrame = CFrame.new(hrp.Position, targetPos) * CFrame.new(0, 0, -dist/2)
-        part.Parent = workspace
+local animalsDataAS = {}
+pcall(function()
+    animalsDataAS = require(ReplicatedStorage:WaitForChild("Datas", 5):WaitForChild("Animals", 5))
+end)
+
+local function autoSteal_getHRP()
+    local char = me.Character
+    if not char then return nil end
+    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso")
+end
+
+local function autoSteal_isMyBase(plotName)
+    local plots = workspace:FindFirstChild("Plots")
+    local plot = plots and plots:FindFirstChild(plotName)
+    if not plot then return false end
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign then
+        local yourBase = sign:FindFirstChild("YourBase")
+        if yourBase and yourBase:IsA("BillboardGui") then
+            return yourBase.Enabled == true
+        end
+    end
+    return false
+end
+
+local function autoSteal_scanPlot(plot)
+    if not plot or not plot:IsA("Model") then return end
+    if autoSteal_isMyBase(plot.Name) then return end
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return end
+    for _, podium in ipairs(podiums:GetChildren()) do
+        if podium:IsA("Model") and podium:FindFirstChild("Base") then
+            local animalName = "Unknown"
+            local spawn = podium.Base:FindFirstChild("Spawn")
+            if spawn then
+                for _, child in ipairs(spawn:GetChildren()) do
+                    if child:IsA("Model") and child.Name ~= "PromptAttachment" then
+                        animalName = child.Name
+                        local info = animalsDataAS[animalName]
+                        if info and info.DisplayName then animalName = info.DisplayName end
+                        break
+                    end
+                end
+            end
+            table.insert(autoStealAnimalsCache, {
+                name = animalName,
+                plot = plot.Name,
+                slot = podium.Name,
+                worldPosition = podium:GetPivot().Position,
+                uid = plot.Name .. "_" .. podium.Name,
+            })
+        end
+    end
+end
+
+local autoStealScannerStarted = false
+local function autoSteal_initScanner()
+    if autoStealScannerStarted then return end
+    autoStealScannerStarted = true
+    task.spawn(function()
+        task.wait(2)
+        local plots = workspace:WaitForChild("Plots", 10)
+        if not plots then return end
+        for _, plot in ipairs(plots:GetChildren()) do
+            if plot:IsA("Model") then autoSteal_scanPlot(plot) end
+        end
+        plots.ChildAdded:Connect(function(plot)
+            if plot:IsA("Model") then task.wait(0.5) autoSteal_scanPlot(plot) end
+        end)
+        task.spawn(function()
+            while task.wait(5) do
+                autoStealAnimalsCache = {}
+                for _, plot in ipairs(plots:GetChildren()) do
+                    if plot:IsA("Model") then autoSteal_scanPlot(plot) end
+                end
+            end
+        end)
     end)
+end
+
+local function autoSteal_findPrompt(animalData)
+    if not animalData then return nil end
+    local cached = autoStealPromptCache[animalData.uid]
+    if cached and cached.Parent then return cached end
+    local plots = workspace:FindFirstChild("Plots")
+    local plot = plots and plots:FindFirstChild(animalData.plot)
+    if not plot then return nil end
+    local podiums = plot:FindFirstChild("AnimalPodiums")
+    if not podiums then return nil end
+    local podium = podiums:FindFirstChild(animalData.slot)
+    if not podium then return nil end
+    local base = podium:FindFirstChild("Base")
+    if not base then return nil end
+    local spawn = base:FindFirstChild("Spawn")
+    if not spawn then return nil end
+    local attach = spawn:FindFirstChild("PromptAttachment")
+    if not attach then return nil end
+    for _, p in ipairs(attach:GetChildren()) do
+        if p:IsA("ProximityPrompt") then
+            autoStealPromptCache[animalData.uid] = p
+            return p
+        end
+    end
+    return nil
+end
+
+local function autoSteal_buildCallbacks(prompt)
+    if autoStealInternalCache[prompt] then return end
+    local data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
+    local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
+    if ok1 and type(conns1) == "table" then
+        for _, conn in ipairs(conns1) do
+            if type(conn.Function) == "function" then
+                table.insert(data.holdCallbacks, conn.Function)
+            end
+        end
+    end
+    local ok2, conns2 = pcall(getconnections, prompt.Triggered)
+    if ok2 and type(conns2) == "table" then
+        for _, conn in ipairs(conns2) do
+            if type(conn.Function) == "function" then
+                table.insert(data.triggerCallbacks, conn.Function)
+            end
+        end
+    end
+    if (#data.holdCallbacks > 0) or (#data.triggerCallbacks > 0) then
+        autoStealInternalCache[prompt] = data
+    end
+end
+
+local function autoSteal_execute(prompt)
+    local data = autoStealInternalCache[prompt]
+    if not data or not data.ready then return false end
+    data.ready = false
+    autoStealIsStealing = true
+    task.spawn(function()
+        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
+        task.wait(0.2)
+        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
+        task.wait(0.01)
+        data.ready = true
+        task.wait(0.01)
+        autoStealIsStealing = false
+    end)
+    return true
+end
+
+local function autoSteal_attempt(prompt)
+    if not prompt or not prompt.Parent then return false end
+    autoSteal_buildCallbacks(prompt)
+    if not autoStealInternalCache[prompt] then return false end
+    return autoSteal_execute(prompt)
+end
+
+local function autoSteal_getNearest()
+    local hrp = autoSteal_getHRP()
+    if not hrp then return nil end
+    local nearest, minDist = nil, math.huge
+    for _, animalData in ipairs(autoStealAnimalsCache) do
+        if autoSteal_isMyBase(animalData.plot) then continue end
+        if animalData.worldPosition then
+            local dist = (hrp.Position - animalData.worldPosition).Magnitude
+            if dist < minDist then minDist = dist nearest = animalData end
+        end
+    end
+    return nearest
+end
+
+local function startAutoStealLoop()
+    if autoStealStealConnection then autoStealStealConnection:Disconnect() end
+    autoStealStealConnection = RunService.Heartbeat:Connect(function()
+        if not autoStealActive then return end
+        if autoStealIsStealing then return end
+        local target = autoSteal_getNearest()
+        if not target or not target.worldPosition then return end
+        local hrp = autoSteal_getHRP()
+        if not hrp then return end
+        if (hrp.Position - target.worldPosition).Magnitude > AUTO_STEAL_PROX_RADIUS then return end
+        if autoStealLastUID ~= target.uid then autoStealLastUID = target.uid end
+        local prompt = autoStealPromptCache[target.uid]
+        if not prompt or not prompt.Parent then prompt = autoSteal_findPrompt(target) end
+        if prompt then autoSteal_attempt(prompt) end
+    end)
+end
+
+local function stopAutoStealLoop()
+    if autoStealStealConnection then autoStealStealConnection:Disconnect() autoStealStealConnection = nil end
+    autoStealIsStealing = false
 end
 
 local function enableAutoSteal()
-    -- Recoger posiciones de targets en el workspace
-    targetPositions = {}
-    pcall(function()
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("BasePart") and (v.Name:lower():find("target") or v.Name:lower():find("chest") or v.Name:lower():find("loot") or v.Name:lower():find("drop")) then
-                table.insert(targetPositions, v.Position)
-            end
-        end
-    end)
-
-    pos1 = me.Character and me.Character:FindFirstChild("HumanoidRootPart") and me.Character.HumanoidRootPart.CFrame
-
-    autoStealConn = task.spawn(function()
-        while autoStealOn and task.wait(1) do
-            local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local closest, dist2 = nil, math.huge
-                for _, v in ipairs(targetPositions) do
-                    local d = (hrp.Position - v).Magnitude
-                    if d < dist2 then dist2 = d; closest = v end
-                end
-                if closest then
-                    pos2 = CFrame.new(closest)
-                    createBeam(pos2.Position, 2)
-                end
-            end
-        end
-        pcall(function()
-            local b = workspace:FindFirstChild("DEMONTIME_StealBeam")
-            if b then b:Destroy() end
-        end)
-    end)
-
-    stealPromptConn = ProximityPromptService.PromptButtonHoldEnded:Connect(function(prompt, who)
-        if who ~= me then return end
-        if prompt.Name ~= "Steal" and prompt.ActionText ~= "Steal" then return end
-        local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        if pos1 then hrp.CFrame = pos1 end
-        if pos2 then task.wait(0.05); hrp.CFrame = pos2 end
-    end)
+    autoStealActive = true
+    autoSteal_initScanner()
+    startAutoStealLoop()
 end
 
 local function disableAutoSteal()
-    autoStealOn = false
-    if stealPromptConn then stealPromptConn:Disconnect(); stealPromptConn = nil end
-    pcall(function()
-        local b = workspace:FindFirstChild("DEMONTIME_StealBeam")
-        if b then b:Destroy() end
-    end)
+    autoStealActive = false
+    stopAutoStealLoop()
 end
 
 autoStealTrack.MouseButton1Click:Connect(function()
-    autoStealOn = not autoStealOn
-    if autoStealOn then
+    autoStealActive = not autoStealActive
+    if autoStealActive then
         toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
         enableAutoSteal()
     else
@@ -648,6 +778,85 @@ local function enableFPSBoost()
 end
 
 task.defer(function() task.wait(1); enableFPSBoost() end)
+
+-- ══════════════════════════════════════
+--  RADIUS SLIDER (auto steal)
+-- ══════════════════════════════════════
+
+local RADIUS_MIN, RADIUS_MAX = 1, 30
+
+local radiusRow = Instance.new("Frame")
+radiusRow.Size                   = UDim2.new(1, -20, 0, 54)
+radiusRow.Position               = UDim2.new(0, 10, 1, -182)
+radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+radiusRow.BackgroundTransparency = 0
+radiusRow.BorderSizePixel        = 0
+radiusRow.ZIndex                 = 4
+radiusRow.Parent                 = MainFrame
+Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
+local radiusStroke = Instance.new("UIStroke", radiusRow)
+radiusStroke.Color = Color3.fromRGB(0,0,0); radiusStroke.Thickness = 1.5
+
+local radiusTitleLabel = Instance.new("TextLabel")
+radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,120,0,20); radiusTitleLabel.Position=UDim2.new(0,4,0,2)
+radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
+radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
+radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
+
+local radiusValLabel = Instance.new("TextLabel")
+radiusValLabel.Text=tostring(AUTO_STEAL_PROX_RADIUS); radiusValLabel.Size=UDim2.new(0,50,0,20); radiusValLabel.Position=UDim2.new(1,-54,0,2)
+radiusValLabel.BackgroundTransparency=1; radiusValLabel.TextColor3=Color3.fromRGB(180,180,180)
+radiusValLabel.TextSize=13; radiusValLabel.Font=Enum.Font.GothamBlack
+radiusValLabel.TextXAlignment=Enum.TextXAlignment.Right; radiusValLabel.ZIndex=5; radiusValLabel.Parent=radiusRow
+
+local radiusTrack = Instance.new("Frame")
+radiusTrack.Size=UDim2.new(1,-8,0,6); radiusTrack.Position=UDim2.new(0,4,0,30)
+radiusTrack.BackgroundColor3=Color3.fromRGB(35,35,35); radiusTrack.BorderSizePixel=0
+radiusTrack.ZIndex=5; radiusTrack.Parent=radiusRow
+Instance.new("UICorner", radiusTrack).CornerRadius = UDim.new(1,0)
+
+local radiusFill = Instance.new("Frame")
+radiusFill.Size=UDim2.new(0,0,1,0); radiusFill.BackgroundColor3=Color3.fromRGB(200,0,0)
+radiusFill.BorderSizePixel=0; radiusFill.ZIndex=6; radiusFill.Parent=radiusTrack
+Instance.new("UICorner", radiusFill).CornerRadius = UDim.new(1,0)
+
+local radiusThumb = Instance.new("Frame")
+radiusThumb.Size=UDim2.new(0,28,0,28); radiusThumb.Position=UDim2.new(0,-14,0.5,-14)
+radiusThumb.BackgroundTransparency=1; radiusThumb.BorderSizePixel=0
+radiusThumb.ZIndex=8; radiusThumb.Parent=radiusTrack
+
+local radiusThumbImg = Instance.new("ImageLabel")
+radiusThumbImg.Size=UDim2.new(1,0,1,0); radiusThumbImg.BackgroundTransparency=1
+radiusThumbImg.Image="rbxassetid://11662710259"; radiusThumbImg.ImageColor3=Color3.fromRGB(255,0,0)
+radiusThumbImg.ScaleType=Enum.ScaleType.Fit; radiusThumbImg.ZIndex=9; radiusThumbImg.Parent=radiusThumb
+
+local function updateRadiusVisual(pct)
+    radiusFill.Size      = UDim2.new(pct, 0, 1, 0)
+    radiusThumb.Position = UDim2.new(pct, -14, 0.5, -14)
+    radiusValLabel.Text  = tostring(AUTO_STEAL_PROX_RADIUS)
+end
+updateRadiusVisual((AUTO_STEAL_PROX_RADIUS - RADIUS_MIN) / (RADIUS_MAX - RADIUS_MIN))
+
+local draggingRadius = false
+radiusTrack.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingRadius = true
+        TweenService:Create(radiusThumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,80,80)}):Play()
+    end
+end)
+radiusTrack.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingRadius = false
+        TweenService:Create(radiusThumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,0,0)}):Play()
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if draggingRadius and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local pct = math.clamp((input.Position.X - radiusTrack.AbsolutePosition.X) / radiusTrack.AbsoluteSize.X, 0, 1)
+        AUTO_STEAL_PROX_RADIUS = math.floor(RADIUS_MIN + pct * (RADIUS_MAX - RADIUS_MIN))
+        updateRadiusVisual(pct)
+    end
+end)
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
@@ -813,7 +1022,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,760)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
