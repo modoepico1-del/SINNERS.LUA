@@ -40,6 +40,9 @@ local function saveConfig()
             ESP         = espOn,
             AntiRagdoll = antiRagdollEnabled,
             FOV         = fovValue,
+            InfJump     = infJumpOn,
+            AutoSteal   = autoStealActive,
+            StealRadius = AUTO_STEAL_PROX_RADIUS,
         }))
     end)
 end
@@ -659,50 +662,6 @@ autoStealTrack.MouseButton1Click:Connect(function()
         disableAutoSteal()
     end
 end)
-
--- ══════════════════════════════════════
---  AUTO BAT
--- ══════════════════════════════════════
-
-local autoBatOn = false
-local autoBatLabel, autoBatTrack, autoBatThumb = makeOptionRow(ContentArea, "AUTO BAT", 334)
-local batLoopActive = false
-
-local function EnableAutoBat()
-    batLoopActive = true
-    task.spawn(function()
-        while batLoopActive do
-            local character = me.Character
-            if character then
-                local humanoid = character:FindFirstChild("Humanoid")
-                if humanoid then
-                    local bat = character:FindFirstChild("Bat") or me.Backpack:FindFirstChild("Bat")
-                    if bat then
-                        if bat.Parent == me.Backpack then humanoid:EquipTool(bat) task.wait(0.1) end
-                        local equippedBat = character:FindFirstChild("Bat")
-                        if equippedBat then equippedBat:Activate() end
-                    end
-                end
-            end
-            task.wait(0.15)
-        end
-    end)
-end
-
-local function DisableAutoBat()
-    batLoopActive = false
-end
-
-autoBatTrack.MouseButton1Click:Connect(function()
-    autoBatOn = not autoBatOn
-    if autoBatOn then
-        toggleOn(autoBatLabel, autoBatTrack, autoBatThumb)
-        EnableAutoBat()
-    else
-        toggleOff(autoBatLabel, autoBatTrack, autoBatThumb)
-        DisableAutoBat()
-    end
-end)
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
@@ -825,13 +784,11 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  RADIUS SLIDER (auto steal)
+--  RADIUS INPUT (auto steal)
 -- ══════════════════════════════════════
 
-local RADIUS_MIN, RADIUS_MAX = 1, 30
-
 local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(1, -20, 0, 54)
+radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
 radiusRow.Position               = UDim2.new(0, 10, 1, -182)
 radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 radiusRow.BackgroundTransparency = 0
@@ -843,63 +800,35 @@ local radiusStroke = Instance.new("UIStroke", radiusRow)
 radiusStroke.Color = Color3.fromRGB(0,0,0); radiusStroke.Thickness = 1.5
 
 local radiusTitleLabel = Instance.new("TextLabel")
-radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,120,0,20); radiusTitleLabel.Position=UDim2.new(0,4,0,2)
+radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
 radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
 radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
 radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
 
-local radiusValLabel = Instance.new("TextLabel")
-radiusValLabel.Text=tostring(AUTO_STEAL_PROX_RADIUS); radiusValLabel.Size=UDim2.new(0,50,0,20); radiusValLabel.Position=UDim2.new(1,-54,0,2)
-radiusValLabel.BackgroundTransparency=1; radiusValLabel.TextColor3=Color3.fromRGB(180,180,180)
-radiusValLabel.TextSize=13; radiusValLabel.Font=Enum.Font.GothamBlack
-radiusValLabel.TextXAlignment=Enum.TextXAlignment.Right; radiusValLabel.ZIndex=5; radiusValLabel.Parent=radiusRow
+local radiusInput = Instance.new("TextBox")
+radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+radiusInput.Size = UDim2.new(0, 70, 0, 28)
+radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
+radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+radiusInput.BorderSizePixel = 0
+radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+radiusInput.PlaceholderText = "7"
+radiusInput.TextSize = 13
+radiusInput.Font = Enum.Font.GothamBlack
+radiusInput.ClearTextOnFocus = true
+radiusInput.ZIndex = 6
+radiusInput.Parent = radiusRow
+Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
+local radiusInputStroke = Instance.new("UIStroke", radiusInput)
+radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
 
-local radiusTrack = Instance.new("Frame")
-radiusTrack.Size=UDim2.new(1,-8,0,6); radiusTrack.Position=UDim2.new(0,4,0,30)
-radiusTrack.BackgroundColor3=Color3.fromRGB(35,35,35); radiusTrack.BorderSizePixel=0
-radiusTrack.ZIndex=5; radiusTrack.Parent=radiusRow
-Instance.new("UICorner", radiusTrack).CornerRadius = UDim.new(1,0)
-
-local radiusFill = Instance.new("Frame")
-radiusFill.Size=UDim2.new(0,0,1,0); radiusFill.BackgroundColor3=Color3.fromRGB(200,0,0)
-radiusFill.BorderSizePixel=0; radiusFill.ZIndex=6; radiusFill.Parent=radiusTrack
-Instance.new("UICorner", radiusFill).CornerRadius = UDim.new(1,0)
-
-local radiusThumb = Instance.new("Frame")
-radiusThumb.Size=UDim2.new(0,28,0,28); radiusThumb.Position=UDim2.new(0,-14,0.5,-14)
-radiusThumb.BackgroundTransparency=1; radiusThumb.BorderSizePixel=0
-radiusThumb.ZIndex=8; radiusThumb.Parent=radiusTrack
-
-local radiusThumbImg = Instance.new("ImageLabel")
-radiusThumbImg.Size=UDim2.new(1,0,1,0); radiusThumbImg.BackgroundTransparency=1
-radiusThumbImg.Image="rbxassetid://11662710259"; radiusThumbImg.ImageColor3=Color3.fromRGB(255,0,0)
-radiusThumbImg.ScaleType=Enum.ScaleType.Fit; radiusThumbImg.ZIndex=9; radiusThumbImg.Parent=radiusThumb
-
-local function updateRadiusVisual(pct)
-    radiusFill.Size      = UDim2.new(pct, 0, 1, 0)
-    radiusThumb.Position = UDim2.new(pct, -14, 0.5, -14)
-    radiusValLabel.Text  = tostring(AUTO_STEAL_PROX_RADIUS)
-end
-updateRadiusVisual((AUTO_STEAL_PROX_RADIUS - RADIUS_MIN) / (RADIUS_MAX - RADIUS_MIN))
-
-local draggingRadius = false
-radiusTrack.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingRadius = true
-        TweenService:Create(radiusThumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,80,80)}):Play()
-    end
-end)
-radiusTrack.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingRadius = false
-        TweenService:Create(radiusThumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,0,0)}):Play()
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if draggingRadius and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local pct = math.clamp((input.Position.X - radiusTrack.AbsolutePosition.X) / radiusTrack.AbsoluteSize.X, 0, 1)
-        AUTO_STEAL_PROX_RADIUS = math.floor(RADIUS_MIN + pct * (RADIUS_MAX - RADIUS_MIN))
-        updateRadiusVisual(pct)
+radiusInput.FocusLost:Connect(function()
+    local val = tonumber(radiusInput.Text)
+    if val and val > 0 then
+        AUTO_STEAL_PROX_RADIUS = math.floor(val)
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    else
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
 end)
 
@@ -911,7 +840,7 @@ local FOV_MIN, FOV_MAX = 70, 120
 
 local fovRow = Instance.new("Frame")
 fovRow.Size                   = UDim2.new(1, -20, 0, 54)
-fovRow.Position               = UDim2.new(0, 10, 1, -118)
+fovRow.Position               = UDim2.new(0, 10, 1, -128)
 fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 fovRow.BackgroundTransparency = 0
 fovRow.BorderSizePixel        = 0
@@ -1117,5 +1046,16 @@ task.defer(function()
         fovValue = math.clamp(savedCfg.FOV, FOV_MIN, FOV_MAX)
         Camera.FieldOfView = fovValue
         updateFOVVisual((fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN))
+    end
+    if savedCfg.InfJump then
+        infJumpOn = true; toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
+    end
+    if savedCfg.StealRadius then
+        AUTO_STEAL_PROX_RADIUS = math.clamp(savedCfg.StealRadius, 1, 999)
+        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    end
+    if savedCfg.AutoSteal then
+        autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
+        enableAutoSteal()
     end
 end)
