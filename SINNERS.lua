@@ -659,112 +659,127 @@ autoStealTrack.MouseButton1Click:Connect(function()
         disableAutoSteal()
     end
 end)
-local antiRagdollMode    = nil
-local ragdollConnections = {}
-local cachedCharData     = {}
-local arIsBoosting       = false
-local AR_BOOST_SPEED     = 400
-local AR_DEFAULT_SPEED   = 16
 
-local function arCacheCharacterData()
-    local char = me.Character
-    if not char then return false end
-    local hum  = char:FindFirstChildOfClass("Humanoid")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not hum or not root then return false end
-    cachedCharData = { character = char, humanoid = hum, root = root }
-    return true
-end
-local function arDisconnectAll()
-    for _, conn in ipairs(ragdollConnections) do
-        pcall(function() conn:Disconnect() end)
-    end
-    ragdollConnections = {}
-end
-local function arIsRagdolled()
-    if not cachedCharData.humanoid then return false end
-    local state = cachedCharData.humanoid:GetState()
-    local ragdollStates = {
-        [Enum.HumanoidStateType.Physics]     = true,
-        [Enum.HumanoidStateType.Ragdoll]     = true,
-        [Enum.HumanoidStateType.FallingDown] = true,
-    }
-    if ragdollStates[state] then return true end
-    local endTime = me:GetAttribute("RagdollEndTime")
-    if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
-    return false
-end
-local function arForceExitRagdoll()
-    if not cachedCharData.humanoid or not cachedCharData.root then return end
-    pcall(function()
-        me:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow())
-    end)
-    for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
-        if descendant:IsA("BallSocketConstraint") or
-           (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
-            descendant:Destroy()
-        end
-    end
-    if not arIsBoosting then
-        arIsBoosting = true
-        cachedCharData.humanoid.WalkSpeed = AR_BOOST_SPEED
-    end
-    if cachedCharData.humanoid.Health > 0 then
-        cachedCharData.humanoid:ChangeState(Enum.HumanoidStateType.Running)
-    end
-    cachedCharData.root.Anchored = false
-end
-local function arHeartbeatLoop()
-    while antiRagdollMode == "active" do
-        task.wait()
-        local isRagdolled = arIsRagdolled()
-        if isRagdolled then
-            arForceExitRagdoll()
-        elseif arIsBoosting and not isRagdolled then
-            arIsBoosting = false
-            if cachedCharData.humanoid then
-                cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED
+-- ══════════════════════════════════════
+--  AUTO BAT
+-- ══════════════════════════════════════
+
+local autoBatOn = false
+local autoBatLabel, autoBatTrack, autoBatThumb = makeOptionRow(ContentArea, "AUTO BAT", 334)
+local batLoopActive = false
+
+local function EnableAutoBat()
+    batLoopActive = true
+    task.spawn(function()
+        while batLoopActive do
+            local character = me.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    local bat = character:FindFirstChild("Bat") or me.Backpack:FindFirstChild("Bat")
+                    if bat then
+                        if bat.Parent == me.Backpack then humanoid:EquipTool(bat) task.wait(0.1) end
+                        local equippedBat = character:FindFirstChild("Bat")
+                        if equippedBat then equippedBat:Activate() end
+                    end
+                end
             end
-        end
-    end
-end
-local function EnableAntiRagdoll()
-    if antiRagdollMode == "active" then return end
-    if not arCacheCharacterData() then return end
-    antiRagdollMode = "active"
-    local camConn = RunService.RenderStepped:Connect(function()
-        local cam = workspace.CurrentCamera
-        if cam and cachedCharData.humanoid then
-            cam.CameraSubject = cachedCharData.humanoid
+            task.wait(0.15)
         end
     end)
-    table.insert(ragdollConnections, camConn)
-    local respawnConn = me.CharacterAdded:Connect(function()
-        arIsBoosting = false
-        task.wait(0.5)
-        arCacheCharacterData()
-    end)
-    table.insert(ragdollConnections, respawnConn)
-    task.spawn(arHeartbeatLoop)
 end
-local function DisableAntiRagdoll()
-    antiRagdollMode = nil
-    if arIsBoosting and cachedCharData.humanoid then
-        cachedCharData.humanoid.WalkSpeed = AR_DEFAULT_SPEED
+
+local function DisableAutoBat()
+    batLoopActive = false
+end
+
+autoBatTrack.MouseButton1Click:Connect(function()
+    autoBatOn = not autoBatOn
+    if autoBatOn then
+        toggleOn(autoBatLabel, autoBatTrack, autoBatThumb)
+        EnableAutoBat()
+    else
+        toggleOff(autoBatLabel, autoBatTrack, autoBatThumb)
+        DisableAutoBat()
     end
-    arIsBoosting = false
-    arDisconnectAll()
-    cachedCharData = {}
+end)
+local currentCharacter        = nil
+local ragdollRemoteConnection = nil
+local moveConnection          = nil
+local RAGDOLL_SPEED           = 16
+local playerModule, controls  = nil, nil
+
+pcall(function()
+    playerModule = require(me:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
+    controls     = playerModule:GetControls()
+end)
+
+local function cleanupRagdoll()
+    if currentCharacter then
+        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
+        if root then local a = root:FindFirstChild("RagdollAnchor"); if a then a:Destroy() end end
+    end
+    if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
 end
+local function disconnectRemote()
+    if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
+end
+local function setupAntiRagdoll(char)
+    currentCharacter = char
+    cleanupRagdoll(); disconnectRemote()
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    local root     = char:WaitForChild("HumanoidRootPart", 5)
+    local head     = char:WaitForChild("Head", 5)
+    if not (humanoid and root and head) then return end
+    local ragdollRemote
+    pcall(function()
+        ragdollRemote = ReplicatedStorage:WaitForChild("Packages",8):WaitForChild("Ragdoll",5):WaitForChild("Ragdoll",5)
+    end)
+    if not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then return end
+    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
+        if not antiRagdollEnabled then return end
+        if arg1 == "Make" or arg2 == "manualM" then
+            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+            Camera.CameraSubject = head; root.CanCollide = false
+            if controls then pcall(controls.Enable, controls) end
+            cleanupRagdoll()
+            local anchor = Instance.new("BodyPosition")
+            anchor.Name="RagdollAnchor"; anchor.MaxForce=Vector3.new(1e5,1e5,1e5)
+            anchor.Position=root.Position; anchor.D=200; anchor.P=5000; anchor.Parent=root
+            moveConnection = RunService.Heartbeat:Connect(function()
+                if not antiRagdollEnabled then cleanupRagdoll(); return end
+                local moveDir = Vector3.zero
+                if controls then pcall(function() moveDir = controls:GetMoveVector() end) end
+                if moveDir.Magnitude > 0.1 then
+                    local cf  = Camera.CFrame
+                    local fwd = Vector3.new(cf.LookVector.X,0,cf.LookVector.Z).Unit
+                    local rgt = Vector3.new(cf.RightVector.X,0,cf.RightVector.Z).Unit
+                    anchor.Position = root.Position + (fwd*-moveDir.Z+rgt*moveDir.X).Unit*RAGDOLL_SPEED*0.1
+                else
+                    anchor.Position = root.Position
+                end
+            end)
+        elseif arg1 == "Destroy" or arg2 == "manualD" then
+            cleanupRagdoll()
+            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            root.CanCollide=true; Camera.CameraSubject=humanoid
+            if controls then pcall(controls.Enable, controls) end
+        end
+    end)
+end
+
+me.CharacterAdded:Connect(function(newChar)
+    if antiRagdollEnabled then task.wait(1); setupAntiRagdoll(newChar) end
+end)
 
 ragdollTrack.MouseButton1Click:Connect(function()
     antiRagdollEnabled = not antiRagdollEnabled
     if antiRagdollEnabled then
         toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
-        EnableAntiRagdoll()
+        if me.Character then setupAntiRagdoll(me.Character) end
     else
         toggleOff(ragdollLabel, ragdollTrack, ragdollThumb)
-        DisableAntiRagdoll()
+        cleanupRagdoll(); disconnectRemote()
     end
 end)
 
