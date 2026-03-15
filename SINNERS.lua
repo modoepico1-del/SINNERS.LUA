@@ -796,6 +796,20 @@ batAimbotTrack.MouseButton1Click:Connect(function()
     end
 end)
 
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.E then
+        batAimbotOn = not batAimbotOn
+        if batAimbotOn then
+            toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+            startBatAimbot()
+        else
+            toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+            stopBatAimbot()
+        end
+    end
+end)
+
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
