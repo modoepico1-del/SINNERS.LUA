@@ -68,7 +68,7 @@ ScreenGui.Parent         = CoreGui
 
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 760)
+MainFrame.Size               = UDim2.new(0, 300, 0, 820)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -667,6 +667,102 @@ galaxySkyTrack.MouseButton1Click:Connect(function()
         disableGalaxySkyBright()
     end
 end)
+
+-- ══════════════════════════════════════
+--  MELEE AIMBOT (tecla E)
+-- ══════════════════════════════════════
+
+local meleeOn = false
+local meleeLabel, meleeTrack, meleeThumb = makeOptionRow(ContentArea, "MELEE [E]", 388)
+
+local MeleeAimbot = {
+    Enabled = false,
+    Circle = nil,
+    Align = nil,
+    Attach = nil,
+    Conn = nil,
+}
+local MELEE_RADIUS = 20
+
+local function findNearestMeleeTarget(hrp)
+    local nearest, dmin = nil, MELEE_RADIUS
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= me and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (p.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+            if d <= dmin then dmin = d; nearest = p.Character.HumanoidRootPart end
+        end
+    end
+    return nearest
+end
+
+local function EnableMeleeAimbot()
+    if MeleeAimbot.Enabled then return end
+    MeleeAimbot.Enabled = true
+    local char = me.Character or me.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    MeleeAimbot.Attach = Instance.new("Attachment", hrp)
+    MeleeAimbot.Align = Instance.new("AlignOrientation", hrp)
+    MeleeAimbot.Align.Attachment0 = MeleeAimbot.Attach
+    MeleeAimbot.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    MeleeAimbot.Align.RigidityEnabled = true
+    local circlePart = Instance.new("Part")
+    circlePart.Shape = Enum.PartType.Cylinder
+    circlePart.Material = Enum.Material.Neon
+    circlePart.Size = Vector3.new(0.05, MELEE_RADIUS*2, MELEE_RADIUS*2)
+    circlePart.Color = Color3.fromRGB(138,43,226)
+    circlePart.CanCollide = false; circlePart.Massless = true; circlePart.Transparency = 0.4
+    circlePart.Parent = workspace
+    local weld = Instance.new("Weld")
+    weld.Part0 = hrp; weld.Part1 = circlePart
+    weld.C0 = CFrame.new(0,-1,0) * CFrame.Angles(0,0,math.rad(90))
+    weld.Parent = circlePart
+    MeleeAimbot.Circle = circlePart
+    MeleeAimbot.Conn = RunService.RenderStepped:Connect(function()
+        if not MeleeAimbot.Enabled then return end
+        local c = me.Character; if not c then return end
+        local h = c:FindFirstChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not h or not hum then return end
+        local target = findNearestMeleeTarget(h)
+        if target then
+            hum.AutoRotate = false
+            MeleeAimbot.Align.Enabled = true
+            MeleeAimbot.Align.CFrame = CFrame.lookAt(h.Position, Vector3.new(target.Position.X, h.Position.Y, target.Position.Z))
+            local tool = c:FindFirstChild("Bat") or c:FindFirstChild("Medusa")
+            if tool then tool:Activate() end
+        else
+            MeleeAimbot.Align.Enabled = false
+            hum.AutoRotate = true
+        end
+    end)
+end
+
+local function DisableMeleeAimbot()
+    if not MeleeAimbot.Enabled then return end
+    MeleeAimbot.Enabled = false
+    if MeleeAimbot.Conn then MeleeAimbot.Conn:Disconnect(); MeleeAimbot.Conn = nil end
+    if MeleeAimbot.Circle then MeleeAimbot.Circle:Destroy(); MeleeAimbot.Circle = nil end
+    if MeleeAimbot.Align then MeleeAimbot.Align:Destroy(); MeleeAimbot.Align = nil end
+    if MeleeAimbot.Attach then MeleeAimbot.Attach:Destroy(); MeleeAimbot.Attach = nil end
+    if me.Character and me.Character:FindFirstChildOfClass("Humanoid") then
+        me.Character:FindFirstChildOfClass("Humanoid").AutoRotate = true
+    end
+end
+
+meleeTrack.MouseButton1Click:Connect(function()
+    meleeOn = not meleeOn
+    if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMeleeAimbot()
+    else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMeleeAimbot() end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.E then
+        meleeOn = not meleeOn
+        if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMeleeAimbot()
+        else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMeleeAimbot() end
+    end
+end)
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
@@ -990,7 +1086,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,760)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
 
 
 -- ══════════════════════════════════════
