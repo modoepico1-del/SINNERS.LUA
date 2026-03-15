@@ -137,7 +137,7 @@ TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3             = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextColor3             = Color3.fromRGB(255, 0, 0)
 TitleLabel.TextSize               = 17
 TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
@@ -193,11 +193,13 @@ local function makeOptionRow(parent, labelText, yPos)
 end
 
 local function toggleOn(lbl, track, thumb)
-    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200,0,0)}):Play()
-    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
-    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,80,80)}):Play()
+    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(180,0,0)}):Play()
+    TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220,0,0)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
+    TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,255,255)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
+    TweenService:Create(lbl.Parent, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15,0,0)}):Play()
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
     TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,3,0.5,-9), BackgroundColor3 = Color3.fromRGB(180,180,180)}):Play()
     TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
@@ -949,7 +951,7 @@ SaveBtn.TextColor3=Color3.fromRGB(255,80,80); SaveBtn.TextStrokeColor3=Color3.fr
 SaveBtn.TextStrokeTransparency=0; SaveBtn.BorderSizePixel=0; SaveBtn.ZIndex=7; SaveBtn.Parent=SaveFrame
 Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0,8)
 local saveBtnStroke = Instance.new("UIStroke", SaveBtn)
-saveBtnStroke.Color=Color3.fromRGB(255,0,0); saveBtnStroke.Thickness=1.5
+saveBtnStroke.Color=Color3.fromRGB(0,0,0); saveBtnStroke.Thickness=1.5
 
 SaveBtn.MouseEnter:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,255,255)}):Play() end)
 SaveBtn.MouseLeave:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,80,80)}):Play() end)
