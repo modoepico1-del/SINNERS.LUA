@@ -12,7 +12,6 @@ local CoreGui          = game:GetService("CoreGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
-local RS          = RunService
 local Camera      = workspace.CurrentCamera
 
 -- ══════════════════════════════════════
@@ -79,34 +78,6 @@ MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-local function addNeonBorder(parent, thickness, color)
-    local glow = Instance.new("Frame")
-    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
-    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
-    glow.BackgroundColor3       = color
-    glow.BackgroundTransparency = 0.72
-    glow.BorderSizePixel        = 0
-    glow.ZIndex                 = parent.ZIndex - 1
-    glow.Parent                 = parent
-    Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 14)
-    local mid = Instance.new("Frame")
-    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
-    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
-    mid.BackgroundColor3       = color
-    mid.BackgroundTransparency = 0.50
-    mid.BorderSizePixel        = 0
-    mid.ZIndex                 = parent.ZIndex - 1
-    mid.Parent                 = parent
-    Instance.new("UICorner", mid).CornerRadius = UDim.new(0, 12)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color           = color
-    stroke.Thickness       = thickness
-    stroke.Transparency    = 0.0
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent          = parent
-end
-
-addNeonBorder(MainFrame, 2, Color3.fromRGB(0, 0, 0))
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
@@ -124,15 +95,6 @@ TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
 
-local lineGlow = Instance.new("Frame")
-lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
-lineGlow.Position               = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
-lineGlow.BackgroundTransparency = 0.6
-lineGlow.BorderSizePixel        = 0
-lineGlow.ZIndex                 = 3
-lineGlow.Parent                 = TitleBar
-
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
@@ -144,16 +106,6 @@ TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
-
-local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
-TitleStroke.Thickness    = 0
-TitleStroke.Transparency = 1.0
-TitleStroke.Parent       = TitleLabel
-
-
-
-
 
 local ContentArea = Instance.new("Frame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
@@ -222,7 +174,7 @@ local function enableUnwalk()
     local anim = hum:FindFirstChildOfClass("Animator") if not anim then return end
     for _, t in ipairs(anim:GetPlayingAnimationTracks()) do t:Stop(0) end
     if unwalkConn then unwalkConn:Disconnect() end
-    unwalkConn = RS.Heartbeat:Connect(function()
+    unwalkConn = RunService.Heartbeat:Connect(function()
         if not unwalkOn then unwalkConn:Disconnect() unwalkConn = nil return end
         local c  = me.Character if not c then return end
         local h  = c:FindFirstChildOfClass("Humanoid") if not h then return end
@@ -372,22 +324,15 @@ end)
 --  DARKMODE (automático)
 -- ══════════════════════════════════════
 
-local darkModeObjects = {}
-
 local function startDarkMode()
-    darkModeObjects = {}
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(darkModeObjects, {removed=true, instance=child, parent=Lighting})
-            child.Parent = nil
-        end
+        if child:IsA("Sky") then child.Parent = nil end
     end
     local sky = Instance.new("Sky")
     sky.SkyboxBk="rbxassetid://2013298"; sky.SkyboxDn="rbxassetid://2013298"
     sky.SkyboxFt="rbxassetid://2013298"; sky.SkyboxLf="rbxassetid://2013298"
     sky.SkyboxRt="rbxassetid://2013298"; sky.SkyboxUp="rbxassetid://2013298"
     sky.StarCount=0; sky.CelestialBodiesShown=false; sky.Parent=Lighting
-    table.insert(darkModeObjects, sky)
     Lighting.FogStart = 10000
 end
 
@@ -850,17 +795,6 @@ Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
 local fovStroke = Instance.new("UIStroke", fovRow)
 fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 1.5
 
--- Forzar negro siempre
-RS.Heartbeat:Connect(function()
-    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
-    fovRow.BackgroundTransparency    = 0
-    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    SaveFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    MainFrame.BackgroundTransparency = 0
-    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
-    ContentArea.BackgroundTransparency = 0
-end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
@@ -998,31 +932,6 @@ end)
 MainFrame.Size = UDim2.new(0,300,0,0)
 TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,760)}):Play()
 
--- ══════════════════════════════════════
---  ANTI LAGBACK (automático)
--- ══════════════════════════════════════
-
-local serverGhosts = {}
-
-local function clearAllGhosts()
-    for _, ghost in pairs(serverGhosts) do
-        pcall(function() if ghost and ghost.Parent then ghost:Destroy() end end)
-    end
-    serverGhosts = {}
-    pcall(function()
-        local pg = me:FindFirstChild("PlayerGui")
-        if pg then for _, gui in pairs(pg:GetChildren()) do if gui.Name=="LagbackNotification" then gui:Destroy() end end end
-    end)
-    pcall(function()
-        if workspace.CurrentCamera then
-            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do if c.Name=="LagbackGhost" then c:Destroy() end end
-        end
-        for _, c in pairs(workspace:GetDescendants()) do if c.Name=="LagbackGhost" or c.Name=="LagbackErrorOrb" then c:Destroy() end end
-    end)
-end
-
-me.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
-task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end end)
 
 -- ══════════════════════════════════════
 --  AUTO-LOAD CONFIG
