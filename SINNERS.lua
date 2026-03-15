@@ -24,9 +24,6 @@ local xrayOn             = false
 local espOn              = false
 local antiRagdollEnabled = false
 local fovValue           = 70
-local infJumpOn          = false
-local autoStealActive    = false
-local AUTO_STEAL_PROX_RADIUS = 7
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -68,7 +65,7 @@ ScreenGui.Parent         = CoreGui
 
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 820)
+MainFrame.Size               = UDim2.new(0, 300, 0, 760)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -80,17 +77,6 @@ MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-
-local BgImage = Instance.new("ImageLabel")
-BgImage.Size = UDim2.new(1, 0, 1, 0)
-BgImage.Position = UDim2.new(0, 0, 0, 0)
-BgImage.BackgroundTransparency = 1
-BgImage.Image = "rbxassetid://88747955596712"
-BgImage.ImageTransparency = 0.3
-BgImage.ScaleType = Enum.ScaleType.Crop
-BgImage.ZIndex = 0
-BgImage.Parent = MainFrame
-Instance.new("UICorner", BgImage).CornerRadius = UDim.new(0, 10)
 
 
 local TitleBar = Instance.new("Frame")
@@ -363,6 +349,7 @@ local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANT
 --  INF JUMP
 -- ══════════════════════════════════════
 
+local infJumpOn = false
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
 
 local jumpForce = 50
@@ -398,6 +385,7 @@ end)
 --  AUTO STEAL
 -- ══════════════════════════════════════
 
+local autoStealActive = false
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
 
 local autoStealStealConnection = nil
@@ -406,6 +394,7 @@ local autoStealPromptCache = {}
 local autoStealInternalCache = {}
 local autoStealLastUID = nil
 local autoStealIsStealing = false
+local AUTO_STEAL_PROX_RADIUS = 7
 
 local animalsDataAS = {}
 pcall(function()
@@ -616,194 +605,6 @@ autoStealTrack.MouseButton1Click:Connect(function()
     else
         toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
         disableAutoSteal()
-    end
-end)
-
--- ══════════════════════════════════════
---  GALAXY SKY
--- ══════════════════════════════════════
-
-local galaxySkyOn = false
-local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
-
-local originalSkybox, galaxySkyBright, galaxySkyBrightConn
-local galaxyPlanets = {}
-local galaxyBloom, galaxyCC
-
-local function enableGalaxySkyBright()
-    if galaxySkyBright then return end
-    originalSkybox = Lighting:FindFirstChildOfClass("Sky")
-    if originalSkybox then originalSkybox.Parent = nil end
-    galaxySkyBright = Instance.new("Sky")
-    galaxySkyBright.SkyboxBk = "rbxassetid://1534951537"; galaxySkyBright.SkyboxDn = "rbxassetid://1534951537"
-    galaxySkyBright.SkyboxFt = "rbxassetid://1534951537"; galaxySkyBright.SkyboxLf = "rbxassetid://1534951537"
-    galaxySkyBright.SkyboxRt = "rbxassetid://1534951537"; galaxySkyBright.SkyboxUp = "rbxassetid://1534951537"
-    galaxySkyBright.StarCount = 10000; galaxySkyBright.CelestialBodiesShown = false; galaxySkyBright.Parent = Lighting
-    galaxyBloom = Instance.new("BloomEffect"); galaxyBloom.Intensity = 1.5; galaxyBloom.Size = 40; galaxyBloom.Threshold = 0.8; galaxyBloom.Parent = Lighting
-    galaxyCC = Instance.new("ColorCorrectionEffect"); galaxyCC.Saturation = 0.8; galaxyCC.Contrast = 0.3; galaxyCC.TintColor = Color3.fromRGB(200,150,255); galaxyCC.Parent = Lighting
-    Lighting.Ambient = Color3.fromRGB(120,60,180); Lighting.Brightness = 3; Lighting.ClockTime = 0
-    for i = 1, 2 do
-        local p = Instance.new("Part"); p.Shape = Enum.PartType.Ball
-        p.Size = Vector3.new(800+i*200, 800+i*200, 800+i*200); p.Anchored = true; p.CanCollide = false; p.CastShadow = false
-        p.Material = Enum.Material.Neon; p.Color = Color3.fromRGB(140+i*20, 60+i*10, 200+i*15); p.Transparency = 0.3
-        p.Position = Vector3.new(math.cos(i*2)*(3000+i*500), 1500+i*300, math.sin(i*2)*(3000+i*500)); p.Parent = workspace
-        table.insert(galaxyPlanets, p)
-    end
-    galaxySkyBrightConn = RunService.Heartbeat:Connect(function()
-        if not galaxySkyOn then return end
-        local t = tick()*0.5
-        Lighting.Ambient = Color3.fromRGB(120+math.sin(t)*60, 50+math.sin(t*0.8)*40, 180+math.sin(t*1.2)*50)
-        if galaxyBloom then galaxyBloom.Intensity = 1.2+math.sin(t*2)*0.4 end
-    end)
-end
-
-local function disableGalaxySkyBright()
-    if galaxySkyBrightConn then galaxySkyBrightConn:Disconnect(); galaxySkyBrightConn = nil end
-    if galaxySkyBright then galaxySkyBright:Destroy(); galaxySkyBright = nil end
-    if originalSkybox then originalSkybox.Parent = Lighting end
-    if galaxyBloom then galaxyBloom:Destroy(); galaxyBloom = nil end
-    if galaxyCC then galaxyCC:Destroy(); galaxyCC = nil end
-    for _, obj in ipairs(galaxyPlanets) do if obj then obj:Destroy() end end
-    galaxyPlanets = {}
-    Lighting.Ambient = Color3.fromRGB(127,127,127); Lighting.Brightness = 2; Lighting.ClockTime = 14
-end
-
-galaxySkyTrack.MouseButton1Click:Connect(function()
-    galaxySkyOn = not galaxySkyOn
-    if galaxySkyOn then
-        toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
-        enableGalaxySkyBright()
-    else
-        toggleOff(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
-        disableGalaxySkyBright()
-    end
-end)
-
--- ══════════════════════════════════════
---  MELEE AIMBOT (tecla E)
--- ══════════════════════════════════════
-
-local meleeOn = false
-local meleeLabel, meleeTrack, meleeThumb = makeOptionRow(ContentArea, "MELEE [E]", 388)
-
-local MELEE_RADIUS = 99999
-local MeleeAimbot = { Enabled=false, Circle=nil, Align=nil, Attach=nil, Conn=nil }
-local batAimbotConnection = nil
-
-local function findBat()
-    local c = me.Character
-    local bp = me:FindFirstChildOfClass("Backpack")
-    if c then for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
-    if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
-    return nil
-end
-
-local function findNearestEnemy(myHRP)
-    local nearest, nearestDist, nearestTorso = nil, MELEE_RADIUS, nil
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= me and p.Character then
-            local eh = p.Character:FindFirstChild("HumanoidRootPart")
-            local tor = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
-            local hum = p.Character:FindFirstChildOfClass("Humanoid")
-            if eh and hum and hum.Health > 0 then
-                local d = (eh.Position - myHRP.Position).Magnitude
-                if d < nearestDist then nearestDist = d; nearest = eh; nearestTorso = tor or eh end
-            end
-        end
-    end
-    return nearest, nearestDist, nearestTorso
-end
-
-local function EnableMelee()
-    if MeleeAimbot.Enabled then return end
-    MeleeAimbot.Enabled = true
-    local char = me.Character or me.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    MeleeAimbot.Attach = Instance.new("Attachment", hrp)
-    MeleeAimbot.Align = Instance.new("AlignOrientation", hrp)
-    MeleeAimbot.Align.Attachment0 = MeleeAimbot.Attach
-    MeleeAimbot.Align.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    MeleeAimbot.Align.RigidityEnabled = true
-    local circlePart = Instance.new("Part")
-    circlePart.Shape = Enum.PartType.Cylinder; circlePart.Material = Enum.Material.Neon
-    circlePart.Size = Vector3.new(0.05, MELEE_RADIUS*2, MELEE_RADIUS*2)
-    circlePart.Color = Color3.fromRGB(138,43,226)
-    circlePart.CanCollide = false; circlePart.Massless = true; circlePart.Transparency = 1
-    circlePart.Parent = workspace
-    local weld = Instance.new("Weld")
-    weld.Part0 = hrp; weld.Part1 = circlePart
-    weld.C0 = CFrame.new(0,-1,0) * CFrame.Angles(0,0,math.rad(90))
-    weld.Parent = circlePart
-    MeleeAimbot.Circle = circlePart
-    -- Melee aimbot: gira y activa arma
-    MeleeAimbot.Conn = RunService.RenderStepped:Connect(function()
-        if not MeleeAimbot.Enabled then return end
-        local c = me.Character; if not c then return end
-        local h = c:FindFirstChild("HumanoidRootPart")
-        local hum = c:FindFirstChildOfClass("Humanoid")
-        if not h or not hum then return end
-        local target, _, targetTorso = findNearestEnemy(h)
-        if target then
-            hum.AutoRotate = false
-            MeleeAimbot.Align.Enabled = true
-            MeleeAimbot.Align.CFrame = CFrame.lookAt(h.Position, Vector3.new(target.Position.X, h.Position.Y, target.Position.Z))
-            local bat = findBat()
-            local tool = bat or c:FindFirstChild("Medusa")
-            if tool then
-                if tool.Parent == me:FindFirstChildOfClass("Backpack") then hum:EquipTool(tool) end
-                tool:Activate()
-            end
-        else
-            MeleeAimbot.Align.Enabled = false
-            hum.AutoRotate = true
-        end
-    end)
-    -- Bat aimbot: equipa bate y va directo al enemigo
-    if batAimbotConnection then batAimbotConnection:Disconnect() end
-    batAimbotConnection = RunService.Heartbeat:Connect(function()
-        if not MeleeAimbot.Enabled then return end
-        local c = me.Character; if not c then return end
-        local h = c:FindFirstChild("HumanoidRootPart")
-        local hum = c:FindFirstChildOfClass("Humanoid")
-        if not h or not hum then return end
-        local bat = findBat()
-        if bat and bat.Parent ~= c then hum:EquipTool(bat) end
-        local target, _, torso = findNearestEnemy(h)
-        if target and torso then
-            local dir = torso.Position - h.Position
-            local flatDir = Vector3.new(dir.X, 0, dir.Z)
-            if flatDir.Magnitude > 3 then
-                local moveDir = flatDir.Unit
-                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*55, h.AssemblyLinearVelocity.Y, moveDir.Z*55)
-            end
-        end
-    end)
-end
-
-local function DisableMelee()
-    MeleeAimbot.Enabled = false
-    if MeleeAimbot.Conn then MeleeAimbot.Conn:Disconnect(); MeleeAimbot.Conn = nil end
-    if batAimbotConnection then batAimbotConnection:Disconnect(); batAimbotConnection = nil end
-    if MeleeAimbot.Circle then MeleeAimbot.Circle:Destroy(); MeleeAimbot.Circle = nil end
-    if MeleeAimbot.Align then MeleeAimbot.Align:Destroy(); MeleeAimbot.Align = nil end
-    if MeleeAimbot.Attach then MeleeAimbot.Attach:Destroy(); MeleeAimbot.Attach = nil end
-    if me.Character and me.Character:FindFirstChildOfClass("Humanoid") then
-        me.Character:FindFirstChildOfClass("Humanoid").AutoRotate = true
-    end
-end
-
-meleeTrack.MouseButton1Click:Connect(function()
-    meleeOn = not meleeOn
-    if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMelee()
-    else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMelee() end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.E then
-        meleeOn = not meleeOn
-        if meleeOn then toggleOn(meleeLabel, meleeTrack, meleeThumb); EnableMelee()
-        else toggleOff(meleeLabel, meleeTrack, meleeThumb); DisableMelee() end
     end
 end)
 local currentCharacter        = nil
@@ -1129,7 +930,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,760)}):Play()
 
 
 -- ══════════════════════════════════════
