@@ -64,25 +64,6 @@ ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Text             = "DEMONTIME"
-ToggleBtn.Size             = UDim2.new(0, 110, 0, 28)
-ToggleBtn.Position         = UDim2.new(0, 10, 0, 10)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ToggleBtn.TextColor3       = Color3.fromRGB(255, 0, 0)
-ToggleBtn.TextSize         = 12
-ToggleBtn.Font             = Enum.Font.GothamBlack
-ToggleBtn.BorderSizePixel  = 0
-ToggleBtn.ZIndex           = 10
-ToggleBtn.Parent           = ScreenGui
-
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
-
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color        = Color3.fromRGB(255, 0, 0)
-ToggleStroke.Thickness    = 1.5
-ToggleStroke.Parent       = ToggleBtn
-
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 820)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
@@ -168,39 +149,6 @@ TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
 TitleStroke.Thickness    = 4
 TitleStroke.Transparency = 0.0
 TitleStroke.Parent       = TitleLabel
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Text              = "X"
-CloseBtn.Size              = UDim2.new(0, 28, 0, 28)
-CloseBtn.Position          = UDim2.new(1, -34, 0, 7)
-CloseBtn.BackgroundColor3  = Color3.fromRGB(0, 0, 0)
-CloseBtn.TextColor3        = Color3.fromRGB(255, 0, 0)
-CloseBtn.TextSize          = 13
-CloseBtn.Font              = Enum.Font.GothamBlack
-CloseBtn.BorderSizePixel   = 0
-CloseBtn.ZIndex            = 6
-CloseBtn.Parent            = TitleBar
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
-
-local CloseBtnStroke = Instance.new("UIStroke")
-CloseBtnStroke.Color        = Color3.fromRGB(255, 0, 0)
-CloseBtnStroke.Thickness    = 1.2
-CloseBtnStroke.Transparency = 0.1
-CloseBtnStroke.Parent       = CloseBtn
-
-CloseBtn.MouseEnter:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180,0,0), TextColor3 = Color3.fromRGB(255,255,255)}):Play()
-end)
-CloseBtn.MouseLeave:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
-end)
-CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
-    task.delay(0.27, function()
-        MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,300,0,820)
-    end)
-end)
 
 local ContentArea = Instance.new("Frame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
@@ -1010,37 +958,37 @@ SaveBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  TOGGLE VENTANA
+--  DRAG
 -- ══════════════════════════════════════
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Visible then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,0)}):Play()
-        task.delay(0.27, function() MainFrame.Visible=false; MainFrame.Size=UDim2.new(0,300,0,820) end)
-    else
-        MainFrame.Size=UDim2.new(0,300,0,0); MainFrame.Visible=true
-        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,820)}):Play()
+local dragging, dragInput, dragStart, startPos
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
 end)
 
--- ══════════════════════════════════════
---  ANIMACIONES NEON
--- ══════════════════════════════════════
-
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.7}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.7}):Play()
-        task.wait(1.2)
-        TweenService:Create(TitleStroke, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play()
-        TweenService:Create(TitleLine,   TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{BackgroundTransparency=0.0}):Play()
-        task.wait(1.2)
+TitleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
     end
 end)
-task.spawn(function()
-    while ScreenGui.Parent do
-        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.6}):Play(); task.wait(1.0)
-        TweenService:Create(ToggleStroke,TweenInfo.new(1.0,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut),{Transparency=0.0}):Play(); task.wait(1.0)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
