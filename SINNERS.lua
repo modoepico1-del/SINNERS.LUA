@@ -796,8 +796,7 @@ batAimbotTrack.MouseButton1Click:Connect(function()
     end
 end)
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.E then
         batAimbotOn = not batAimbotOn
         if batAimbotOn then
