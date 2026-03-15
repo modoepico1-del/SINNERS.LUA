@@ -247,7 +247,7 @@ local xrayDescConn, xrayCharConn = nil, nil
 local function startXray()
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        Lighting.GlobalShadows = false; Lighting.Brightness = 3; Lighting.FogEnd = 9e9
+        Lighting.GlobalShadows = false; Lighting.FogEnd = 9e9
     end)
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -497,7 +497,8 @@ end
 local function enableFPSBoost()
     pcall(function()
         Lighting.GlobalShadows=false; Lighting.FogEnd=1000000; Lighting.FogStart=0
-        Lighting.EnvironmentDiffuseScale=0; Lighting.EnvironmentSpecularScale=0
+        Lighting.Brightness=2
+        Lighting.EnvironmentDiffuseScale=1; Lighting.EnvironmentSpecularScale=1
     end)
     pcall(function()
         for _, v in pairs(Lighting:GetChildren()) do
@@ -554,7 +555,7 @@ fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; f
 
 local fovValLabel = Instance.new("TextLabel")
 fovValLabel.Text=tostring(fovValue); fovValLabel.Size=UDim2.new(0,50,0,20); fovValLabel.Position=UDim2.new(1,-54,0,2)
-fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(255,80,80)
+fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(180,180,180)
 fovValLabel.TextSize=13; fovValLabel.Font=Enum.Font.GothamBlack
 fovValLabel.TextXAlignment=Enum.TextXAlignment.Right; fovValLabel.ZIndex=5; fovValLabel.Parent=fovRow
 
