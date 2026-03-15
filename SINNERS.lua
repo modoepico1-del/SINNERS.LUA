@@ -142,6 +142,13 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
+-- Neon negro alrededor del texto
+local TitleStroke = Instance.new("UIStroke")
+TitleStroke.Color        = Color3.fromRGB(0, 0, 0)
+TitleStroke.Thickness    = 3
+TitleStroke.Transparency = 0.0
+TitleStroke.Parent       = TitleLabel
+
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text              = "X"
 CloseBtn.Size              = UDim2.new(0, 28, 0, 28)
@@ -219,7 +226,7 @@ end
 
 local function toggleOn(lbl, track, thumb)
     TweenService:Create(track, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
-    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,255,255)}):Play()
+    TweenService:Create(thumb, TweenInfo.new(0.2), {Position = UDim2.new(0,23,0.5,-9), BackgroundColor3 = Color3.fromRGB(255,0,0)}):Play()
     TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end
 local function toggleOff(lbl, track, thumb)
@@ -566,7 +573,7 @@ end)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
-fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(220,220,220)
+fovTitleLabel.BackgroundTransparency=1; fovTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
 fovTitleLabel.TextSize=13; fovTitleLabel.Font=Enum.Font.GothamBlack
 fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; fovTitleLabel.Parent=fovRow
 
