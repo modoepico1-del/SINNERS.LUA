@@ -28,6 +28,7 @@ local fovValue           = 70
 local infJumpOn          = false
 local autoStealActive    = false
 local AUTO_STEAL_PROX_RADIUS = 7
+local galaxySkyOn        = false
 
 -- ══════════════════════════════════════
 --  SAVE / LOAD CONFIG
@@ -403,7 +404,6 @@ local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANT
 --  INF JUMP
 -- ══════════════════════════════════════
 
-local infJumpOn = false
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
 
 local jumpForce = 50
@@ -441,7 +441,6 @@ local RAGDOLL_SPEED           = 16
 --  AUTO STEAL
 -- ══════════════════════════════════════
 
-local autoStealActive = false
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
 
 local autoStealStealConnection = nil
@@ -450,7 +449,6 @@ local autoStealPromptCache = {}
 local autoStealInternalCache = {}
 local autoStealLastUID = nil
 local autoStealIsStealing = false
-local AUTO_STEAL_PROX_RADIUS = 7
 
 local animalsDataAS = {}
 pcall(function()
@@ -668,7 +666,6 @@ end)
 --  GALAXY SKY
 -- ══════════════════════════════════════
 
-local galaxySkyOn = false
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
