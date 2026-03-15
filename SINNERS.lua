@@ -140,7 +140,7 @@ lineGlow.BorderSizePixel        = 0
 lineGlow.ZIndex                 = 3
 lineGlow.Parent                 = TitleBar
 
-local TitleLabel = Instance.new("TextLabel")
+local TitleLabel = Instance.new("TextButton")
 TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
@@ -151,6 +151,14 @@ TitleLabel.Font                   = Enum.Font.GothamBlack
 TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
+
+TitleLabel.MouseButton1Click:Connect(function()
+    if MainFrame.Size.Y.Offset > 42 then
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
+    else
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
+    end
+end)
 
 local TitleStroke = Instance.new("UIStroke")
 TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
@@ -184,11 +192,11 @@ CloseBtn.MouseLeave:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0,0,0), TextColor3 = Color3.fromRGB(255,0,0)}):Play()
 end)
 CloseBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
-    task.delay(0.27, function()
-        MainFrame.Visible = false
-        MainFrame.Size    = UDim2.new(0,300,0,680)
-    end)
+    if MainFrame.Size.Y.Offset > 42 then
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
+    else
+        TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
+    end
 end)
 
 local ContentArea = Instance.new("Frame")
@@ -678,11 +686,9 @@ end)
 -- ══════════════════════════════════════
 
 ToggleBtn.MouseButton1Click:Connect(function()
-    if MainFrame.Visible then
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,0)}):Play()
-        task.delay(0.27, function() MainFrame.Visible=false; MainFrame.Size=UDim2.new(0,300,0,680) end)
+    if MainFrame.Size.Y.Offset > 42 then
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size=UDim2.new(0,300,0,42)}):Play()
     else
-        MainFrame.Size=UDim2.new(0,300,0,0); MainFrame.Visible=true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,680)}):Play()
     end
 end)
