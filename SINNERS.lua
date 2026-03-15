@@ -147,9 +147,20 @@ CloseBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
         CloseBtn.Text = "+"
-        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,42)}):Play()
+        -- Mover CloseBtn fuera del MainFrame para que siga visible
+        CloseBtn.Parent = ScreenGui
+        CloseBtn.Position = UDim2.new(0, 4, 0, 4)
+        TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0,300,0,0)}):Play()
+        task.delay(0.27, function()
+            MainFrame.Visible = false
+            MainFrame.Size    = UDim2.new(0,300,0,680)
+        end)
     else
         CloseBtn.Text = "X"
+        CloseBtn.Parent   = TitleBar
+        CloseBtn.Position = UDim2.new(1, -34, 0, 7)
+        MainFrame.Size    = UDim2.new(0,300,0,0)
+        MainFrame.Visible = true
         TweenService:Create(MainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0,300,0,680)}):Play()
     end
 end)
