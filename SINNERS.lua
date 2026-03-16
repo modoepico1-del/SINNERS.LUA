@@ -591,6 +591,7 @@ local function autoSteal_execute(prompt)
     if not data or not data.ready then return false end
     data.ready = false
     autoStealIsStealing = true
+    animateStealBar()
     task.spawn(function()
         for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
         local delay = 0.2 + (AUTO_STEAL_PROX_RADIUS - 7) * 0.05
@@ -950,54 +951,124 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  RADIUS INPUT (en hub) + BARRA ABAJO
+--  GRAB RADIUS + PROGRESS BAR (flotante)
 -- ══════════════════════════════════════
 
--- Input dentro del hub
-local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(1, -20, 0, 38)
-radiusRow.Position               = UDim2.new(0, 10, 0, 496)
-radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-radiusRow.BackgroundTransparency = 0
-radiusRow.BorderSizePixel        = 0
-radiusRow.ZIndex                 = 4
-radiusRow.Parent                 = ContentArea
-Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
+-- Panel "Grab Radius" flotante debajo del hub
+local grabRadiusFrame = Instance.new("Frame")
+grabRadiusFrame.Size = UDim2.new(0, 280, 0, 40)
+grabRadiusFrame.Position = UDim2.new(0, 0, 0, 430)
+grabRadiusFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+grabRadiusFrame.BackgroundTransparency = 0.1
+grabRadiusFrame.BorderSizePixel = 0
+grabRadiusFrame.ZIndex = 10
+grabRadiusFrame.Parent = ScreenGui
+Instance.new("UICorner", grabRadiusFrame).CornerRadius = UDim.new(0, 8)
 
-local radiusTitleLabel = Instance.new("TextLabel")
-radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,120,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
-radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
-radiusTitleLabel.TextSize=12; radiusTitleLabel.Font=Enum.Font.GothamBlack
-radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
+local grabRadiusLabel = Instance.new("TextLabel")
+grabRadiusLabel.Text = "Grab Radius"
+grabRadiusLabel.Size = UDim2.new(0.6, 0, 1, 0)
+grabRadiusLabel.Position = UDim2.new(0, 12, 0, 0)
+grabRadiusLabel.BackgroundTransparency = 1
+grabRadiusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+grabRadiusLabel.TextSize = 13
+grabRadiusLabel.Font = Enum.Font.GothamBold
+grabRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+grabRadiusLabel.ZIndex = 11
+grabRadiusLabel.Parent = grabRadiusFrame
 
 local radiusInput = Instance.new("TextBox")
 radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-radiusInput.Size = UDim2.new(0, 55, 0, 24)
-radiusInput.Position = UDim2.new(1, -65, 0.5, -12)
-radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+radiusInput.Size = UDim2.new(0, 65, 0, 28)
+radiusInput.Position = UDim2.new(1, -75, 0.5, -14)
+radiusInput.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
 radiusInput.BorderSizePixel = 0
-radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+radiusInput.TextColor3 = Color3.fromRGB(255, 80, 80)
 radiusInput.PlaceholderText = "7"
-radiusInput.TextSize = 12
-radiusInput.Font = Enum.Font.GothamBlack
+radiusInput.TextSize = 14
+radiusInput.Font = Enum.Font.GothamBold
 radiusInput.ClearTextOnFocus = true
-radiusInput.ZIndex = 6
-radiusInput.Parent = radiusRow
-Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
-local radiusInputStroke = Instance.new("UIStroke", radiusInput)
-radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
+radiusInput.TextXAlignment = Enum.TextXAlignment.Center
+radiusInput.ZIndex = 12
+radiusInput.Parent = grabRadiusFrame
+Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 6)
 
 radiusInput.FocusLost:Connect(function()
     local val = tonumber(radiusInput.Text)
     if val and val > 0 then
         AUTO_STEAL_PROX_RADIUS = math.floor(val)
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+        stealRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
     else
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
 end)
 
-local function animateStealBar() end
+-- Barra de progreso 0%-100% flotante debajo
+local stealBarFrame = Instance.new("Frame")
+stealBarFrame.Size = UDim2.new(0, 280, 0, 36)
+stealBarFrame.Position = UDim2.new(0, 0, 0, 476)
+stealBarFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+stealBarFrame.BackgroundTransparency = 0.1
+stealBarFrame.BorderSizePixel = 0
+stealBarFrame.ZIndex = 10
+stealBarFrame.Parent = ScreenGui
+Instance.new("UICorner", stealBarFrame).CornerRadius = UDim.new(0, 8)
+
+local stealPctLabel = Instance.new("TextLabel")
+stealPctLabel.Text = "0%"
+stealPctLabel.Size = UDim2.new(0.5, 0, 0.6, 0)
+stealPctLabel.Position = UDim2.new(0, 10, 0, 2)
+stealPctLabel.BackgroundTransparency = 1
+stealPctLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+stealPctLabel.TextSize = 11
+stealPctLabel.Font = Enum.Font.GothamBold
+stealPctLabel.TextXAlignment = Enum.TextXAlignment.Left
+stealPctLabel.ZIndex = 11
+stealPctLabel.Parent = stealBarFrame
+
+local stealRadiusLabel = Instance.new("TextLabel")
+stealRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
+stealRadiusLabel.Size = UDim2.new(0.5, 0, 0.6, 0)
+stealRadiusLabel.Position = UDim2.new(0.5, 0, 0, 2)
+stealRadiusLabel.BackgroundTransparency = 1
+stealRadiusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+stealRadiusLabel.TextSize = 11
+stealRadiusLabel.Font = Enum.Font.GothamBold
+stealRadiusLabel.TextXAlignment = Enum.TextXAlignment.Right
+stealRadiusLabel.ZIndex = 11
+stealRadiusLabel.Parent = stealBarFrame
+
+local stealBarBg = Instance.new("Frame")
+stealBarBg.Size = UDim2.new(1, -16, 0, 8)
+stealBarBg.Position = UDim2.new(0, 8, 1, -12)
+stealBarBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+stealBarBg.BorderSizePixel = 0
+stealBarBg.ZIndex = 11
+stealBarBg.Parent = stealBarFrame
+Instance.new("UICorner", stealBarBg).CornerRadius = UDim.new(1, 0)
+
+local stealBarFill = Instance.new("Frame")
+stealBarFill.Size = UDim2.new(0, 0, 1, 0)
+stealBarFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+stealBarFill.BorderSizePixel = 0
+stealBarFill.ZIndex = 12
+stealBarFill.Parent = stealBarBg
+Instance.new("UICorner", stealBarFill).CornerRadius = UDim.new(1, 0)
+
+local function animateStealBar()
+    task.spawn(function()
+        for i = 1, 20 do
+            local pct = i / 20
+            TweenService:Create(stealBarFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
+            stealPctLabel.Text = math.floor(pct * 100) .. "%"
+            task.wait(0.01)
+        end
+        task.wait(0.3)
+        TweenService:Create(stealBarFill, TweenInfo.new(0.3), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+        stealPctLabel.Text = "0%"
+    end)
+end
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
