@@ -15,10 +15,6 @@ local me          = Players.LocalPlayer
 local RS          = RunService
 local Camera      = workspace.CurrentCamera
 
--- ══════════════════════════════════════
---  VARIABLES DE ESTADO
--- ══════════════════════════════════════
-
 local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
@@ -29,10 +25,6 @@ local infJumpOn          = false
 local autoStealActive    = false
 local AUTO_STEAL_PROX_RADIUS = 7
 local galaxySkyOn        = false
-
--- ══════════════════════════════════════
---  SAVE / LOAD CONFIG
--- ══════════════════════════════════════
 
 local CONFIG_FILE = "DEMONTIME_config.json"
 
@@ -55,10 +47,6 @@ end
 local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
--- ══════════════════════════════════════
---  GUI SETUP
--- ══════════════════════════════════════
-
 if CoreGui:FindFirstChild("DEMONTIME_GUI") then
     CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
 end
@@ -80,37 +68,7 @@ MainFrame.Draggable          = false
 MainFrame.ClipsDescendants   = true
 MainFrame.Visible            = true
 MainFrame.Parent             = ScreenGui
-
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-
-local function addNeonBorder(parent, thickness, color)
-    local glow = Instance.new("Frame")
-    glow.Size                   = UDim2.new(1, thickness*6, 1, thickness*6)
-    glow.Position               = UDim2.new(0, -thickness*3, 0, -thickness*3)
-    glow.BackgroundColor3       = color
-    glow.BackgroundTransparency = 0.72
-    glow.BorderSizePixel        = 0
-    glow.ZIndex                 = parent.ZIndex - 1
-    glow.Parent                 = parent
-    Instance.new("UICorner", glow).CornerRadius = UDim.new(0, 14)
-    local mid = Instance.new("Frame")
-    mid.Size                   = UDim2.new(1, thickness*3, 1, thickness*3)
-    mid.Position               = UDim2.new(0, -thickness*1.5, 0, -thickness*1.5)
-    mid.BackgroundColor3       = color
-    mid.BackgroundTransparency = 0.50
-    mid.BorderSizePixel        = 0
-    mid.ZIndex                 = parent.ZIndex - 1
-    mid.Parent                 = parent
-    Instance.new("UICorner", mid).CornerRadius = UDim.new(0, 12)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color           = color
-    stroke.Thickness       = thickness
-    stroke.Transparency    = 0.0
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.Parent          = parent
-end
-
-addNeonBorder(MainFrame, 2, Color3.fromRGB(0, 0, 0))
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size              = UDim2.new(1, 0, 0, 42)
@@ -128,17 +86,8 @@ TitleLine.BorderSizePixel  = 0
 TitleLine.ZIndex           = 4
 TitleLine.Parent           = TitleBar
 
-local lineGlow = Instance.new("Frame")
-lineGlow.Size                   = UDim2.new(1, 0, 0, 8)
-lineGlow.Position               = UDim2.new(0, 0, 1, -5)
-lineGlow.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
-lineGlow.BackgroundTransparency = 0.6
-lineGlow.BorderSizePixel        = 0
-lineGlow.ZIndex                 = 3
-lineGlow.Parent                 = TitleBar
-
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text                   = "DEMONTIME"
+TitleLabel.Text                   = "$KMONEY HUB"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
@@ -149,12 +98,6 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
-local TitleStroke = Instance.new("UIStroke")
-TitleStroke.Color        = Color3.fromRGB(20, 20, 20)
-TitleStroke.Thickness    = 0
-TitleStroke.Transparency = 1.0
-TitleStroke.Parent       = TitleLabel
-
 local ContentArea = Instance.new("Frame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
 ContentArea.Position               = UDim2.new(0, 0, 0, 42)
@@ -163,10 +106,6 @@ ContentArea.BackgroundTransparency = 0
 ContentArea.BorderSizePixel        = 0
 ContentArea.ZIndex                 = 3
 ContentArea.Parent                 = MainFrame
-
--- ══════════════════════════════════════
---  HELPER FILA
--- ══════════════════════════════════════
 
 local function makeOptionRow(parent, labelText, yPos)
     local row = Instance.new("Frame")
@@ -210,12 +149,8 @@ local function toggleOff(lbl, track, thumb)
     TweenService:Create(lbl,   TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(220,220,220)}):Play()
 end
 
--- ══════════════════════════════════════
---  UNWALK
--- ══════════════════════════════════════
-
+-- UNWALK
 local unwalkLabel, unwalkTrack, unwalkThumb = makeOptionRow(ContentArea, "UNWALK", 10)
-
 local function enableUnwalk()
     local char = me.Character if not char then return end
     local hum  = char:FindFirstChildOfClass("Humanoid") if not hum then return end
@@ -239,27 +174,20 @@ unwalkTrack.MouseButton1Click:Connect(function()
     else toggleOff(unwalkLabel, unwalkTrack, unwalkThumb); disableUnwalk() end
 end)
 
--- ══════════════════════════════════════
---  XRAY
--- ══════════════════════════════════════
-
+-- XRAY
 local xrayLabel, xrayTrack, xrayThumb = makeOptionRow(ContentArea, "XRAY", 64)
 local originalTransparency = {}
 local xrayDescConn, xrayCharConn = nil, nil
-
 local function startXray()
     pcall(function()
         settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        Lighting.GlobalShadows = false; Lighting.Brightness = 3; Lighting.FogEnd = 9e9
+        Lighting.GlobalShadows = false; Lighting.FogEnd = 9e9
     end)
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
             pcall(function()
-                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-                    obj:Destroy()
-                elseif obj:IsA("BasePart") then
-                    obj.CastShadow = false; obj.Material = Enum.Material.Plastic
-                end
+                if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then obj:Destroy()
+                elseif obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = Enum.Material.Plastic end
             end)
         end
     end)
@@ -310,13 +238,9 @@ xrayTrack.MouseButton1Click:Connect(function()
     else toggleOff(xrayLabel, xrayTrack, xrayThumb); stopXray() end
 end)
 
--- ══════════════════════════════════════
---  ESP
--- ══════════════════════════════════════
-
+-- ESP
 local espLabel, espTrack, espThumb = makeOptionRow(ContentArea, "ESP", 118)
 local espObjects, espConnections = {}, {}
-
 local function createESP(plr)
     if plr == me then return end
     if not plr.Character then return end
@@ -368,47 +292,28 @@ espTrack.MouseButton1Click:Connect(function()
     else toggleOff(espLabel, espTrack, espThumb); disableESP() end
 end)
 
--- ══════════════════════════════════════
---  DARKMODE (automático)
--- ══════════════════════════════════════
-
-local darkModeObjects = {}
-
+-- DARKMODE
 local function startDarkMode()
-    darkModeObjects = {}
     for _, child in pairs(Lighting:GetChildren()) do
-        if child:IsA("Sky") then
-            table.insert(darkModeObjects, {removed=true, instance=child, parent=Lighting})
-            child.Parent = nil
-        end
+        if child:IsA("Sky") then child.Parent = nil end
     end
     local sky = Instance.new("Sky")
     sky.SkyboxBk="rbxassetid://2013298"; sky.SkyboxDn="rbxassetid://2013298"
     sky.SkyboxFt="rbxassetid://2013298"; sky.SkyboxLf="rbxassetid://2013298"
     sky.SkyboxRt="rbxassetid://2013298"; sky.SkyboxUp="rbxassetid://2013298"
     sky.StarCount=0; sky.CelestialBodiesShown=false; sky.Parent=Lighting
-    table.insert(darkModeObjects, sky)
     Lighting.FogStart = 10000
 end
-
 task.defer(function() task.wait(0.5); startDarkMode() end)
 me.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
--- ══════════════════════════════════════
---  ANTI RAGDOLL
--- ══════════════════════════════════════
-
+-- ANTI RAGDOLL
 local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 
--- ══════════════════════════════════════
---  INF JUMP
--- ══════════════════════════════════════
-
+-- INF JUMP
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
-
 local jumpForce = 50
 local clampFallSpeed = 80
-
 RunService.Heartbeat:Connect(function()
     if not infJumpOn then return end
     local char = me.Character
@@ -418,31 +323,23 @@ RunService.Heartbeat:Connect(function()
         hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
     end
 end)
-
 UserInputService.JumpRequest:Connect(function()
     if not infJumpOn then return end
     local char = me.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z)
-    end
+    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
 end)
-
 infJumpTrack.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
     if infJumpOn then toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
     else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
 end)
 
-local RAGDOLL_SPEED           = 16
+local RAGDOLL_SPEED = 16
 
--- ══════════════════════════════════════
---  AUTO STEAL
--- ══════════════════════════════════════
-
+-- AUTO STEAL
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
-
 local autoStealStealConnection = nil
 local autoStealAnimalsCache = {}
 local autoStealPromptCache = {}
@@ -495,9 +392,7 @@ local function autoSteal_scanPlot(plot)
                 end
             end
             table.insert(autoStealAnimalsCache, {
-                name = animalName,
-                plot = plot.Name,
-                slot = podium.Name,
+                name = animalName, plot = plot.Name, slot = podium.Name,
                 worldPosition = podium:GetPivot().Position,
                 uid = plot.Name .. "_" .. podium.Name,
             })
@@ -662,12 +557,8 @@ autoStealTrack.MouseButton1Click:Connect(function()
     end
 end)
 
--- ══════════════════════════════════════
---  GALAXY SKY
--- ══════════════════════════════════════
-
+-- GALAXY SKY
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
-
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
 local galaxyPlanets = {}
 local galaxyBloom, galaxyCC
@@ -712,22 +603,13 @@ end
 
 galaxySkyTrack.MouseButton1Click:Connect(function()
     galaxySkyOn = not galaxySkyOn
-    if galaxySkyOn then
-        toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
-        enableGalaxySkyBright()
-    else
-        toggleOff(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
-        disableGalaxySkyBright()
-    end
+    if galaxySkyOn then toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb); enableGalaxySkyBright()
+    else toggleOff(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb); disableGalaxySkyBright() end
 end)
 
--- ══════════════════════════════════════
---  BAT AIMBOT
--- ══════════════════════════════════════
-
+-- BAT AIMBOT
 local batAimbotOn = false
 local batAimbotLabel, batAimbotTrack, batAimbotThumb = makeOptionRow(ContentArea, "BAT AIMBOT [E]", 388)
-
 local batAimbotConnection = nil
 
 local function findBat()
@@ -768,11 +650,9 @@ local function startBatAimbot()
         if target and torso then
             local dir = (torso.Position - h.Position)
             local flatDir = Vector3.new(dir.X, 0, dir.Z)
-            local flatDist = flatDir.Magnitude
-            local spd = 55
-            if flatDist > 1.5 then
+            if flatDir.Magnitude > 1.5 then
                 local moveDir = flatDir.Unit
-                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*spd, h.AssemblyLinearVelocity.Y, moveDir.Z*spd)
+                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*55, h.AssemblyLinearVelocity.Y, moveDir.Z*55)
             else
                 local tv = target.AssemblyLinearVelocity
                 h.AssemblyLinearVelocity = Vector3.new(tv.X, h.AssemblyLinearVelocity.Y, tv.Z)
@@ -787,28 +667,19 @@ end
 
 batAimbotTrack.MouseButton1Click:Connect(function()
     batAimbotOn = not batAimbotOn
-    if batAimbotOn then
-        toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
-        startBatAimbot()
-    else
-        toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
-        stopBatAimbot()
-    end
+    if batAimbotOn then toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb); startBatAimbot()
+    else toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb); stopBatAimbot() end
 end)
 
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.E then
         batAimbotOn = not batAimbotOn
-        if batAimbotOn then
-            toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
-            startBatAimbot()
-        else
-            toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
-            stopBatAimbot()
-        end
+        if batAimbotOn then toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb); startBatAimbot()
+        else toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb); stopBatAimbot() end
     end
 end)
 
+-- ANTI RAGDOLL CODE
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
@@ -888,50 +759,35 @@ ragdollTrack.MouseButton1Click:Connect(function()
     end
 end)
 
--- ══════════════════════════════════════
---  FPS BOOST (automático)
--- ══════════════════════════════════════
-
+-- FPS BOOST
 local fpsDescConn = nil
-
 local function stripVisuals(obj)
     pcall(function()
         if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")
         or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or obj:IsA("ColorCorrectionEffect")
         or obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("Atmosphere") then
             obj:Destroy()
-        elseif obj:IsA("BasePart") then
-            obj.CastShadow = false
-        end
+        elseif obj:IsA("BasePart") then obj.CastShadow = false end
     end)
 end
-
 local function enableFPSBoost()
     pcall(function()
         Lighting.GlobalShadows=false; Lighting.FogEnd=1000000; Lighting.FogStart=0
-        Lighting.EnvironmentDiffuseScale=0; Lighting.EnvironmentSpecularScale=0
+        Lighting.Brightness=2; Lighting.EnvironmentDiffuseScale=1; Lighting.EnvironmentSpecularScale=1
     end)
     pcall(function()
         for _, v in pairs(Lighting:GetChildren()) do
             if v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("ColorCorrectionEffect")
-            or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("Atmosphere") then
-                v:Destroy()
-            end
+            or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("Atmosphere") then v:Destroy() end
         end
     end)
-    pcall(function()
-        for _, obj in pairs(workspace:GetDescendants()) do stripVisuals(obj) end
-    end)
+    pcall(function() for _, obj in pairs(workspace:GetDescendants()) do stripVisuals(obj) end end)
     if fpsDescConn then fpsDescConn:Disconnect() end
     fpsDescConn = workspace.DescendantAdded:Connect(stripVisuals)
 end
-
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
--- ══════════════════════════════════════
---  RADIUS INPUT (steal radius)
--- ══════════════════════════════════════
-
+-- RADIUS INPUT
 local radiusRow = Instance.new("Frame")
 radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
 radiusRow.Position               = UDim2.new(0, 10, 1, -172)
@@ -975,35 +831,13 @@ radiusInput.FocusLost:Connect(function()
     end
 end)
 
--- ══════════════════════════════════════
---  FOV SLIDER (anclado abajo)
--- ══════════════════════════════════════
-
+-- FOV SLIDER
 local FOV_MIN, FOV_MAX = 70, 120
-
 local fovRow = Instance.new("Frame")
-fovRow.Size                   = UDim2.new(1, -20, 0, 54)
-fovRow.Position               = UDim2.new(0, 10, 1, -118)
-fovRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-fovRow.BackgroundTransparency = 0
-fovRow.BorderSizePixel        = 0
-fovRow.ZIndex                 = 4
-fovRow.Parent                 = MainFrame
-Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0, 7)
-local fovStroke = Instance.new("UIStroke", fovRow)
-fovStroke.Color = Color3.fromRGB(0,0,0); fovStroke.Thickness = 0
-
--- Forzar negro siempre
-RS.Heartbeat:Connect(function()
-    fovRow.BackgroundColor3          = Color3.fromRGB(0,0,0)
-    fovRow.BackgroundTransparency    = 0
-    SaveFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    SaveFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3       = Color3.fromRGB(0,0,0)
-    MainFrame.BackgroundTransparency = 0
-    ContentArea.BackgroundColor3     = Color3.fromRGB(0,0,0)
-    ContentArea.BackgroundTransparency = 0
-end)
+fovRow.Size=UDim2.new(1,-20,0,54); fovRow.Position=UDim2.new(0,10,1,-118)
+fovRow.BackgroundColor3=Color3.fromRGB(0,0,0); fovRow.BackgroundTransparency=0
+fovRow.BorderSizePixel=0; fovRow.ZIndex=4; fovRow.Parent=MainFrame
+Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0,7)
 
 local fovTitleLabel = Instance.new("TextLabel")
 fovTitleLabel.Text="FOV"; fovTitleLabel.Size=UDim2.new(0,80,0,20); fovTitleLabel.Position=UDim2.new(0,4,0,2)
@@ -1013,7 +847,7 @@ fovTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; fovTitleLabel.ZIndex=5; f
 
 local fovValLabel = Instance.new("TextLabel")
 fovValLabel.Text=tostring(fovValue); fovValLabel.Size=UDim2.new(0,50,0,20); fovValLabel.Position=UDim2.new(1,-54,0,2)
-fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(255,80,80)
+fovValLabel.BackgroundTransparency=1; fovValLabel.TextColor3=Color3.fromRGB(180,180,180)
 fovValLabel.TextSize=13; fovValLabel.Font=Enum.Font.GothamBlack
 fovValLabel.TextXAlignment=Enum.TextXAlignment.Right; fovValLabel.ZIndex=5; fovValLabel.Parent=fovRow
 
@@ -1028,7 +862,6 @@ sliderFill.Size=UDim2.new(0,0,1,0); sliderFill.BackgroundColor3=Color3.fromRGB(2
 sliderFill.BorderSizePixel=0; sliderFill.ZIndex=6; sliderFill.Parent=sliderTrack
 Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1,0)
 
--- Thumb: demonio neon rojo
 local sliderThumb = Instance.new("Frame")
 sliderThumb.Size=UDim2.new(0,28,0,28); sliderThumb.Position=UDim2.new(0,-14,0.5,-14)
 sliderThumb.BackgroundTransparency=1; sliderThumb.BorderSizePixel=0
@@ -1068,10 +901,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ══════════════════════════════════════
---  SAVE CONFIG
--- ══════════════════════════════════════
-
+-- SAVE CONFIG
 local SaveFrame = Instance.new("Frame")
 SaveFrame.Size=UDim2.new(1,-24,0,40); SaveFrame.Position=UDim2.new(0,12,1,-52)
 SaveFrame.BackgroundColor3=Color3.fromRGB(0,0,0); SaveFrame.BackgroundTransparency=0
@@ -1095,10 +925,7 @@ SaveBtn.MouseButton1Click:Connect(function()
     saveConfig(); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG"
 end)
 
--- ══════════════════════════════════════
---  DRAG
--- ══════════════════════════════════════
-
+-- DRAG
 local dragging, dragInput, dragStart, startPos
 
 TitleBar.InputBegan:Connect(function(input)
@@ -1107,9 +934,7 @@ TitleBar.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = MainFrame.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
         end)
     end
 end)
@@ -1130,43 +955,11 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- ══════════════════════════════════════
---  APERTURA
--- ══════════════════════════════════════
-
+-- APERTURA
 MainFrame.Size = UDim2.new(0,300,0,0)
 TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,940)}):Play()
 
--- ══════════════════════════════════════
---  ANTI LAGBACK (automático)
--- ══════════════════════════════════════
-
-local serverGhosts = {}
-
-local function clearAllGhosts()
-    for _, ghost in pairs(serverGhosts) do
-        pcall(function() if ghost and ghost.Parent then ghost:Destroy() end end)
-    end
-    serverGhosts = {}
-    pcall(function()
-        local pg = me:FindFirstChild("PlayerGui")
-        if pg then for _, gui in pairs(pg:GetChildren()) do if gui.Name=="LagbackNotification" then gui:Destroy() end end end
-    end)
-    pcall(function()
-        if workspace.CurrentCamera then
-            for _, c in pairs(workspace.CurrentCamera:GetChildren()) do if c.Name=="LagbackGhost" then c:Destroy() end end
-        end
-        for _, c in pairs(workspace:GetDescendants()) do if c.Name=="LagbackGhost" or c.Name=="LagbackErrorOrb" then c:Destroy() end end
-    end)
-end
-
-me.CharacterAdded:Connect(function() task.wait(0.5); clearAllGhosts() end)
-task.spawn(function() while ScreenGui.Parent do clearAllGhosts(); task.wait(10) end end)
-
--- ══════════════════════════════════════
---  AUTO-LOAD CONFIG
--- ══════════════════════════════════════
-
+-- AUTO-LOAD CONFIG
 task.defer(function()
     if savedCfg.Unwalk then
         unwalkOn = true; toggleOn(unwalkLabel, unwalkTrack, unwalkThumb); enableUnwalk()
