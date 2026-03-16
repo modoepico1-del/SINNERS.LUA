@@ -954,12 +954,12 @@ task.defer(function() task.wait(1); enableFPSBoost() end)
 
 local radiusRow = Instance.new("Frame")
 radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
-radiusRow.Position               = UDim2.new(0, 10, 1, -172)
+radiusRow.Position               = UDim2.new(0, 10, 0, 496)
 radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 radiusRow.BackgroundTransparency = 0
 radiusRow.BorderSizePixel        = 0
 radiusRow.ZIndex                 = 4
-radiusRow.Parent                 = MainFrame
+radiusRow.Parent                 = ContentArea
 Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
 
 local radiusTitleLabel = Instance.new("TextLabel")
