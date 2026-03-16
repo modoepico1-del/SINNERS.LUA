@@ -70,7 +70,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 940)
+MainFrame.Size               = UDim2.new(0, 300, 0, 1000)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -798,6 +798,21 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
+-- ══════════════════════════════════════
+--  DROP BRAINROT
+-- ══════════════════════════════════════
+
+local dropLabel, dropTrack, dropThumb = makeOptionRow(ContentArea, "DROP brainrot", 442)
+
+dropTrack.MouseButton1Click:Connect(function()
+    local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 125, 0)
+        task.wait(0.4)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, -600, 0)
+    end
+end)
+
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
@@ -1124,7 +1139,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,940)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,1000)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
