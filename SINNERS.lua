@@ -807,9 +807,9 @@ local dropLabel, dropTrack, dropThumb = makeOptionRow(ContentArea, "DROP Brainro
 local function doDrop()
     local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 88, 0)
-        task.wait(0.4)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, -1200, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, 180, 0)
+        task.wait(0.15)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, -1800, 0)
     end
 end
 
