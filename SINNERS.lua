@@ -591,9 +591,11 @@ local function autoSteal_execute(prompt)
     if not data or not data.ready then return false end
     data.ready = false
     autoStealIsStealing = true
+    animateStealBar()
     task.spawn(function()
         for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
-        task.wait(0.2)
+        local delay = 0.2 + (AUTO_STEAL_PROX_RADIUS - 7) * 0.05
+        task.wait(delay)
         for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
         task.wait(0.01)
         data.ready = true
@@ -949,11 +951,11 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  RADIUS INPUT (steal radius)
+--  RADIUS INPUT + PROGRESS BAR
 -- ══════════════════════════════════════
 
 local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
+radiusRow.Size                   = UDim2.new(1, -20, 0, 62)
 radiusRow.Position               = UDim2.new(0, 10, 0, 496)
 radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 radiusRow.BackgroundTransparency = 0
@@ -962,21 +964,23 @@ radiusRow.ZIndex                 = 4
 radiusRow.Parent                 = ContentArea
 Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
 
+-- Title
 local radiusTitleLabel = Instance.new("TextLabel")
-radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
+radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,120,0,20); radiusTitleLabel.Position=UDim2.new(0,10,0,4)
 radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
-radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
+radiusTitleLabel.TextSize=12; radiusTitleLabel.Font=Enum.Font.GothamBlack
 radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
 
+-- Input box
 local radiusInput = Instance.new("TextBox")
 radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-radiusInput.Size = UDim2.new(0, 70, 0, 28)
-radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
+radiusInput.Size = UDim2.new(0, 55, 0, 22)
+radiusInput.Position = UDim2.new(1, -65, 0, 4)
 radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 radiusInput.BorderSizePixel = 0
 radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
 radiusInput.PlaceholderText = "7"
-radiusInput.TextSize = 13
+radiusInput.TextSize = 12
 radiusInput.Font = Enum.Font.GothamBlack
 radiusInput.ClearTextOnFocus = true
 radiusInput.ZIndex = 6
@@ -994,6 +998,51 @@ radiusInput.FocusLost:Connect(function()
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
 end)
+
+-- Progress bar background
+local progressBg = Instance.new("Frame")
+progressBg.Size = UDim2.new(1, -16, 0, 12)
+progressBg.Position = UDim2.new(0, 8, 0, 32)
+progressBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+progressBg.BorderSizePixel = 0
+progressBg.ZIndex = 5
+progressBg.Parent = radiusRow
+Instance.new("UICorner", progressBg).CornerRadius = UDim.new(1, 0)
+
+-- Progress bar fill
+local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+progressFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+progressFill.BorderSizePixel = 0
+progressFill.ZIndex = 6
+progressFill.Parent = progressBg
+Instance.new("UICorner", progressFill).CornerRadius = UDim.new(1, 0)
+
+-- Percent label
+local progressPct = Instance.new("TextLabel")
+progressPct.Text = "0%"
+progressPct.Size = UDim2.new(1, 0, 1, 0)
+progressPct.BackgroundTransparency = 1
+progressPct.TextColor3 = Color3.fromRGB(255, 255, 255)
+progressPct.TextSize = 9
+progressPct.Font = Enum.Font.GothamBold
+progressPct.ZIndex = 7
+progressPct.Parent = progressBg
+
+local function animateStealBar()
+    task.spawn(function()
+        local steps = 20
+        for i = 1, steps do
+            local pct = i / steps
+            TweenService:Create(progressFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
+            progressPct.Text = math.floor(pct * 100) .. "%"
+            task.wait(0.01)
+        end
+        task.wait(0.3)
+        TweenService:Create(progressFill, TweenInfo.new(0.3), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+        progressPct.Text = "0%"
+    end)
+end
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
