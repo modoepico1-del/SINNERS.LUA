@@ -557,7 +557,108 @@ autoStealTrack.MouseButton1Click:Connect(function()
     end
 end)
 
--- GALAXY SKY
+-- ══════════════════════════════════════
+--  BARRA DE PROGRESO + RADIO VISUAL
+-- ══════════════════════════════════════
+
+-- Barra de progreso Auto Steal
+local progressBarBg = Instance.new("Frame")
+progressBarBg.Size = UDim2.new(0, 240, 0, 10)
+progressBarBg.Position = UDim2.new(0.5, -120, 0, 52)
+progressBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+progressBarBg.BackgroundTransparency = 0.25
+progressBarBg.Visible = false
+progressBarBg.Parent = ScreenGui
+Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
+
+local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+progressFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+progressFill.Parent = progressBarBg
+Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
+
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Size = UDim2.new(1, 0, 1, 0)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Font = Enum.Font.GothamBold
+percentLabel.TextSize = 11
+percentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+percentLabel.Text = "0%"
+percentLabel.Parent = progressBarBg
+
+-- Radio visual (cilindro azul)
+local stealSquarePart = nil
+local circleConnection = nil
+local grabRadius = AUTO_STEAL_PROX_RADIUS
+
+local function hideSquare()
+    if stealSquarePart then stealSquarePart:Destroy(); stealSquarePart = nil end
+    if circleConnection then circleConnection:Disconnect(); circleConnection = nil end
+end
+
+local function createOrUpdateSquare(radius)
+    if not stealSquarePart then
+        stealSquarePart = Instance.new("Part")
+        stealSquarePart.Name = "StealCircle"
+        stealSquarePart.Anchored = true
+        stealSquarePart.CanCollide = false
+        stealSquarePart.Transparency = 0.7
+        stealSquarePart.Material = Enum.Material.Neon
+        stealSquarePart.Color = Color3.fromRGB(0, 120, 255)
+        stealSquarePart.Shape = Enum.PartType.Cylinder
+        stealSquarePart.Parent = workspace
+    end
+    stealSquarePart.Size = Vector3.new(0.05, radius * 2, radius * 2)
+    if circleConnection then circleConnection:Disconnect() end
+    circleConnection = RunService.Heartbeat:Connect(function()
+        if not autoStealActive then hideSquare(); return end
+        local hrp = autoSteal_getHRP()
+        if hrp then
+            stealSquarePart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, 2.5, 0)) * CFrame.Angles(0, 0, math.rad(90))
+        end
+    end)
+end
+
+-- Animacion de la barra cuando roba
+local function animateProgressBar()
+    progressBarBg.Visible = true
+    task.spawn(function()
+        for i = 1, 20 do
+            local pct = i / 20
+            TweenService:Create(progressFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
+            percentLabel.Text = math.floor(pct * 100) .. "%"
+            task.wait(0.01)
+        end
+        task.wait(0.4)
+        TweenService:Create(progressFill, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+        percentLabel.Text = "0%"
+        task.wait(0.3)
+        progressBarBg.Visible = false
+    end)
+end
+
+-- Mostrar/ocultar radio al activar auto steal
+local _origEnable = enableAutoSteal
+enableAutoSteal = function()
+    _origEnable()
+    grabRadius = AUTO_STEAL_PROX_RADIUS
+    createOrUpdateSquare(grabRadius)
+end
+
+local _origDisable = disableAutoSteal
+disableAutoSteal = function()
+    _origDisable()
+    hideSquare()
+    progressBarBg.Visible = false
+end
+
+-- Hook en execute para animar la barra
+local _origExecute = autoSteal_execute
+autoSteal_execute = function(prompt)
+    local result = _origExecute(prompt)
+    if result then animateProgressBar() end
+    return result
+end
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
 local galaxyPlanets = {}
