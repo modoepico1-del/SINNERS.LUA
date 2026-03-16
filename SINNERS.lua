@@ -802,14 +802,24 @@ end)
 --  DROP BRAINROT
 -- ══════════════════════════════════════
 
-local dropLabel, dropTrack, dropThumb = makeOptionRow(ContentArea, "DROP brainrot", 442)
+local dropLabel, dropTrack, dropThumb = makeOptionRow(ContentArea, "DROP Brainrot [X]", 442)
 
-dropTrack.MouseButton1Click:Connect(function()
+local function doDrop()
     local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
     if hrp then
         hrp.AssemblyLinearVelocity = Vector3.new(0, 88, 0)
         task.wait(0.4)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, -600, 0)
+        hrp.AssemblyLinearVelocity = Vector3.new(0, -1200, 0)
+    end
+end
+
+dropTrack.MouseButton1Click:Connect(function()
+    doDrop()
+end)
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.X then
+        doDrop()
     end
 end)
 
