@@ -70,7 +70,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 300, 0, 1000)
+MainFrame.Size               = UDim2.new(0, 280, 0, 420)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -155,13 +155,19 @@ TitleStroke.Thickness    = 0
 TitleStroke.Transparency = 1.0
 TitleStroke.Parent       = TitleLabel
 
-local ContentArea = Instance.new("Frame")
-ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
+local ContentArea = Instance.new("ScrollingFrame")
+ContentArea.Size                   = UDim2.new(1, 0, 1, -130)
 ContentArea.Position               = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 ContentArea.BackgroundTransparency = 0
 ContentArea.BorderSizePixel        = 0
 ContentArea.ZIndex                 = 3
+ContentArea.ScrollBarThickness     = 4
+ContentArea.ScrollBarImageColor3   = Color3.fromRGB(255, 0, 0)
+ContentArea.CanvasSize             = UDim2.new(0, 0, 0, 500)
+ContentArea.AutomaticCanvasSize    = Enum.AutomaticSize.Y
+ContentArea.ScrollingDirection     = Enum.ScrollingDirection.Y
+ContentArea.ElasticBehavior        = Enum.ElasticBehavior.Never
 ContentArea.Parent                 = MainFrame
 
 -- ══════════════════════════════════════
@@ -1149,7 +1155,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,1000)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,280,0,420)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
