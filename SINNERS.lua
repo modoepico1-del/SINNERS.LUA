@@ -591,7 +591,6 @@ local function autoSteal_execute(prompt)
     if not data or not data.ready then return false end
     data.ready = false
     autoStealIsStealing = true
-    animateStealBar()
     task.spawn(function()
         for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
         local delay = 0.2 + (AUTO_STEAL_PROX_RADIUS - 7) * 0.05
@@ -993,70 +992,12 @@ radiusInput.FocusLost:Connect(function()
     if val and val > 0 then
         AUTO_STEAL_PROX_RADIUS = math.floor(val)
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-        bottomRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
     else
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
 end)
 
--- Barra de progreso en la parte baja de la pantalla (como en la foto)
-local bottomBarFrame = Instance.new("Frame")
-bottomBarFrame.Size = UDim2.new(0, 300, 0, 28)
-bottomBarFrame.Position = UDim2.new(0.5, -150, 1, -60)
-bottomBarFrame.BackgroundColor3 = Color3.fromRGB(80, 0, 120)
-bottomBarFrame.BackgroundTransparency = 0.2
-bottomBarFrame.BorderSizePixel = 0
-bottomBarFrame.ZIndex = 20
-bottomBarFrame.Parent = ScreenGui
-Instance.new("UICorner", bottomBarFrame).CornerRadius = UDim.new(0, 14)
-
-local bottomBarFill = Instance.new("Frame")
-bottomBarFill.Size = UDim2.new(0, 0, 1, 0)
-bottomBarFill.BackgroundColor3 = Color3.fromRGB(160, 0, 220)
-bottomBarFill.BackgroundTransparency = 0.1
-bottomBarFill.BorderSizePixel = 0
-bottomBarFill.ZIndex = 21
-bottomBarFill.Parent = bottomBarFrame
-Instance.new("UICorner", bottomBarFill).CornerRadius = UDim.new(0, 14)
-
-local bottomPctLabel = Instance.new("TextLabel")
-bottomPctLabel.Text = "0%"
-bottomPctLabel.Size = UDim2.new(0.5, 0, 1, 0)
-bottomPctLabel.Position = UDim2.new(0, 8, 0, 0)
-bottomPctLabel.BackgroundTransparency = 1
-bottomPctLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-bottomPctLabel.TextSize = 11
-bottomPctLabel.Font = Enum.Font.GothamBold
-bottomPctLabel.TextXAlignment = Enum.TextXAlignment.Left
-bottomPctLabel.ZIndex = 22
-bottomPctLabel.Parent = bottomBarFrame
-
-local bottomRadiusLabel = Instance.new("TextLabel")
-bottomRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
-bottomRadiusLabel.Size = UDim2.new(0.5, 0, 1, 0)
-bottomRadiusLabel.Position = UDim2.new(0.5, 0, 0, 0)
-bottomRadiusLabel.BackgroundTransparency = 1
-bottomRadiusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-bottomRadiusLabel.TextSize = 11
-bottomRadiusLabel.Font = Enum.Font.GothamBold
-bottomRadiusLabel.TextXAlignment = Enum.TextXAlignment.Right
-bottomRadiusLabel.ZIndex = 22
-bottomRadiusLabel.Parent = bottomBarFrame
-
-local function animateStealBar()
-    task.spawn(function()
-        local steps = 20
-        for i = 1, steps do
-            local pct = i / steps
-            TweenService:Create(bottomBarFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
-            bottomPctLabel.Text = math.floor(pct * 100) .. "%"
-            task.wait(0.01)
-        end
-        task.wait(0.3)
-        TweenService:Create(bottomBarFill, TweenInfo.new(0.3), {Size = UDim2.new(0, 0, 1, 0)}):Play()
-        bottomPctLabel.Text = "0%"
-    end)
-end
+local function animateStealBar() end
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
