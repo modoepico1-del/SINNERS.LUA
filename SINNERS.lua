@@ -606,18 +606,30 @@ local function createOrUpdateSquare(radius)
         stealSquarePart.Material = Enum.Material.Neon
         stealSquarePart.Color = Color3.fromRGB(0, 120, 255)
         stealSquarePart.Shape = Enum.PartType.Cylinder
+        -- IMPORTANTE: el cilindro necesita rotación
+        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
         stealSquarePart.Parent = workspace
+    else
+        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
     end
-    stealSquarePart.Size = Vector3.new(0.05, radius * 2, radius * 2)
-    if circleConnection then circleConnection:Disconnect() end
-    circleConnection = RunService.Heartbeat:Connect(function()
-        if not autoStealActive then hideSquare(); return end
-        local hrp = autoSteal_getHRP()
-        if hrp then
-            stealSquarePart.CFrame = CFrame.new(hrp.Position - Vector3.new(0, 2.5, 0)) * CFrame.Angles(0, 0, math.rad(90))
-        end
-    end)
 end
+
+local function updateSquarePosition()
+    if stealSquarePart and me.Character then
+        local root = me.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            stealSquarePart.CFrame =
+                CFrame.new(root.Position + Vector3.new(0, -2.5, 0))
+                * CFrame.Angles(0, 0, math.rad(90))
+        end
+    end
+end
+
+if circleConnection then circleConnection:Disconnect() end
+circleConnection = RunService.Heartbeat:Connect(function()
+    if not autoStealActive then hideSquare(); return end
+    updateSquarePosition()
+end)
 
 -- Animacion de la barra cuando roba
 local function animateProgressBar()
@@ -780,7 +792,117 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
--- ANTI RAGDOLL CODE
+-- ══════════════════════════════════════
+--  SPEED
+-- ══════════════════════════════════════
+
+local speedOn = false
+local speedConnection = nil
+local speedNoStealValue = 53
+local speedStealValue = 29
+
+-- Separador visual
+local speedSeparator = Instance.new("Frame")
+speedSeparator.Size = UDim2.new(1, -20, 0, 2)
+speedSeparator.Position = UDim2.new(0, 10, 0, 448)
+speedSeparator.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+speedSeparator.BackgroundTransparency = 0.6
+speedSeparator.BorderSizePixel = 0
+speedSeparator.ZIndex = 4
+speedSeparator.Parent = ContentArea
+
+local speedTitleLbl = Instance.new("TextLabel")
+speedTitleLbl.Text = "— SPEED —"
+speedTitleLbl.Size = UDim2.new(1, -20, 0, 20)
+speedTitleLbl.Position = UDim2.new(0, 10, 0, 454)
+speedTitleLbl.BackgroundTransparency = 1
+speedTitleLbl.TextColor3 = Color3.fromRGB(255, 0, 0)
+speedTitleLbl.TextSize = 12
+speedTitleLbl.Font = Enum.Font.GothamBlack
+speedTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
+speedTitleLbl.ZIndex = 5
+speedTitleLbl.Parent = ContentArea
+
+-- Row con los inputs y toggle
+local speedRow = Instance.new("Frame")
+speedRow.Size = UDim2.new(1, -20, 0, 60)
+speedRow.Position = UDim2.new(0, 10, 0, 478)
+speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+speedRow.BorderSizePixel = 0
+speedRow.ZIndex = 4
+speedRow.Parent = ContentArea
+Instance.new("UICorner", speedRow).CornerRadius = UDim.new(0, 7)
+local speedRowStroke = Instance.new("UIStroke", speedRow)
+speedRowStroke.Color = Color3.fromRGB(255,0,0); speedRowStroke.Thickness = 0.8; speedRowStroke.Transparency = 0.5
+
+-- Label Speed Normal
+local speedNormalLbl = Instance.new("TextLabel")
+speedNormalLbl.Text = "SPEED"; speedNormalLbl.Size = UDim2.new(0,50,0,18); speedNormalLbl.Position = UDim2.new(0,8,0,4)
+speedNormalLbl.BackgroundTransparency=1; speedNormalLbl.TextColor3=Color3.fromRGB(180,180,180)
+speedNormalLbl.TextSize=10; speedNormalLbl.Font=Enum.Font.GothamBold
+speedNormalLbl.TextXAlignment=Enum.TextXAlignment.Left; speedNormalLbl.ZIndex=5; speedNormalLbl.Parent=speedRow
+
+local speedBox = Instance.new("TextBox")
+speedBox.Text = tostring(speedNoStealValue); speedBox.Size = UDim2.new(0,55,0,22); speedBox.Position = UDim2.new(0,8,0,24)
+speedBox.BackgroundColor3=Color3.fromRGB(20,20,20); speedBox.BorderSizePixel=0
+speedBox.TextColor3=Color3.fromRGB(255,80,80); speedBox.TextSize=12; speedBox.Font=Enum.Font.GothamBold
+speedBox.ClearTextOnFocus=true; speedBox.ZIndex=6; speedBox.Parent=speedRow
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0,5)
+
+-- Label Steal Speed
+local stealSpeedLbl = Instance.new("TextLabel")
+stealSpeedLbl.Text = "STEAL"; stealSpeedLbl.Size = UDim2.new(0,50,0,18); stealSpeedLbl.Position = UDim2.new(0,72,0,4)
+stealSpeedLbl.BackgroundTransparency=1; stealSpeedLbl.TextColor3=Color3.fromRGB(180,180,180)
+stealSpeedLbl.TextSize=10; stealSpeedLbl.Font=Enum.Font.GothamBold
+stealSpeedLbl.TextXAlignment=Enum.TextXAlignment.Left; stealSpeedLbl.ZIndex=5; stealSpeedLbl.Parent=speedRow
+
+local stealBox = Instance.new("TextBox")
+stealBox.Text = tostring(speedStealValue); stealBox.Size = UDim2.new(0,55,0,22); stealBox.Position = UDim2.new(0,72,0,24)
+stealBox.BackgroundColor3=Color3.fromRGB(20,20,20); stealBox.BorderSizePixel=0
+stealBox.TextColor3=Color3.fromRGB(255,80,80); stealBox.TextSize=12; stealBox.Font=Enum.Font.GothamBold
+stealBox.ClearTextOnFocus=true; stealBox.ZIndex=6; stealBox.Parent=speedRow
+Instance.new("UICorner", stealBox).CornerRadius = UDim.new(0,5)
+
+-- Boton ON/OFF
+local speedActivate = Instance.new("TextButton")
+speedActivate.Text = "OFF"; speedActivate.Size = UDim2.new(0,60,0,40); speedActivate.Position = UDim2.new(1,-68,0.5,-20)
+speedActivate.BackgroundColor3=Color3.fromRGB(25,25,25); speedActivate.TextColor3=Color3.fromRGB(220,220,220)
+speedActivate.TextSize=13; speedActivate.Font=Enum.Font.GothamBlack; speedActivate.BorderSizePixel=0
+speedActivate.ZIndex=6; speedActivate.Parent=speedRow
+Instance.new("UICorner", speedActivate).CornerRadius = UDim.new(0,8)
+local speedBtnStroke = Instance.new("UIStroke", speedActivate)
+speedBtnStroke.Color=Color3.fromRGB(255,0,0); speedBtnStroke.Thickness=1.2
+
+speedActivate.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    if speedOn then
+        speedActivate.Text = "ON"
+        speedActivate.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = me.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+            speedNoStealValue = tonumber(speedBox.Text) or 53
+            speedStealValue = tonumber(stealBox.Text) or 29
+            local moveDirection = hum.MoveDirection
+            if moveDirection.Magnitude > 0 then
+                local isSteal = hum.WalkSpeed < 25
+                local currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                hrp.AssemblyLinearVelocity = Vector3.new(
+                    moveDirection.X * currentSpeed,
+                    hrp.AssemblyLinearVelocity.Y,
+                    moveDirection.Z * currentSpeed
+                )
+            end
+        end)
+    else
+        speedActivate.Text = "OFF"
+        speedActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+    end
+end)
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
