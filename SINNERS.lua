@@ -70,7 +70,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size               = UDim2.new(0, 280, 0, 420)
+MainFrame.Size               = UDim2.new(0, 300, 0, 940)
 MainFrame.Position           = UDim2.new(0, 0, 0, 4)
 MainFrame.BackgroundColor3   = Color3.fromRGB(0, 0, 0)
 MainFrame.BackgroundTransparency = 0
@@ -138,7 +138,7 @@ lineGlow.ZIndex                 = 3
 lineGlow.Parent                 = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text                   = "$KMONEY HUB"
+TitleLabel.Text                   = "DEMONTIME"
 TitleLabel.Size                   = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position               = UDim2.new(0, 14, 0, 0)
 TitleLabel.BackgroundTransparency = 1
@@ -155,19 +155,13 @@ TitleStroke.Thickness    = 0
 TitleStroke.Transparency = 1.0
 TitleStroke.Parent       = TitleLabel
 
-local ContentArea = Instance.new("ScrollingFrame")
-ContentArea.Size                   = UDim2.new(1, 0, 1, -130)
+local ContentArea = Instance.new("Frame")
+ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
 ContentArea.Position               = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 ContentArea.BackgroundTransparency = 0
 ContentArea.BorderSizePixel        = 0
 ContentArea.ZIndex                 = 3
-ContentArea.ScrollBarThickness     = 4
-ContentArea.ScrollBarImageColor3   = Color3.fromRGB(255, 0, 0)
-ContentArea.CanvasSize             = UDim2.new(0, 0, 0, 500)
-ContentArea.AutomaticCanvasSize    = Enum.AutomaticSize.Y
-ContentArea.ScrollingDirection     = Enum.ScrollingDirection.Y
-ContentArea.ElasticBehavior        = Enum.ElasticBehavior.Never
 ContentArea.Parent                 = MainFrame
 
 -- ══════════════════════════════════════
@@ -564,8 +558,26 @@ end
 
 local function autoSteal_buildCallbacks(prompt)
     if autoStealInternalCache[prompt] then return end
-    local data = { ready = true }
-    autoStealInternalCache[prompt] = data
+    local data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
+    local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
+    if ok1 and type(conns1) == "table" then
+        for _, conn in ipairs(conns1) do
+            if type(conn.Function) == "function" then
+                table.insert(data.holdCallbacks, conn.Function)
+            end
+        end
+    end
+    local ok2, conns2 = pcall(getconnections, prompt.Triggered)
+    if ok2 and type(conns2) == "table" then
+        for _, conn in ipairs(conns2) do
+            if type(conn.Function) == "function" then
+                table.insert(data.triggerCallbacks, conn.Function)
+            end
+        end
+    end
+    if (#data.holdCallbacks > 0) or (#data.triggerCallbacks > 0) then
+        autoStealInternalCache[prompt] = data
+    end
 end
 
 local function autoSteal_execute(prompt)
@@ -574,18 +586,13 @@ local function autoSteal_execute(prompt)
     data.ready = false
     autoStealIsStealing = true
     task.spawn(function()
-        pcall(function()
-            local oldMaxDist = prompt.MaxActivationDistance
-            prompt.MaxActivationDistance = 9999
-            prompt.HoldDuration = 0
-            fireproximityprompt(prompt)
-            task.wait(0.1)
-            prompt.MaxActivationDistance = oldMaxDist
-        end)
-        task.wait(0.1)
+        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
+        task.wait(0.2)
+        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
+        task.wait(0.01)
         data.ready = true
+        task.wait(0.01)
         autoStealIsStealing = false
-        if animateStealBar then animateStealBar() end
     end)
     return true
 end
@@ -593,6 +600,7 @@ end
 local function autoSteal_attempt(prompt)
     if not prompt or not prompt.Parent then return false end
     autoSteal_buildCallbacks(prompt)
+    if not autoStealInternalCache[prompt] then return false end
     return autoSteal_execute(prompt)
 end
 
@@ -714,7 +722,7 @@ galaxySkyTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  BAT AIMBOT [E]
+--  BAT AIMBOT
 -- ══════════════════════════════════════
 
 local batAimbotOn = false
@@ -761,9 +769,10 @@ local function startBatAimbot()
             local dir = (torso.Position - h.Position)
             local flatDir = Vector3.new(dir.X, 0, dir.Z)
             local flatDist = flatDir.Magnitude
+            local spd = 55
             if flatDist > 1.5 then
                 local moveDir = flatDir.Unit
-                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*55, h.AssemblyLinearVelocity.Y, moveDir.Z*55)
+                h.AssemblyLinearVelocity = Vector3.new(moveDir.X*spd, h.AssemblyLinearVelocity.Y, moveDir.Z*spd)
             else
                 local tv = target.AssemblyLinearVelocity
                 h.AssemblyLinearVelocity = Vector3.new(tv.X, h.AssemblyLinearVelocity.Y, tv.Z)
@@ -778,40 +787,25 @@ end
 
 batAimbotTrack.MouseButton1Click:Connect(function()
     batAimbotOn = not batAimbotOn
-    if batAimbotOn then toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb); startBatAimbot()
-    else toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb); stopBatAimbot() end
+    if batAimbotOn then
+        toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+        startBatAimbot()
+    else
+        toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+        stopBatAimbot()
+    end
 end)
 
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.E then
         batAimbotOn = not batAimbotOn
-        if batAimbotOn then toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb); startBatAimbot()
-        else toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb); stopBatAimbot() end
-    end
-end)
-
--- ══════════════════════════════════════
---  DROP BRAINROT
--- ══════════════════════════════════════
-
-local dropLabel, dropTrack, dropThumb = makeOptionRow(ContentArea, "DROP Brainrot [X]", 442)
-
-local function doDrop()
-    local hrp = me.Character and me.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        hrp.AssemblyLinearVelocity = Vector3.new(0, 180, 0)
-        task.wait(0.15)
-        hrp.AssemblyLinearVelocity = Vector3.new(0, -1800, 0)
-    end
-end
-
-dropTrack.MouseButton1Click:Connect(function()
-    doDrop()
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.X then
-        doDrop()
+        if batAimbotOn then
+            toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+            startBatAimbot()
+        else
+            toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb)
+            stopBatAimbot()
+        end
     end
 end)
 
@@ -935,124 +929,51 @@ end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
 -- ══════════════════════════════════════
---  GRAB RADIUS + PROGRESS BAR (flotante)
+--  RADIUS INPUT (steal radius)
 -- ══════════════════════════════════════
 
--- Panel "Grab Radius" flotante debajo del hub
-local grabRadiusFrame = Instance.new("Frame")
-grabRadiusFrame.Size = UDim2.new(0, 280, 0, 40)
-grabRadiusFrame.Position = UDim2.new(0, 0, 0, 430)
-grabRadiusFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-grabRadiusFrame.BackgroundTransparency = 0.1
-grabRadiusFrame.BorderSizePixel = 0
-grabRadiusFrame.ZIndex = 10
-grabRadiusFrame.Parent = ScreenGui
-Instance.new("UICorner", grabRadiusFrame).CornerRadius = UDim.new(0, 8)
+local radiusRow = Instance.new("Frame")
+radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
+radiusRow.Position               = UDim2.new(0, 10, 1, -172)
+radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
+radiusRow.BackgroundTransparency = 0
+radiusRow.BorderSizePixel        = 0
+radiusRow.ZIndex                 = 4
+radiusRow.Parent                 = MainFrame
+Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
 
-local grabRadiusLabel = Instance.new("TextLabel")
-grabRadiusLabel.Text = "Grab Radius"
-grabRadiusLabel.Size = UDim2.new(0.6, 0, 1, 0)
-grabRadiusLabel.Position = UDim2.new(0, 12, 0, 0)
-grabRadiusLabel.BackgroundTransparency = 1
-grabRadiusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-grabRadiusLabel.TextSize = 13
-grabRadiusLabel.Font = Enum.Font.GothamBold
-grabRadiusLabel.TextXAlignment = Enum.TextXAlignment.Left
-grabRadiusLabel.ZIndex = 11
-grabRadiusLabel.Parent = grabRadiusFrame
+local radiusTitleLabel = Instance.new("TextLabel")
+radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
+radiusTitleLabel.BackgroundTransparency=1; radiusTitleLabel.TextColor3=Color3.fromRGB(255,0,0)
+radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
+radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
 
 local radiusInput = Instance.new("TextBox")
 radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-radiusInput.Size = UDim2.new(0, 65, 0, 28)
-radiusInput.Position = UDim2.new(1, -75, 0.5, -14)
-radiusInput.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+radiusInput.Size = UDim2.new(0, 70, 0, 28)
+radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
+radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 radiusInput.BorderSizePixel = 0
-radiusInput.TextColor3 = Color3.fromRGB(255, 80, 80)
+radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
 radiusInput.PlaceholderText = "7"
-radiusInput.TextSize = 14
-radiusInput.Font = Enum.Font.GothamBold
+radiusInput.TextSize = 13
+radiusInput.Font = Enum.Font.GothamBlack
 radiusInput.ClearTextOnFocus = true
-radiusInput.TextXAlignment = Enum.TextXAlignment.Center
-radiusInput.ZIndex = 12
-radiusInput.Parent = grabRadiusFrame
-Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 6)
+radiusInput.ZIndex = 6
+radiusInput.Parent = radiusRow
+Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
+local radiusInputStroke = Instance.new("UIStroke", radiusInput)
+radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
 
 radiusInput.FocusLost:Connect(function()
     local val = tonumber(radiusInput.Text)
     if val and val > 0 then
         AUTO_STEAL_PROX_RADIUS = math.floor(val)
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-        stealRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
     else
         radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
     end
 end)
-
--- Barra de progreso 0%-100% flotante debajo
-local stealBarFrame = Instance.new("Frame")
-stealBarFrame.Size = UDim2.new(0, 280, 0, 36)
-stealBarFrame.Position = UDim2.new(0, 0, 0, 476)
-stealBarFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-stealBarFrame.BackgroundTransparency = 0.1
-stealBarFrame.BorderSizePixel = 0
-stealBarFrame.ZIndex = 10
-stealBarFrame.Parent = ScreenGui
-Instance.new("UICorner", stealBarFrame).CornerRadius = UDim.new(0, 8)
-
-local stealPctLabel = Instance.new("TextLabel")
-stealPctLabel.Text = "0%"
-stealPctLabel.Size = UDim2.new(0.5, 0, 0.6, 0)
-stealPctLabel.Position = UDim2.new(0, 10, 0, 2)
-stealPctLabel.BackgroundTransparency = 1
-stealPctLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-stealPctLabel.TextSize = 11
-stealPctLabel.Font = Enum.Font.GothamBold
-stealPctLabel.TextXAlignment = Enum.TextXAlignment.Left
-stealPctLabel.ZIndex = 11
-stealPctLabel.Parent = stealBarFrame
-
-local stealRadiusLabel = Instance.new("TextLabel")
-stealRadiusLabel.Text = "Radius: " .. tostring(AUTO_STEAL_PROX_RADIUS)
-stealRadiusLabel.Size = UDim2.new(0.5, 0, 0.6, 0)
-stealRadiusLabel.Position = UDim2.new(0.5, 0, 0, 2)
-stealRadiusLabel.BackgroundTransparency = 1
-stealRadiusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-stealRadiusLabel.TextSize = 11
-stealRadiusLabel.Font = Enum.Font.GothamBold
-stealRadiusLabel.TextXAlignment = Enum.TextXAlignment.Right
-stealRadiusLabel.ZIndex = 11
-stealRadiusLabel.Parent = stealBarFrame
-
-local stealBarBg = Instance.new("Frame")
-stealBarBg.Size = UDim2.new(1, -16, 0, 8)
-stealBarBg.Position = UDim2.new(0, 8, 1, -12)
-stealBarBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-stealBarBg.BorderSizePixel = 0
-stealBarBg.ZIndex = 11
-stealBarBg.Parent = stealBarFrame
-Instance.new("UICorner", stealBarBg).CornerRadius = UDim.new(1, 0)
-
-local stealBarFill = Instance.new("Frame")
-stealBarFill.Size = UDim2.new(0, 0, 1, 0)
-stealBarFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-stealBarFill.BorderSizePixel = 0
-stealBarFill.ZIndex = 12
-stealBarFill.Parent = stealBarBg
-Instance.new("UICorner", stealBarFill).CornerRadius = UDim.new(1, 0)
-
-local function animateStealBar()
-    task.spawn(function()
-        for i = 1, 20 do
-            local pct = i / 20
-            TweenService:Create(stealBarFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
-            stealPctLabel.Text = math.floor(pct * 100) .. "%"
-            task.wait(0.01)
-        end
-        task.wait(0.3)
-        TweenService:Create(stealBarFill, TweenInfo.new(0.3), {Size = UDim2.new(0, 0, 1, 0)}):Play()
-        stealPctLabel.Text = "0%"
-    end)
-end
 
 -- ══════════════════════════════════════
 --  FOV SLIDER (anclado abajo)
@@ -1214,7 +1135,7 @@ end)
 -- ══════════════════════════════════════
 
 MainFrame.Size = UDim2.new(0,300,0,0)
-TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,280,0,420)}):Play()
+TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,940)}):Play()
 
 -- ══════════════════════════════════════
 --  ANTI LAGBACK (automático)
