@@ -345,8 +345,8 @@ RunService.Heartbeat:Connect(function()
     local char = me.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp.Velocity.Y < -clampFallSpeed then
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+    if hrp and hrp.AssemblyLinearVelocity.Y < -clampFallSpeed then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -clampFallSpeed, hrp.AssemblyLinearVelocity.Z)
     end
 end)
 UserInputService.JumpRequest:Connect(function()
@@ -354,7 +354,7 @@ UserInputService.JumpRequest:Connect(function()
     local char = me.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
+    if hrp then hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, jumpForce, hrp.AssemblyLinearVelocity.Z) end
 end)
 infJumpTrack.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
@@ -1373,7 +1373,6 @@ local function forceExitRagdollChar(char, isLeft)
     local step2 = isLeft and LEFT_STEP_2 or RIGHT_STEP_2
     local step3 = isLeft and LEFT_STEP_3 or RIGHT_STEP_3
     root.CFrame = CFrame.new(step1 + Vector3.new(0, 3, 0))
-    root.Velocity = Vector3.zero
     root.AssemblyLinearVelocity = Vector3.zero
     root.AssemblyAngularVelocity = Vector3.zero
     hum:ChangeState(Enum.HumanoidStateType.GettingUp)
@@ -1387,7 +1386,6 @@ local function forceExitRagdollChar(char, isLeft)
         task.wait(0.07)
         if root and root.Parent then
             root.CFrame = CFrame.new(step2 + Vector3.new(0, 2.5, 0))
-            root.Velocity = Vector3.zero
             root.AssemblyLinearVelocity = Vector3.zero
         end
     end)
@@ -1396,7 +1394,6 @@ local function forceExitRagdollChar(char, isLeft)
             task.wait(0.14)
             if root and root.Parent then
                 root.CFrame = CFrame.new(step3 + Vector3.new(0, 2, 0))
-                root.Velocity = Vector3.zero
                 root.AssemblyLinearVelocity = Vector3.zero
             end
         end)
@@ -1499,7 +1496,7 @@ end)
 -- Logica movimiento
 local ARRIVE_DIST = 4
 
-local function moveToPoint(target, activeFlag)
+local function moveToPoint(target, activeFlag, isLeft)
     local char = me.Character
     if not char then return false end
     local hum = char:FindFirstChildOfClass("Humanoid")
@@ -1510,9 +1507,8 @@ local function moveToPoint(target, activeFlag)
         task.wait(0.1); t = t + 0.1
         local c2 = me.Character; if not c2 then break end
         local r2 = c2:FindFirstChild("HumanoidRootPart"); if not r2 then break end
-        -- anti ragdoll durante movimiento
         if isRagdolledChar(c2) then
-            forceExitRagdollChar(c2, activeFlag == function() return autoLeftOn end)
+            forceExitRagdollChar(c2, isLeft)
         end
         local dist = (Vector3.new(r2.Position.X, target.Y, r2.Position.Z) - Vector3.new(target.X, target.Y, target.Z)).Magnitude
         if dist <= ARRIVE_DIST then return true end
@@ -1527,7 +1523,7 @@ local function startAutoRight()
         while autoRightOn do
             for _, step in ipairs({RIGHT_STEP_1, RIGHT_STEP_2, RIGHT_STEP_3}) do
                 if not autoRightOn then break end
-                moveToPoint(step, function() return autoRightOn end)
+                moveToPoint(step, function() return autoRightOn end, false)
             end
             if autoRightOn then task.wait(0.5) end
         end
@@ -1551,7 +1547,7 @@ local function startAutoLeft()
         while autoLeftOn do
             for _, step in ipairs({LEFT_STEP_1, LEFT_STEP_2, LEFT_STEP_3}) do
                 if not autoLeftOn then break end
-                moveToPoint(step, function() return autoLeftOn end)
+                moveToPoint(step, function() return autoLeftOn end, true)
             end
             if autoLeftOn then task.wait(0.5) end
         end
