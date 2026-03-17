@@ -513,6 +513,7 @@ local function autoSteal_execute(prompt)
         task.wait(0.01)
         autoStealIsStealing = false
     end)
+    animateProgressBar()
     return true
 end
 
@@ -563,11 +564,14 @@ local function enableAutoSteal()
     autoStealActive = true
     autoSteal_initScanner()
     startAutoStealLoop()
+    grabRadius = AUTO_STEAL_PROX_RADIUS
+    createOrUpdateSquare(grabRadius)
 end
 
 local function disableAutoSteal()
     autoStealActive = false
     stopAutoStealLoop()
+    hideSquare()
 end
 
 autoStealTrack.MouseButton1Click:Connect(function()
@@ -1265,27 +1269,6 @@ UserInputService.InputChanged:Connect(function(input)
         )
     end
 end)
-
--- Wrappers finales
-local _origEnable = enableAutoSteal
-enableAutoSteal = function()
-    _origEnable()
-    grabRadius = AUTO_STEAL_PROX_RADIUS
-    createOrUpdateSquare(grabRadius)
-end
-
-local _origDisable = disableAutoSteal
-disableAutoSteal = function()
-    _origDisable()
-    hideSquare()
-end
-
-local _origExecute = autoSteal_execute
-autoSteal_execute = function(prompt)
-    local result = _origExecute(prompt)
-    if result then animateProgressBar() end
-    return result
-end
 
 -- APERTURA
 MainFrame.Size = UDim2.new(0,300,0,0)
