@@ -504,15 +504,11 @@ local function autoSteal_execute(prompt)
     local data = autoStealInternalCache[prompt]
     if not data or not data.ready then return false end
     data.ready = false
-    autoStealIsStealing = true
     task.spawn(function()
-        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
-        task.wait(0.2)
-        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
-        task.wait(0.01)
+        for _, fn in ipairs(data.holdCallbacks) do pcall(fn) end
+        for _, fn in ipairs(data.triggerCallbacks) do pcall(fn) end
+        task.wait(0.1)
         data.ready = true
-        task.wait(0.01)
-        autoStealIsStealing = false
     end)
     return true
 end
@@ -542,7 +538,6 @@ local function startAutoStealLoop()
     if autoStealStealConnection then autoStealStealConnection:Disconnect() end
     autoStealStealConnection = RunService.Heartbeat:Connect(function()
         if not autoStealActive then return end
-        if autoStealIsStealing then return end
         local target = autoSteal_getNearest()
         if not target or not target.worldPosition then return end
         local hrp = autoSteal_getHRP()
@@ -567,8 +562,6 @@ local function enableAutoSteal()
     autoStealActive = true
     autoSteal_initScanner()
     startAutoStealLoop()
-    grabRadius = AUTO_STEAL_PROX_RADIUS
-    createOrUpdateSquare(grabRadius)
 end
 
 local function disableAutoSteal()
@@ -582,9 +575,12 @@ autoStealTrack.MouseButton1Click:Connect(function()
     if autoStealActive then
         toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
         enableAutoSteal()
+        grabRadius = AUTO_STEAL_PROX_RADIUS
+        createOrUpdateSquare(grabRadius)
     else
         toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
         disableAutoSteal()
+        hideSquare()
     end
 end)
 
@@ -672,14 +668,16 @@ percentLabel.Parent = progressBarBg
 
 local function animateProgressBar()
     task.spawn(function()
-        for i = 1, 20 do
-            local pct = i / 20
-            TweenService:Create(progressFill, TweenInfo.new(0.01), {Size = UDim2.new(pct, 0, 1, 0)}):Play()
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        percentLabel.Text = "0%"
+        for i = 1, 10 do
+            local pct = i / 10
+            progressFill.Size = UDim2.new(pct, 0, 1, 0)
             percentLabel.Text = math.floor(pct * 100) .. "%"
-            task.wait(0.01)
+            task.wait(0.02)
         end
-        task.wait(0.4)
-        TweenService:Create(progressFill, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+        task.wait(0.3)
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
         percentLabel.Text = "0%"
     end)
 end
@@ -1337,6 +1335,8 @@ task.defer(function()
     if savedCfg.AutoSteal then
         autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
         enableAutoSteal()
+        grabRadius = AUTO_STEAL_PROX_RADIUS
+        createOrUpdateSquare(grabRadius)
     end
     if savedCfg.GalaxySky then
         galaxySkyOn = true; toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
