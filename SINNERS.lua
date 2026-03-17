@@ -841,33 +841,37 @@ Instance.new("UICorner", speedRow).CornerRadius = UDim.new(0, 7)
 local speedRowStroke = Instance.new("UIStroke", speedRow)
 speedRowStroke.Color = Color3.fromRGB(255,0,0); speedRowStroke.Thickness = 0.8; speedRowStroke.Transparency = 0.5
 
--- Label Speed Normal
-local speedNormalLbl = Instance.new("TextLabel")
-speedNormalLbl.Text = "SPEED"; speedNormalLbl.Size = UDim2.new(0,50,0,18); speedNormalLbl.Position = UDim2.new(0,8,0,4)
-speedNormalLbl.BackgroundTransparency=1; speedNormalLbl.TextColor3=Color3.fromRGB(180,180,180)
-speedNormalLbl.TextSize=10; speedNormalLbl.Font=Enum.Font.GothamBold
-speedNormalLbl.TextXAlignment=Enum.TextXAlignment.Left; speedNormalLbl.ZIndex=5; speedNormalLbl.Parent=speedRow
+local function createSpeedRow(text, posY, default)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.55, 0, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, posY)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 5
+    label.Parent = speedRow
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.35, 0, 0, 25)
+    box.Position = UDim2.new(0.55, 5, 0, posY)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.Text = tostring(default)
+    box.Font = Enum.Font.GothamBold
+    box.TextSize = 13
+    box.ClearTextOnFocus = false
+    box.ZIndex = 6
+    box.Parent = speedRow
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+    local s = Instance.new("UIStroke", box)
+    s.Color = Color3.fromRGB(0, 120, 255)
+    return box
+end
 
-local speedBox = Instance.new("TextBox")
-speedBox.Text = tostring(speedNoStealValue); speedBox.Size = UDim2.new(0,55,0,22); speedBox.Position = UDim2.new(0,8,0,24)
-speedBox.BackgroundColor3=Color3.fromRGB(20,20,20); speedBox.BorderSizePixel=0
-speedBox.TextColor3=Color3.fromRGB(255,80,80); speedBox.TextSize=12; speedBox.Font=Enum.Font.GothamBold
-speedBox.ClearTextOnFocus=true; speedBox.ZIndex=6; speedBox.Parent=speedRow
-Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0,5)
-
--- Label Steal Speed
-local stealSpeedLbl = Instance.new("TextLabel")
-stealSpeedLbl.Text = "STEAL"; stealSpeedLbl.Size = UDim2.new(0,50,0,18); stealSpeedLbl.Position = UDim2.new(0,72,0,4)
-stealSpeedLbl.BackgroundTransparency=1; stealSpeedLbl.TextColor3=Color3.fromRGB(180,180,180)
-stealSpeedLbl.TextSize=10; stealSpeedLbl.Font=Enum.Font.GothamBold
-stealSpeedLbl.TextXAlignment=Enum.TextXAlignment.Left; stealSpeedLbl.ZIndex=5; stealSpeedLbl.Parent=speedRow
-
-local stealBox = Instance.new("TextBox")
-stealBox.Text = tostring(speedStealValue); stealBox.Size = UDim2.new(0,55,0,22); stealBox.Position = UDim2.new(0,72,0,24)
-stealBox.BackgroundColor3=Color3.fromRGB(20,20,20); stealBox.BorderSizePixel=0
-stealBox.TextColor3=Color3.fromRGB(255,80,80); stealBox.TextSize=12; stealBox.Font=Enum.Font.GothamBold
-stealBox.ClearTextOnFocus=true; stealBox.ZIndex=6; stealBox.Parent=speedRow
-Instance.new("UICorner", stealBox).CornerRadius = UDim.new(0,5)
+local speedBox = createSpeedRow("Speed", 4, 53)
+local stealBox = createSpeedRow("Steal Speed", 34, 29)
 
 -- Boton ON/OFF
 local speedActivate = Instance.new("TextButton")
