@@ -1319,19 +1319,94 @@ autoSteal_execute = function(prompt)
 end
 
 -- ══════════════════════════════════════
---  MINI HUB - AUTO RIGHT
+--  MINI HUB - AUTO RIGHT / AUTO LEFT
 -- ══════════════════════════════════════
 
+-- Coordenadas RIGHT
 local RIGHT_STEP_1 = Vector3.new(-468, -6, 41)
 local RIGHT_STEP_2 = Vector3.new(-473, -6, 24)
 local RIGHT_STEP_3 = Vector3.new(-484, -4, 20)
+-- Coordenadas LEFT
+local LEFT_STEP_1 = Vector3.new(-469, -6, 78)
+local LEFT_STEP_2 = Vector3.new(-471, -6, 96)
+local LEFT_STEP_3 = Vector3.new(-484, -4, 99)
 
 local autoRightOn = false
+local autoLeftOn  = false
 local autoRightConn = nil
+local autoLeftConn  = nil
 
--- Panel
+local justTeleported = false
+local TP_COOLDOWN = 0.2
+local medusaMode = false
+
+local routeConnections = {}
+local function cleanupRouteConnections()
+    for _, c in pairs(routeConnections) do pcall(function() c:Disconnect() end) end
+    routeConnections = {}
+end
+
+local function isRagdolledChar(char)
+    if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    local state = hum:GetState()
+    if state == Enum.HumanoidStateType.Physics or
+       state == Enum.HumanoidStateType.Ragdoll or
+       state == Enum.HumanoidStateType.FallingDown then return true end
+    for _, obj in ipairs(char:GetDescendants()) do
+        if obj:IsA("Motor6D") and obj.Enabled == false then return true end
+    end
+    return false
+end
+
+local function forceExitRagdollChar(char, isLeft)
+    if not char or justTeleported then return end
+    justTeleported = true
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum  = char:FindFirstChildOfClass("Humanoid")
+    if not (root and hum) then
+        task.delay(TP_COOLDOWN, function() justTeleported = false end)
+        return
+    end
+    local step1 = isLeft and LEFT_STEP_1 or RIGHT_STEP_1
+    local step2 = isLeft and LEFT_STEP_2 or RIGHT_STEP_2
+    local step3 = isLeft and LEFT_STEP_3 or RIGHT_STEP_3
+    root.CFrame = CFrame.new(step1 + Vector3.new(0, 3, 0))
+    root.Velocity = Vector3.zero
+    root.AssemblyLinearVelocity = Vector3.zero
+    root.AssemblyAngularVelocity = Vector3.zero
+    hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+    task.wait(0.04)
+    hum:ChangeState(Enum.HumanoidStateType.Running)
+    Camera.CameraSubject = hum
+    for _, obj in ipairs(char:GetDescendants()) do
+        if obj:IsA("Motor6D") and not obj.Enabled then obj.Enabled = true end
+    end
+    task.spawn(function()
+        task.wait(0.07)
+        if root and root.Parent then
+            root.CFrame = CFrame.new(step2 + Vector3.new(0, 2.5, 0))
+            root.Velocity = Vector3.zero
+            root.AssemblyLinearVelocity = Vector3.zero
+        end
+    end)
+    if not medusaMode then
+        task.spawn(function()
+            task.wait(0.14)
+            if root and root.Parent then
+                root.CFrame = CFrame.new(step3 + Vector3.new(0, 2, 0))
+                root.Velocity = Vector3.zero
+                root.AssemblyLinearVelocity = Vector3.zero
+            end
+        end)
+    end
+    task.delay(TP_COOLDOWN, function() justTeleported = false end)
+end
+
+-- Panel mini hub
 local miniHub = Instance.new("Frame")
-miniHub.Size = UDim2.new(0, 160, 0, 130)
+miniHub.Size = UDim2.new(0, 180, 0, 180)
 miniHub.Position = UDim2.new(0, 310, 0, 4)
 miniHub.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 miniHub.BackgroundTransparency = 0
@@ -1343,9 +1418,8 @@ local miniStroke = Instance.new("UIStroke", miniHub)
 miniStroke.Color = Color3.fromRGB(255, 0, 0)
 miniStroke.Thickness = 1.2
 
--- Titulo
 local miniTitle = Instance.new("TextLabel")
-miniTitle.Text = "AUTO RIGHT"
+miniTitle.Text = "ROUTE HUB"
 miniTitle.Size = UDim2.new(1, -10, 0, 30)
 miniTitle.Position = UDim2.new(0, 10, 0, 6)
 miniTitle.BackgroundTransparency = 1
@@ -1356,7 +1430,6 @@ miniTitle.TextXAlignment = Enum.TextXAlignment.Left
 miniTitle.ZIndex = 5
 miniTitle.Parent = miniHub
 
--- Separador
 local miniLine = Instance.new("Frame")
 miniLine.Size = UDim2.new(1, -20, 0, 1)
 miniLine.Position = UDim2.new(0, 10, 0, 36)
@@ -1366,58 +1439,43 @@ miniLine.BorderSizePixel = 0
 miniLine.ZIndex = 5
 miniLine.Parent = miniHub
 
--- Toggle row
-local miniRow = Instance.new("Frame")
-miniRow.Size = UDim2.new(1, -20, 0, 44)
-miniRow.Position = UDim2.new(0, 10, 0, 46)
-miniRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-miniRow.BorderSizePixel = 0
-miniRow.ZIndex = 4
-miniRow.Parent = miniHub
-Instance.new("UICorner", miniRow).CornerRadius = UDim.new(0, 7)
-local miniRowStroke = Instance.new("UIStroke", miniRow)
-miniRowStroke.Color = Color3.fromRGB(255, 0, 0)
-miniRowStroke.Thickness = 0.8
-miniRowStroke.Transparency = 0.5
+local function makeMiniRow(labelText, yPos)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -20, 0, 44)
+    row.Position = UDim2.new(0, 10, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+    row.BorderSizePixel = 0
+    row.ZIndex = 4
+    row.Parent = miniHub
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
+    local rs = Instance.new("UIStroke", row)
+    rs.Color = Color3.fromRGB(255,0,0); rs.Thickness = 0.8; rs.Transparency = 0.5
+    local lbl = Instance.new("TextLabel")
+    lbl.Text = labelText; lbl.Size = UDim2.new(1,-60,1,0); lbl.Position = UDim2.new(0,10,0,0)
+    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.TextSize = 12; lbl.Font = Enum.Font.GothamBlack
+    lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 5; lbl.Parent = row
+    local track = Instance.new("TextButton")
+    track.Text = ""; track.Size = UDim2.new(0,44,0,24); track.Position = UDim2.new(1,-54,0.5,-12)
+    track.BackgroundColor3 = Color3.fromRGB(40,40,40); track.BorderSizePixel = 0
+    track.ZIndex = 5; track.Parent = row
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1,0)
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0,18,0,18); thumb.Position = UDim2.new(0,3,0.5,-9)
+    thumb.BackgroundColor3 = Color3.fromRGB(180,180,180); thumb.BorderSizePixel = 0
+    thumb.ZIndex = 6; thumb.Parent = track
+    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
+    return lbl, track, thumb
+end
 
-local miniLbl = Instance.new("TextLabel")
-miniLbl.Text = "AUTO RIGHT"
-miniLbl.Size = UDim2.new(1, -60, 1, 0)
-miniLbl.Position = UDim2.new(0, 10, 0, 0)
-miniLbl.BackgroundTransparency = 1
-miniLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-miniLbl.TextSize = 12
-miniLbl.Font = Enum.Font.GothamBlack
-miniLbl.TextXAlignment = Enum.TextXAlignment.Left
-miniLbl.ZIndex = 5
-miniLbl.Parent = miniRow
-
-local miniTrack = Instance.new("TextButton")
-miniTrack.Text = ""
-miniTrack.Size = UDim2.new(0, 44, 0, 24)
-miniTrack.Position = UDim2.new(1, -54, 0.5, -12)
-miniTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-miniTrack.BorderSizePixel = 0
-miniTrack.ZIndex = 5
-miniTrack.Parent = miniRow
-Instance.new("UICorner", miniTrack).CornerRadius = UDim.new(1, 0)
-
-local miniThumb = Instance.new("Frame")
-miniThumb.Size = UDim2.new(0, 18, 0, 18)
-miniThumb.Position = UDim2.new(0, 3, 0.5, -9)
-miniThumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-miniThumb.BorderSizePixel = 0
-miniThumb.ZIndex = 6
-miniThumb.Parent = miniTrack
-Instance.new("UICorner", miniThumb).CornerRadius = UDim.new(1, 0)
+local rightLbl, rightTrack, rightThumb = makeMiniRow("AUTO RIGHT", 46)
+local leftLbl,  leftTrack,  leftThumb  = makeMiniRow("AUTO LEFT",  100)
 
 -- Drag mini hub
 local mDragging, mDragInput, mDragStart, mStartPos = false, nil, nil, nil
 miniHub.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        mDragging = true
-        mDragStart = input.Position
-        mStartPos = miniHub.Position
+        mDragging = true; mDragStart = input.Position; mStartPos = miniHub.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then mDragging = false end
         end)
@@ -1438,30 +1496,27 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Logica AUTO RIGHT
-local RIGHT_STEPS = {RIGHT_STEP_1, RIGHT_STEP_2, RIGHT_STEP_3}
-local ARRIVE_DIST = 4  -- distancia para considerar que llegó al punto
+-- Logica movimiento
+local ARRIVE_DIST = 4
 
-local function moveToPoint(target)
+local function moveToPoint(target, activeFlag)
     local char = me.Character
     if not char then return false end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum then return false end
-    -- Mover usando Humanoid:MoveTo
+    if not hum then return false end
     hum:MoveTo(target)
-    -- Esperar hasta llegar o timeout
     local t = 0
-    while autoRightOn do
-        task.wait(0.1)
-        t = t + 0.1
-        local c2 = me.Character
-        if not c2 then break end
-        local r2 = c2:FindFirstChild("HumanoidRootPart")
-        if not r2 then break end
+    while activeFlag() do
+        task.wait(0.1); t = t + 0.1
+        local c2 = me.Character; if not c2 then break end
+        local r2 = c2:FindFirstChild("HumanoidRootPart"); if not r2 then break end
+        -- anti ragdoll durante movimiento
+        if isRagdolledChar(c2) then
+            forceExitRagdollChar(c2, activeFlag == function() return autoLeftOn end)
+        end
         local dist = (Vector3.new(r2.Position.X, target.Y, r2.Position.Z) - Vector3.new(target.X, target.Y, target.Z)).Magnitude
         if dist <= ARRIVE_DIST then return true end
-        if t > 10 then return false end  -- timeout 10s por punto
+        if t > 10 then return false end
     end
     return false
 end
@@ -1470,36 +1525,81 @@ local function startAutoRight()
     if autoRightConn then return end
     autoRightConn = task.spawn(function()
         while autoRightOn do
-            for _, step in ipairs(RIGHT_STEPS) do
+            for _, step in ipairs({RIGHT_STEP_1, RIGHT_STEP_2, RIGHT_STEP_3}) do
                 if not autoRightOn then break end
-                moveToPoint(step)
+                moveToPoint(step, function() return autoRightOn end)
             end
-            if autoRightOn then
-                task.wait(0.5)
-            end
+            if autoRightOn then task.wait(0.5) end
         end
         autoRightConn = nil
     end)
 end
 
 local function stopAutoRight()
-    autoRightOn = false
-    autoRightConn = nil
+    autoRightOn = false; autoRightConn = nil
     local char = me.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then hum:MoveTo(char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.Position or Vector3.zero) end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hum and hrp then hum:MoveTo(hrp.Position) end
     end
 end
 
-miniTrack.MouseButton1Click:Connect(function()
+local function startAutoLeft()
+    if autoLeftConn then return end
+    autoLeftConn = task.spawn(function()
+        while autoLeftOn do
+            for _, step in ipairs({LEFT_STEP_1, LEFT_STEP_2, LEFT_STEP_3}) do
+                if not autoLeftOn then break end
+                moveToPoint(step, function() return autoLeftOn end)
+            end
+            if autoLeftOn then task.wait(0.5) end
+        end
+        autoLeftConn = nil
+    end)
+end
+
+local function stopAutoLeft()
+    autoLeftOn = false; autoLeftConn = nil
+    local char = me.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hum and hrp then hum:MoveTo(hrp.Position) end
+    end
+end
+
+rightTrack.MouseButton1Click:Connect(function()
     autoRightOn = not autoRightOn
     if autoRightOn then
-        toggleOn(miniLbl, miniTrack, miniThumb)
+        -- apagar left si estaba on
+        if autoLeftOn then
+            autoLeftOn = false
+            toggleOff(leftLbl, leftTrack, leftThumb)
+            stopAutoLeft()
+        end
+        toggleOn(rightLbl, rightTrack, rightThumb)
         startAutoRight()
     else
-        toggleOff(miniLbl, miniTrack, miniThumb)
+        toggleOff(rightLbl, rightTrack, rightThumb)
         stopAutoRight()
+    end
+end)
+
+leftTrack.MouseButton1Click:Connect(function()
+    autoLeftOn = not autoLeftOn
+    if autoLeftOn then
+        -- apagar right si estaba on
+        if autoRightOn then
+            autoRightOn = false
+            toggleOff(rightLbl, rightTrack, rightThumb)
+            stopAutoRight()
+        end
+        toggleOn(leftLbl, leftTrack, leftThumb)
+        startAutoLeft()
+    else
+        toggleOff(leftLbl, leftTrack, leftThumb)
+        stopAutoLeft()
     end
 end)
 
