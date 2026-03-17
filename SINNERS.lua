@@ -567,7 +567,6 @@ end)
 --  BARRA DE PROGRESO + RADIO VISUAL
 -- ══════════════════════════════════════
 
--- Barra de progreso Auto Steal
 local progressBarBg = Instance.new("Frame")
 progressBarBg.Size = UDim2.new(0, 240, 0, 10)
 progressBarBg.Position = UDim2.new(0.5, -120, 0, 52)
@@ -592,7 +591,6 @@ percentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 percentLabel.Text = "0%"
 percentLabel.Parent = progressBarBg
 
--- Radio visual (cilindro azul)
 local stealSquarePart = nil
 local circleConnection = nil
 local grabRadius = AUTO_STEAL_PROX_RADIUS
@@ -612,7 +610,6 @@ local function createOrUpdateSquare(radius)
         stealSquarePart.Material = Enum.Material.Neon
         stealSquarePart.Color = Color3.fromRGB(0, 120, 255)
         stealSquarePart.Shape = Enum.PartType.Cylinder
-        -- IMPORTANTE: el cilindro necesita rotación
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
         stealSquarePart.Parent = workspace
     else
@@ -637,7 +634,6 @@ circleConnection = RunService.Heartbeat:Connect(function()
     updateSquarePosition()
 end)
 
--- Animacion de la barra cuando roba
 local function animateProgressBar()
     progressBarBg.Visible = true
     task.spawn(function()
@@ -655,7 +651,6 @@ local function animateProgressBar()
     end)
 end
 
--- Mostrar/ocultar radio al activar auto steal
 local _origEnable = enableAutoSteal
 enableAutoSteal = function()
     _origEnable()
@@ -670,13 +665,13 @@ disableAutoSteal = function()
     progressBarBg.Visible = false
 end
 
--- Hook en execute para animar la barra
 local _origExecute = autoSteal_execute
 autoSteal_execute = function(prompt)
     local result = _origExecute(prompt)
     if result then animateProgressBar() end
     return result
 end
+
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
 local galaxyPlanets = {}
@@ -807,7 +802,6 @@ local speedConnection = nil
 local speedNoStealValue = 53
 local speedStealValue = 29
 
--- Separador visual
 local speedSeparator = Instance.new("Frame")
 speedSeparator.Size = UDim2.new(1, -20, 0, 2)
 speedSeparator.Position = UDim2.new(0, 10, 0, 448)
@@ -829,7 +823,6 @@ speedTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
 speedTitleLbl.ZIndex = 5
 speedTitleLbl.Parent = ContentArea
 
--- Row con los inputs y toggle
 local speedRow = Instance.new("Frame")
 speedRow.Size = UDim2.new(1, -20, 0, 60)
 speedRow.Position = UDim2.new(0, 10, 0, 478)
@@ -841,7 +834,6 @@ Instance.new("UICorner", speedRow).CornerRadius = UDim.new(0, 7)
 local speedRowStroke = Instance.new("UIStroke", speedRow)
 speedRowStroke.Color = Color3.fromRGB(255,0,0); speedRowStroke.Thickness = 0.8; speedRowStroke.Transparency = 0.5
 
--- Label Speed Normal
 local speedNormalLbl = Instance.new("TextLabel")
 speedNormalLbl.Text = "SPEED"; speedNormalLbl.Size = UDim2.new(0,50,0,18); speedNormalLbl.Position = UDim2.new(0,8,0,4)
 speedNormalLbl.BackgroundTransparency=1; speedNormalLbl.TextColor3=Color3.fromRGB(180,180,180)
@@ -855,7 +847,6 @@ speedBox.TextColor3=Color3.fromRGB(255,80,80); speedBox.TextSize=12; speedBox.Fo
 speedBox.ClearTextOnFocus=true; speedBox.ZIndex=6; speedBox.Parent=speedRow
 Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0,5)
 
--- Label Steal Speed
 local stealSpeedLbl = Instance.new("TextLabel")
 stealSpeedLbl.Text = "STEAL"; stealSpeedLbl.Size = UDim2.new(0,50,0,18); stealSpeedLbl.Position = UDim2.new(0,72,0,4)
 stealSpeedLbl.BackgroundTransparency=1; stealSpeedLbl.TextColor3=Color3.fromRGB(180,180,180)
@@ -869,7 +860,6 @@ stealBox.TextColor3=Color3.fromRGB(255,80,80); stealBox.TextSize=12; stealBox.Fo
 stealBox.ClearTextOnFocus=true; stealBox.ZIndex=6; stealBox.Parent=speedRow
 Instance.new("UICorner", stealBox).CornerRadius = UDim.new(0,5)
 
--- Boton ON/OFF
 local speedActivate = Instance.new("TextButton")
 speedActivate.Text = "OFF"; speedActivate.Size = UDim2.new(0,60,0,40); speedActivate.Position = UDim2.new(1,-68,0.5,-20)
 speedActivate.BackgroundColor3=Color3.fromRGB(25,25,25); speedActivate.TextColor3=Color3.fromRGB(220,220,220)
@@ -880,19 +870,25 @@ local speedBtnStroke = Instance.new("UIStroke", speedActivate)
 speedBtnStroke.Color=Color3.fromRGB(255,0,0); speedBtnStroke.Thickness=1.2
 
 speedBox.FocusLost:Connect(function()
-    local text = speedBox.Text:gsub("%D","")
-    local num = tonumber(text) or 53
-    num = math.clamp(num, 15, 200)
-    speedBox.Text = tostring(num)
-    speedNoStealValue = num
+    local num = tonumber(speedBox.Text)
+    if num then
+        num = math.clamp(num, 15, 200)
+        speedBox.Text = tostring(num)
+        speedNoStealValue = num
+    else
+        speedBox.Text = tostring(speedNoStealValue)
+    end
 end)
 
 stealBox.FocusLost:Connect(function()
-    local text = stealBox.Text:gsub("%D","")
-    local num = tonumber(text) or 29
-    num = math.clamp(num, 15, 200)
-    stealBox.Text = tostring(num)
-    speedStealValue = num
+    local num = tonumber(stealBox.Text)
+    if num then
+        num = math.clamp(num, 15, 200)
+        stealBox.Text = tostring(num)
+        speedStealValue = num
+    else
+        stealBox.Text = tostring(speedStealValue)
+    end
 end)
 
 speedActivate.MouseButton1Click:Connect(function()
@@ -925,6 +921,7 @@ speedActivate.MouseButton1Click:Connect(function()
         if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
     end
 end)
+
 local currentCharacter        = nil
 local ragdollRemoteConnection = nil
 local moveConnection          = nil
