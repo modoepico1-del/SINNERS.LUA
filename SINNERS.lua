@@ -831,7 +831,7 @@ speedTitleLbl.Parent = ContentArea
 
 -- Row con los inputs y toggle
 local speedRow = Instance.new("Frame")
-speedRow.Size = UDim2.new(1, -20, 0, 60)
+speedRow.Size = UDim2.new(1, -20, 0, 95)
 speedRow.Position = UDim2.new(0, 10, 0, 478)
 speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 speedRow.BorderSizePixel = 0
@@ -870,8 +870,20 @@ local function createSpeedRow(text, posY, default)
     return box
 end
 
-local speedBox = createSpeedRow("Speed", 4, 53)
-local stealBox = createSpeedRow("Steal Speed", 34, 29)
+local speedSectionTitle = Instance.new("TextLabel")
+speedSectionTitle.Size = UDim2.new(1, 0, 0, 30)
+speedSectionTitle.Position = UDim2.new(0, 10, 0, 0)
+speedSectionTitle.BackgroundTransparency = 1
+speedSectionTitle.Text = "Booster Customizer"
+speedSectionTitle.Font = Enum.Font.GothamBold
+speedSectionTitle.TextSize = 15
+speedSectionTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+speedSectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+speedSectionTitle.ZIndex = 5
+speedSectionTitle.Parent = speedRow
+
+local speedBox = createSpeedRow("Speed", 34, 53)
+local stealBox = createSpeedRow("Steal Speed", 64, 29)
 
 -- Boton ON/OFF
 local speedActivate = Instance.new("TextButton")
