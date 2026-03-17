@@ -363,6 +363,47 @@ infJumpTrack.MouseButton1Click:Connect(function()
     else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
 end)
 
+-- BARRA DE PROGRESO
+local progressBarBg = Instance.new("Frame")
+progressBarBg.Size = UDim2.new(0, 240, 0, 10)
+progressBarBg.Position = UDim2.new(0, 0, 0, 758)
+progressBarBg.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+progressBarBg.BackgroundTransparency = 0
+progressBarBg.Visible = false
+progressBarBg.Parent = ScreenGui
+Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
+
+local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+progressFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+progressFill.Parent = progressBarBg
+Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
+
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Size = UDim2.new(1, 0, 1, 0)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Font = Enum.Font.GothamBold
+percentLabel.TextSize = 11
+percentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+percentLabel.Text = "0%"
+percentLabel.Parent = progressBarBg
+
+local function animateProgressBar()
+    task.spawn(function()
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        percentLabel.Text = "0%"
+        for i = 1, 10 do
+            local pct = i / 10
+            progressFill.Size = UDim2.new(pct, 0, 1, 0)
+            percentLabel.Text = math.floor(pct * 100) .. "%"
+            task.wait(0.015)
+        end
+        task.wait(0.2)
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        percentLabel.Text = "0%"
+    end)
+end
+
 -- AUTO STEAL
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
 local autoStealStealConnection = nil
@@ -582,10 +623,14 @@ autoStealTrack.MouseButton1Click:Connect(function()
         enableAutoSteal()
         grabRadius = AUTO_STEAL_PROX_RADIUS
         createOrUpdateSquare(grabRadius)
+        progressBarBg.Visible = true
     else
         toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
         disableAutoSteal()
         hideSquare()
+        progressBarBg.Visible = false
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        percentLabel.Text = "0%"
     end
 end)
 
@@ -635,59 +680,6 @@ if circleConnection then circleConnection:Disconnect() end
 circleConnection = RunService.Heartbeat:Connect(function()
     if not autoStealActive then hideSquare(); return end
     updateSquarePosition()
-end)
-
--- ══════════════════════════════════════
---  BARRA DE PROGRESO ROJA (SIEMPRE VISIBLE, DEBAJO DE RADIUS)
--- ══════════════════════════════════════
-
-local progressBarBg = Instance.new("Frame")
-progressBarBg.Size = UDim2.new(0, 240, 0, 10)
-progressBarBg.Position = UDim2.new(0, 0, 0, 758)
-progressBarBg.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
-progressBarBg.BackgroundTransparency = 0
-progressBarBg.Visible = true
-progressBarBg.Parent = ScreenGui
-Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
-
-local progressFill = Instance.new("Frame")
-progressFill.Size = UDim2.new(0, 0, 1, 0)
-progressFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-progressFill.Parent = progressBarBg
-Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
-
-local percentLabel = Instance.new("TextLabel")
-percentLabel.Size = UDim2.new(1, 0, 1, 0)
-percentLabel.BackgroundTransparency = 1
-percentLabel.Font = Enum.Font.GothamBold
-percentLabel.TextSize = 11
-percentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-percentLabel.Text = "0%"
-percentLabel.Parent = progressBarBg
-
-local function animateProgressBar()
-    progressBarBg.Visible = true
-    task.spawn(function()
-        progressFill.Size = UDim2.new(0, 0, 1, 0)
-        percentLabel.Text = "0%"
-        for i = 1, 10 do
-            local pct = i / 10
-            progressFill.Size = UDim2.new(pct, 0, 1, 0)
-            percentLabel.Text = math.floor(pct * 100) .. "%"
-            task.wait(0.015)
-        end
-        task.wait(0.2)
-        progressFill.Size = UDim2.new(0, 0, 1, 0)
-        percentLabel.Text = "0%"
-    end)
-end
-
-RunService.Heartbeat:Connect(function()
-    if not autoStealActive then
-        progressBarBg.Visible = false
-        return
-    end
-    progressBarBg.Visible = true
 end)
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
