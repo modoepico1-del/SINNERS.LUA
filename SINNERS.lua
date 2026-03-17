@@ -644,15 +644,15 @@ end)
 local progressBarBg = Instance.new("Frame")
 progressBarBg.Size = UDim2.new(0, 240, 0, 10)
 progressBarBg.Position = UDim2.new(0, 0, 0, 758)
-progressBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-progressBarBg.BackgroundTransparency = 0.25
-progressBarBg.Visible = false
+progressBarBg.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
+progressBarBg.BackgroundTransparency = 0
+progressBarBg.Visible = true
 progressBarBg.Parent = ScreenGui
 Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
 
 local progressFill = Instance.new("Frame")
 progressFill.Size = UDim2.new(0, 0, 1, 0)
-progressFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+progressFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 progressFill.Parent = progressBarBg
 Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
 
@@ -670,43 +670,24 @@ local function animateProgressBar()
     task.spawn(function()
         progressFill.Size = UDim2.new(0, 0, 1, 0)
         percentLabel.Text = "0%"
-        for i = 1, 20 do
-            local pct = i / 20
+        for i = 1, 10 do
+            local pct = i / 10
             progressFill.Size = UDim2.new(pct, 0, 1, 0)
             percentLabel.Text = math.floor(pct * 100) .. "%"
-            task.wait(0.02)
+            task.wait(0.015)
         end
-        task.wait(0.3)
+        task.wait(0.2)
         progressFill.Size = UDim2.new(0, 0, 1, 0)
         percentLabel.Text = "0%"
-        progressBarBg.Visible = false
     end)
 end
 
--- Loop que muestra la barra cuando estas en rango de robo
 RunService.Heartbeat:Connect(function()
     if not autoStealActive then
         progressBarBg.Visible = false
         return
     end
-    local hrp = autoSteal_getHRP()
-    if not hrp then progressBarBg.Visible = false; return end
-    local target = autoSteal_getNearest()
-    if target and target.worldPosition then
-        local dist = (hrp.Position - target.worldPosition).Magnitude
-        if dist <= AUTO_STEAL_PROX_RADIUS then
-            progressBarBg.Visible = true
-            local pct = math.clamp(1 - (dist / AUTO_STEAL_PROX_RADIUS), 0, 1)
-            progressFill.Size = UDim2.new(pct, 0, 1, 0)
-            percentLabel.Text = math.floor(pct * 100) .. "%"
-        else
-            progressBarBg.Visible = false
-            progressFill.Size = UDim2.new(0, 0, 1, 0)
-            percentLabel.Text = "0%"
-        end
-    else
-        progressBarBg.Visible = false
-    end
+    progressBarBg.Visible = true
 end)
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
