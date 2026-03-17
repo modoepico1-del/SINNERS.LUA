@@ -1318,6 +1318,191 @@ autoSteal_execute = function(prompt)
     return result
 end
 
+-- ══════════════════════════════════════
+--  MINI HUB - AUTO RIGHT
+-- ══════════════════════════════════════
+
+local RIGHT_STEP_1 = Vector3.new(-468, -6, 41)
+local RIGHT_STEP_2 = Vector3.new(-473, -6, 24)
+local RIGHT_STEP_3 = Vector3.new(-484, -4, 20)
+
+local autoRightOn = false
+local autoRightConn = nil
+
+-- Panel
+local miniHub = Instance.new("Frame")
+miniHub.Size = UDim2.new(0, 160, 0, 130)
+miniHub.Position = UDim2.new(0, 310, 0, 4)
+miniHub.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+miniHub.BackgroundTransparency = 0
+miniHub.BorderSizePixel = 0
+miniHub.Active = true
+miniHub.Parent = ScreenGui
+Instance.new("UICorner", miniHub).CornerRadius = UDim.new(0, 10)
+local miniStroke = Instance.new("UIStroke", miniHub)
+miniStroke.Color = Color3.fromRGB(255, 0, 0)
+miniStroke.Thickness = 1.2
+
+-- Titulo
+local miniTitle = Instance.new("TextLabel")
+miniTitle.Text = "AUTO RIGHT"
+miniTitle.Size = UDim2.new(1, -10, 0, 30)
+miniTitle.Position = UDim2.new(0, 10, 0, 6)
+miniTitle.BackgroundTransparency = 1
+miniTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+miniTitle.TextSize = 13
+miniTitle.Font = Enum.Font.GothamBlack
+miniTitle.TextXAlignment = Enum.TextXAlignment.Left
+miniTitle.ZIndex = 5
+miniTitle.Parent = miniHub
+
+-- Separador
+local miniLine = Instance.new("Frame")
+miniLine.Size = UDim2.new(1, -20, 0, 1)
+miniLine.Position = UDim2.new(0, 10, 0, 36)
+miniLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+miniLine.BackgroundTransparency = 0.6
+miniLine.BorderSizePixel = 0
+miniLine.ZIndex = 5
+miniLine.Parent = miniHub
+
+-- Toggle row
+local miniRow = Instance.new("Frame")
+miniRow.Size = UDim2.new(1, -20, 0, 44)
+miniRow.Position = UDim2.new(0, 10, 0, 46)
+miniRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+miniRow.BorderSizePixel = 0
+miniRow.ZIndex = 4
+miniRow.Parent = miniHub
+Instance.new("UICorner", miniRow).CornerRadius = UDim.new(0, 7)
+local miniRowStroke = Instance.new("UIStroke", miniRow)
+miniRowStroke.Color = Color3.fromRGB(255, 0, 0)
+miniRowStroke.Thickness = 0.8
+miniRowStroke.Transparency = 0.5
+
+local miniLbl = Instance.new("TextLabel")
+miniLbl.Text = "AUTO RIGHT"
+miniLbl.Size = UDim2.new(1, -60, 1, 0)
+miniLbl.Position = UDim2.new(0, 10, 0, 0)
+miniLbl.BackgroundTransparency = 1
+miniLbl.TextColor3 = Color3.fromRGB(220, 220, 220)
+miniLbl.TextSize = 12
+miniLbl.Font = Enum.Font.GothamBlack
+miniLbl.TextXAlignment = Enum.TextXAlignment.Left
+miniLbl.ZIndex = 5
+miniLbl.Parent = miniRow
+
+local miniTrack = Instance.new("TextButton")
+miniTrack.Text = ""
+miniTrack.Size = UDim2.new(0, 44, 0, 24)
+miniTrack.Position = UDim2.new(1, -54, 0.5, -12)
+miniTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+miniTrack.BorderSizePixel = 0
+miniTrack.ZIndex = 5
+miniTrack.Parent = miniRow
+Instance.new("UICorner", miniTrack).CornerRadius = UDim.new(1, 0)
+
+local miniThumb = Instance.new("Frame")
+miniThumb.Size = UDim2.new(0, 18, 0, 18)
+miniThumb.Position = UDim2.new(0, 3, 0.5, -9)
+miniThumb.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+miniThumb.BorderSizePixel = 0
+miniThumb.ZIndex = 6
+miniThumb.Parent = miniTrack
+Instance.new("UICorner", miniThumb).CornerRadius = UDim.new(1, 0)
+
+-- Drag mini hub
+local mDragging, mDragInput, mDragStart, mStartPos = false, nil, nil, nil
+miniHub.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        mDragging = true
+        mDragStart = input.Position
+        mStartPos = miniHub.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then mDragging = false end
+        end)
+    end
+end)
+miniHub.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        mDragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == mDragInput and mDragging then
+        local delta = input.Position - mDragStart
+        miniHub.Position = UDim2.new(
+            mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
+            mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Logica AUTO RIGHT
+local RIGHT_STEPS = {RIGHT_STEP_1, RIGHT_STEP_2, RIGHT_STEP_3}
+local ARRIVE_DIST = 4  -- distancia para considerar que llegó al punto
+
+local function moveToPoint(target)
+    local char = me.Character
+    if not char then return false end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return false end
+    -- Mover usando Humanoid:MoveTo
+    hum:MoveTo(target)
+    -- Esperar hasta llegar o timeout
+    local t = 0
+    while autoRightOn do
+        task.wait(0.1)
+        t = t + 0.1
+        local c2 = me.Character
+        if not c2 then break end
+        local r2 = c2:FindFirstChild("HumanoidRootPart")
+        if not r2 then break end
+        local dist = (Vector3.new(r2.Position.X, target.Y, r2.Position.Z) - Vector3.new(target.X, target.Y, target.Z)).Magnitude
+        if dist <= ARRIVE_DIST then return true end
+        if t > 10 then return false end  -- timeout 10s por punto
+    end
+    return false
+end
+
+local function startAutoRight()
+    if autoRightConn then return end
+    autoRightConn = task.spawn(function()
+        while autoRightOn do
+            for _, step in ipairs(RIGHT_STEPS) do
+                if not autoRightOn then break end
+                moveToPoint(step)
+            end
+            if autoRightOn then
+                task.wait(0.5)
+            end
+        end
+        autoRightConn = nil
+    end)
+end
+
+local function stopAutoRight()
+    autoRightOn = false
+    autoRightConn = nil
+    local char = me.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then hum:MoveTo(char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart.Position or Vector3.zero) end
+    end
+end
+
+miniTrack.MouseButton1Click:Connect(function()
+    autoRightOn = not autoRightOn
+    if autoRightOn then
+        toggleOn(miniLbl, miniTrack, miniThumb)
+        startAutoRight()
+    else
+        toggleOff(miniLbl, miniTrack, miniThumb)
+        stopAutoRight()
+    end
+end)
+
 -- APERTURA
 MainFrame.Size = UDim2.new(0,300,0,0)
 TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0,300,0,700)}):Play()
