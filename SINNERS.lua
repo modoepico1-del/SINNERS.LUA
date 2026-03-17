@@ -504,11 +504,15 @@ local function autoSteal_execute(prompt)
     local data = autoStealInternalCache[prompt]
     if not data or not data.ready then return false end
     data.ready = false
+    autoStealIsStealing = true
     task.spawn(function()
-        for _, fn in ipairs(data.holdCallbacks) do pcall(fn) end
-        for _, fn in ipairs(data.triggerCallbacks) do pcall(fn) end
-        task.wait(0.1)
+        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
+        task.wait(0.2)
+        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
+        task.wait(0.01)
         data.ready = true
+        task.wait(0.01)
+        autoStealIsStealing = false
     end)
     return true
 end
@@ -538,6 +542,7 @@ local function startAutoStealLoop()
     if autoStealStealConnection then autoStealStealConnection:Disconnect() end
     autoStealStealConnection = RunService.Heartbeat:Connect(function()
         if not autoStealActive then return end
+        if autoStealIsStealing then return end
         local target = autoSteal_getNearest()
         if not target or not target.worldPosition then return end
         local hrp = autoSteal_getHRP()
@@ -546,10 +551,7 @@ local function startAutoStealLoop()
         if autoStealLastUID ~= target.uid then autoStealLastUID = target.uid end
         local prompt = autoStealPromptCache[target.uid]
         if not prompt or not prompt.Parent then prompt = autoSteal_findPrompt(target) end
-        if prompt then
-            local result = autoSteal_attempt(prompt)
-            if result then animateProgressBar() end
-        end
+        if prompt then autoSteal_attempt(prompt) end
     end)
 end
 
@@ -567,7 +569,6 @@ end
 local function disableAutoSteal()
     autoStealActive = false
     stopAutoStealLoop()
-    hideSquare()
 end
 
 autoStealTrack.MouseButton1Click:Connect(function()
