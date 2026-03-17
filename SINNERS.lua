@@ -879,6 +879,22 @@ Instance.new("UICorner", speedActivate).CornerRadius = UDim.new(0,8)
 local speedBtnStroke = Instance.new("UIStroke", speedActivate)
 speedBtnStroke.Color=Color3.fromRGB(255,0,0); speedBtnStroke.Thickness=1.2
 
+speedBox.FocusLost:Connect(function()
+    local text = speedBox.Text:gsub("%D","")
+    local num = tonumber(text) or 53
+    num = math.clamp(num, 15, 200)
+    speedBox.Text = tostring(num)
+    speedNoStealValue = num
+end)
+
+stealBox.FocusLost:Connect(function()
+    local text = stealBox.Text:gsub("%D","")
+    local num = tonumber(text) or 29
+    num = math.clamp(num, 15, 200)
+    stealBox.Text = tostring(num)
+    speedStealValue = num
+end)
+
 speedActivate.MouseButton1Click:Connect(function()
     speedOn = not speedOn
     if speedOn then
