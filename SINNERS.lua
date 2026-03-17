@@ -564,32 +564,8 @@ autoStealTrack.MouseButton1Click:Connect(function()
 end)
 
 -- ══════════════════════════════════════
---  BARRA DE PROGRESO + RADIO VISUAL
+--  RADIO VISUAL (CIRCULO ROJO)
 -- ══════════════════════════════════════
-
-local progressBarBg = Instance.new("Frame")
-progressBarBg.Size = UDim2.new(0, 240, 0, 10)
-progressBarBg.Position = UDim2.new(0.5, -120, 0, 52)
-progressBarBg.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-progressBarBg.BackgroundTransparency = 0.25
-progressBarBg.Visible = false
-progressBarBg.Parent = ScreenGui
-Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
-
-local progressFill = Instance.new("Frame")
-progressFill.Size = UDim2.new(0, 0, 1, 0)
-progressFill.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-progressFill.Parent = progressBarBg
-Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
-
-local percentLabel = Instance.new("TextLabel")
-percentLabel.Size = UDim2.new(1, 0, 1, 0)
-percentLabel.BackgroundTransparency = 1
-percentLabel.Font = Enum.Font.GothamBold
-percentLabel.TextSize = 11
-percentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-percentLabel.Text = "0%"
-percentLabel.Parent = progressBarBg
 
 local stealSquarePart = nil
 local circleConnection = nil
@@ -608,7 +584,8 @@ local function createOrUpdateSquare(radius)
         stealSquarePart.CanCollide = false
         stealSquarePart.Transparency = 0.7
         stealSquarePart.Material = Enum.Material.Neon
-        stealSquarePart.Color = Color3.fromRGB(0, 120, 255)
+        -- CAMBIO: color rojo
+        stealSquarePart.Color = Color3.fromRGB(255, 0, 0)
         stealSquarePart.Shape = Enum.PartType.Cylinder
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
         stealSquarePart.Parent = workspace
@@ -634,8 +611,41 @@ circleConnection = RunService.Heartbeat:Connect(function()
     updateSquarePosition()
 end)
 
+-- ══════════════════════════════════════
+--  BARRA DE PROGRESO ROJA (SIEMPRE VISIBLE, DEBAJO DE RADIUS)
+-- ══════════════════════════════════════
+
+-- Se crea despues del radiusRow, posicion relativa ajustada al final del script
+-- Aqui definimos la barra pero la posicionamos despues de radiusRow
+
+local progressBarBg = Instance.new("Frame")
+progressBarBg.Size = UDim2.new(0, 276, 0, 18)
+-- Posicion: debajo del radiusRow — se ajusta al final cuando radiusRow ya tiene posicion
+progressBarBg.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
+progressBarBg.BackgroundTransparency = 0
+progressBarBg.Visible = true
+progressBarBg.Parent = ScreenGui
+Instance.new("UICorner", progressBarBg).CornerRadius = UDim.new(0, 8)
+local progressBgStroke = Instance.new("UIStroke", progressBarBg)
+progressBgStroke.Color = Color3.fromRGB(255, 0, 0); progressBgStroke.Thickness = 1.2
+
+local progressFill = Instance.new("Frame")
+progressFill.Size = UDim2.new(0, 0, 1, 0)
+-- CAMBIO: fill rojo
+progressFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+progressFill.Parent = progressBarBg
+Instance.new("UICorner", progressFill).CornerRadius = UDim.new(0, 8)
+
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Size = UDim2.new(1, 0, 1, 0)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Font = Enum.Font.GothamBold
+percentLabel.TextSize = 11
+percentLabel.TextColor3 = Color3.fromRGB(255, 180, 180)
+percentLabel.Text = "0%"
+percentLabel.Parent = progressBarBg
+
 local function animateProgressBar()
-    progressBarBg.Visible = true
     task.spawn(function()
         for i = 1, 20 do
             local pct = i / 20
@@ -646,30 +656,7 @@ local function animateProgressBar()
         task.wait(0.4)
         TweenService:Create(progressFill, TweenInfo.new(0.2), {Size = UDim2.new(0, 0, 1, 0)}):Play()
         percentLabel.Text = "0%"
-        task.wait(0.3)
-        progressBarBg.Visible = false
     end)
-end
-
-local _origEnable = enableAutoSteal
-enableAutoSteal = function()
-    _origEnable()
-    grabRadius = AUTO_STEAL_PROX_RADIUS
-    createOrUpdateSquare(grabRadius)
-end
-
-local _origDisable = disableAutoSteal
-disableAutoSteal = function()
-    _origDisable()
-    hideSquare()
-    progressBarBg.Visible = false
-end
-
-local _origExecute = autoSteal_execute
-autoSteal_execute = function(prompt)
-    local result = _origExecute(prompt)
-    if result then animateProgressBar() end
-    return result
 end
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
@@ -891,11 +878,13 @@ stealBox.FocusLost:Connect(function()
     end
 end)
 
+-- CAMBIO PRINCIPAL: Speed ON usa SPEED, Speed OFF usa STEAL
 speedActivate.MouseButton1Click:Connect(function()
     speedOn = not speedOn
     if speedOn then
         speedActivate.Text = "ON"
-        speedActivate.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+        speedActivate.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        if speedConnection then speedConnection:Disconnect() end
         speedConnection = RunService.Heartbeat:Connect(function()
             local char = me.Character
             if not char then return end
@@ -903,15 +892,13 @@ speedActivate.MouseButton1Click:Connect(function()
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then return end
             speedNoStealValue = tonumber(speedBox.Text) or 53
-            speedStealValue = tonumber(stealBox.Text) or 29
             local moveDirection = hum.MoveDirection
             if moveDirection.Magnitude > 0 then
-                local isSteal = hum.WalkSpeed < 25
-                local currentSpeed = isSteal and speedStealValue or speedNoStealValue
+                -- Speed ON: siempre usa la velocidad SPEED (speedNoStealValue)
                 hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDirection.X * currentSpeed,
+                    moveDirection.X * speedNoStealValue,
                     hrp.AssemblyLinearVelocity.Y,
-                    moveDirection.Z * currentSpeed
+                    moveDirection.Z * speedNoStealValue
                 )
             end
         end)
@@ -919,6 +906,24 @@ speedActivate.MouseButton1Click:Connect(function()
         speedActivate.Text = "OFF"
         speedActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+        -- Speed OFF: activar loop con velocidad STEAL
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = me.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+            speedStealValue = tonumber(stealBox.Text) or 29
+            local moveDirection = hum.MoveDirection
+            if moveDirection.Magnitude > 0 then
+                -- Speed OFF: siempre usa la velocidad STEAL (speedStealValue)
+                hrp.AssemblyLinearVelocity = Vector3.new(
+                    moveDirection.X * speedStealValue,
+                    hrp.AssemblyLinearVelocity.Y,
+                    moveDirection.Z * speedStealValue
+                )
+            end
+        end)
     end
 end)
 
@@ -1029,7 +1034,10 @@ local function enableFPSBoost()
 end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
--- RADIUS INPUT (fuera del hub, arrastrable)
+-- ══════════════════════════════════════
+--  RADIUS INPUT (arrastrable, fuera del hub)
+-- ══════════════════════════════════════
+
 local radiusRow = Instance.new("Frame")
 radiusRow.Size                   = UDim2.new(0, 276, 0, 44)
 radiusRow.Position               = UDim2.new(0, 0, 0, 708)
@@ -1063,9 +1071,15 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if input == rDragInput and rDragging then
         local delta = input.Position - rDragStart
-        radiusRow.Position = UDim2.new(
+        local newPos = UDim2.new(
             rStartPos.X.Scale, rStartPos.X.Offset + delta.X,
             rStartPos.Y.Scale, rStartPos.Y.Offset + delta.Y
+        )
+        radiusRow.Position = newPos
+        -- La barra de progreso sigue al radiusRow
+        progressBarBg.Position = UDim2.new(
+            newPos.X.Scale, newPos.X.Offset,
+            newPos.Y.Scale, newPos.Y.Offset + 50
         )
     end
 end)
@@ -1103,7 +1117,16 @@ radiusInput.FocusLost:Connect(function()
     end
 end)
 
--- FOV SLIDER
+-- Posicionar barra de progreso debajo del radiusRow (separada 6px)
+progressBarBg.Position = UDim2.new(
+    radiusRow.Position.X.Scale, radiusRow.Position.X.Offset,
+    radiusRow.Position.Y.Scale, radiusRow.Position.Y.Offset + 50
+)
+
+-- ══════════════════════════════════════
+--  FOV SLIDER
+-- ══════════════════════════════════════
+
 local FOV_MIN, FOV_MAX = 70, 120
 local fovRow = Instance.new("Frame")
 fovRow.Size=UDim2.new(1,-20,0,54); fovRow.Position=UDim2.new(0,10,1,-118)
@@ -1197,7 +1220,7 @@ SaveBtn.MouseButton1Click:Connect(function()
     saveConfig(); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG"
 end)
 
--- DRAG
+-- DRAG MAIN FRAME
 local dragging, dragInput, dragStart, startPos
 
 TitleBar.InputBegan:Connect(function(input)
@@ -1226,6 +1249,27 @@ UserInputService.InputChanged:Connect(function(input)
         )
     end
 end)
+
+-- Wrappers finales para enableAutoSteal / disableAutoSteal con circulo y barra
+local _origEnable = enableAutoSteal
+enableAutoSteal = function()
+    _origEnable()
+    grabRadius = AUTO_STEAL_PROX_RADIUS
+    createOrUpdateSquare(grabRadius)
+end
+
+local _origDisable = disableAutoSteal
+disableAutoSteal = function()
+    _origDisable()
+    hideSquare()
+end
+
+local _origExecute = autoSteal_execute
+autoSteal_execute = function(prompt)
+    local result = _origExecute(prompt)
+    if result then animateProgressBar() end
+    return result
+end
 
 -- APERTURA
 MainFrame.Size = UDim2.new(0,300,0,0)
