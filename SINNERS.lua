@@ -98,13 +98,19 @@ TitleLabel.TextXAlignment         = Enum.TextXAlignment.Left
 TitleLabel.ZIndex                 = 5
 TitleLabel.Parent                 = TitleBar
 
-local ContentArea = Instance.new("Frame")
+local ContentArea = Instance.new("ScrollingFrame")
 ContentArea.Size                   = UDim2.new(1, 0, 1, -170)
 ContentArea.Position               = UDim2.new(0, 0, 0, 42)
 ContentArea.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 ContentArea.BackgroundTransparency = 0
 ContentArea.BorderSizePixel        = 0
 ContentArea.ZIndex                 = 3
+ContentArea.ScrollBarThickness     = 4
+ContentArea.ScrollBarImageColor3   = Color3.fromRGB(255, 0, 0)
+ContentArea.CanvasSize             = UDim2.new(0, 0, 0, 620)
+ContentArea.AutomaticCanvasSize    = Enum.AutomaticSize.Y
+ContentArea.ScrollingDirection     = Enum.ScrollingDirection.Y
+ContentArea.ElasticBehavior        = Enum.ElasticBehavior.Never
 ContentArea.Parent                 = MainFrame
 
 local function makeOptionRow(parent, labelText, yPos)
