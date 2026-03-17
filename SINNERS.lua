@@ -641,7 +641,7 @@ end)
 
 local progressBarBg = Instance.new("Frame")
 progressBarBg.Size = UDim2.new(0, 276, 0, 18)
--- Posicion: debajo del radiusRow — se ajusta al final cuando radiusRow ya tiene posicion
+progressBarBg.Position = UDim2.new(0, 0, 0, 758)
 progressBarBg.BackgroundColor3 = Color3.fromRGB(20, 0, 0)
 progressBarBg.BackgroundTransparency = 0
 progressBarBg.Visible = true
