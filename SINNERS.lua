@@ -831,7 +831,7 @@ speedTitleLbl.Parent = ContentArea
 
 -- Row con los inputs y toggle
 local speedRow = Instance.new("Frame")
-speedRow.Size = UDim2.new(1, -20, 0, 95)
+speedRow.Size = UDim2.new(1, -20, 0, 115)
 speedRow.Position = UDim2.new(0, 10, 0, 478)
 speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 speedRow.BorderSizePixel = 0
@@ -881,6 +881,39 @@ speedSectionTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
 speedSectionTitle.TextXAlignment = Enum.TextXAlignment.Left
 speedSectionTitle.ZIndex = 5
 speedSectionTitle.Parent = speedRow
+
+-- Indicador de modo activo
+local speedModeLabel = Instance.new("TextLabel")
+speedModeLabel.Size = UDim2.new(1, -10, 0, 18)
+speedModeLabel.Position = UDim2.new(0, 10, 1, -22)
+speedModeLabel.BackgroundTransparency = 1
+speedModeLabel.Text = "— OFF —"
+speedModeLabel.Font = Enum.Font.GothamBold
+speedModeLabel.TextSize = 11
+speedModeLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+speedModeLabel.TextXAlignment = Enum.TextXAlignment.Center
+speedModeLabel.ZIndex = 5
+speedModeLabel.Parent = speedRow
+
+-- Actualizar indicador cada frame
+RunService.Heartbeat:Connect(function()
+    if not speedOn then
+        speedModeLabel.Text = "— OFF —"
+        speedModeLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+        return
+    end
+    local char = me.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    if hum.WalkSpeed < 25 then
+        speedModeLabel.Text = "⚡ STEAL SPEED"
+        speedModeLabel.TextColor3 = Color3.fromRGB(0, 180, 255)
+    else
+        speedModeLabel.Text = "⚡ CARRY SPEED"
+        speedModeLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+    end
+end)
 
 local speedBox = createSpeedRow("Speed", 34, 53)
 local stealBox = createSpeedRow("Steal Speed", 64, 29)
