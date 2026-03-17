@@ -19,7 +19,6 @@ local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
 local espOn              = false
-local antiRagdollEnabled = false
 local fovValue           = 70
 local infJumpOn          = false
 local autoStealActive    = false
@@ -34,7 +33,7 @@ local function saveConfig()
             Unwalk      = unwalkOn,
             Xray        = xrayOn,
             ESP         = espOn,
-            AntiRagdoll = antiRagdollEnabled,
+            AntiRagdoll = antiRagdollOn,
             FOV         = fovValue,
             InfJump     = infJumpOn,
             AutoSteal   = autoStealActive,
@@ -335,8 +334,7 @@ end
 task.defer(function() task.wait(0.5); startDarkMode() end)
 me.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
--- ANTI RAGDOLL
-local ragdollLabel, ragdollTrack, ragdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
+-- ANTI RAGDOLL (row y logica definidos abajo)
 
 -- INF JUMP
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
@@ -363,8 +361,6 @@ infJumpTrack.MouseButton1Click:Connect(function()
     if infJumpOn then toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
     else toggleOff(infJumpLabel, infJumpTrack, infJumpThumb) end
 end)
-
-local RAGDOLL_SPEED = 16
 
 -- AUTO STEAL
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
@@ -949,82 +945,111 @@ speedActivate.MouseButton1Click:Connect(function()
     end
 end)
 
-local currentCharacter        = nil
-local ragdollRemoteConnection = nil
-local moveConnection          = nil
-local playerModule, controls  = nil, nil
-
-pcall(function()
-    playerModule = require(me:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
-    controls     = playerModule:GetControls()
-end)
-
-local function cleanupRagdoll()
-    if currentCharacter then
-        local root = currentCharacter:FindFirstChild("HumanoidRootPart")
-        if root then local a = root:FindFirstChild("RagdollAnchor"); if a then a:Destroy() end end
-    end
-    if moveConnection then moveConnection:Disconnect(); moveConnection = nil end
+-- ══════════════════════════════════════
+--  ANTI RAGDOLL
+-- ══════════════════════════════════════
+local antiRagdollOn = false
+local antiRagdollLabel, antiRagdollTrack, antiRagdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
+local antiRagdollMode = nil
+local ragdollConnections = {}
+local cachedCharData = {}
+local function cacheCharacterData()
+    local char = me.Character
+    if not char then return false end
+    local hum  = char:FindFirstChildOfClass("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return false end
+    cachedCharData = {
+        character         = char,
+        humanoid          = hum,
+        root              = root,
+        originalWalkSpeed = hum.WalkSpeed,
+        originalJumpPower = hum.JumpPower,
+        isFrozen          = false
+    }
+    return true
 end
-local function disconnectRemote()
-    if ragdollRemoteConnection then ragdollRemoteConnection:Disconnect(); ragdollRemoteConnection = nil end
-end
-local function setupAntiRagdoll(char)
-    currentCharacter = char
-    cleanupRagdoll(); disconnectRemote()
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    local root     = char:WaitForChild("HumanoidRootPart", 5)
-    local head     = char:WaitForChild("Head", 5)
-    if not (humanoid and root and head) then return end
-    local ragdollRemote
-    pcall(function()
-        ragdollRemote = ReplicatedStorage:WaitForChild("Packages",8):WaitForChild("Ragdoll",5):WaitForChild("Ragdoll",5)
-    end)
-    if not ragdollRemote or not ragdollRemote:IsA("RemoteEvent") then return end
-    ragdollRemoteConnection = ragdollRemote.OnClientEvent:Connect(function(arg1, arg2)
-        if not antiRagdollEnabled then return end
-        if arg1 == "Make" or arg2 == "manualM" then
-            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-            Camera.CameraSubject = head; root.CanCollide = false
-            if controls then pcall(controls.Enable, controls) end
-            cleanupRagdoll()
-            local anchor = Instance.new("BodyPosition")
-            anchor.Name="RagdollAnchor"; anchor.MaxForce=Vector3.new(1e5,1e5,1e5)
-            anchor.Position=root.Position; anchor.D=200; anchor.P=5000; anchor.Parent=root
-            moveConnection = RunService.Heartbeat:Connect(function()
-                if not antiRagdollEnabled then cleanupRagdoll(); return end
-                local moveDir = Vector3.zero
-                if controls then pcall(function() moveDir = controls:GetMoveVector() end) end
-                if moveDir.Magnitude > 0.1 then
-                    local cf  = Camera.CFrame
-                    local fwd = Vector3.new(cf.LookVector.X,0,cf.LookVector.Z).Unit
-                    local rgt = Vector3.new(cf.RightVector.X,0,cf.RightVector.Z).Unit
-                    anchor.Position = root.Position + (fwd*-moveDir.Z+rgt*moveDir.X).Unit*RAGDOLL_SPEED*0.1
-                else
-                    anchor.Position = root.Position
-                end
-            end)
-        elseif arg1 == "Destroy" or arg2 == "manualD" then
-            cleanupRagdoll()
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-            root.CanCollide=true; Camera.CameraSubject=humanoid
-            if controls then pcall(controls.Enable, controls) end
+local function disconnectAllRagdoll()
+    for _, conn in ipairs(ragdollConnections) do
+        if typeof(conn) == "RBXScriptConnection" then
+            pcall(function() conn:Disconnect() end)
         end
-    end)
+    end
+    ragdollConnections = {}
 end
-
-me.CharacterAdded:Connect(function(newChar)
-    if antiRagdollEnabled then task.wait(1); setupAntiRagdoll(newChar) end
-end)
-
-ragdollTrack.MouseButton1Click:Connect(function()
-    antiRagdollEnabled = not antiRagdollEnabled
-    if antiRagdollEnabled then
-        toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
-        if me.Character then setupAntiRagdoll(me.Character) end
+local function isRagdolled()
+    if not cachedCharData.humanoid then return false end
+    local state = cachedCharData.humanoid:GetState()
+    if state == Enum.HumanoidStateType.Physics
+    or state == Enum.HumanoidStateType.Ragdoll
+    or state == Enum.HumanoidStateType.FallingDown then
+        return true
+    end
+    local endTime = me:GetAttribute("RagdollEndTime")
+    if endTime then
+        if (endTime - workspace:GetServerTimeNow()) > 0 then return true end
+    end
+    return false
+end
+local function removeRagdollConstraints()
+    if not cachedCharData.character then return end
+    for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
+        if descendant:IsA("BallSocketConstraint") or
+           (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
+            pcall(function() descendant:Destroy() end)
+        end
+    end
+end
+local function forceExitRagdoll()
+    if not cachedCharData.humanoid or not cachedCharData.root then return end
+    local hum  = cachedCharData.humanoid
+    local root = cachedCharData.root
+    pcall(function() me:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
+    if hum.Health > 0 then hum:ChangeState(Enum.HumanoidStateType.Running) end
+    root.Anchored = false
+    root.AssemblyLinearVelocity  = Vector3.zero
+    root.AssemblyAngularVelocity = Vector3.zero
+end
+local function antiRagdollLoop()
+    while antiRagdollMode do
+        task.wait()
+        if isRagdolled() then
+            removeRagdollConstraints()
+            forceExitRagdoll()
+        end
+        local cam = workspace.CurrentCamera
+        if cam and cachedCharData.humanoid then
+            if cam.CameraSubject ~= cachedCharData.humanoid then
+                cam.CameraSubject = cachedCharData.humanoid
+            end
+        end
+    end
+end
+local function toggleAntiRagdoll(enable)
+    if enable then
+        disconnectAllRagdoll()
+        if not cacheCharacterData() then return end
+        antiRagdollMode = "v1"
+        local charConn = me.CharacterAdded:Connect(function()
+            task.wait(0.5)
+            if antiRagdollMode then cacheCharacterData() end
+        end)
+        table.insert(ragdollConnections, charConn)
+        task.spawn(antiRagdollLoop)
     else
-        toggleOff(ragdollLabel, ragdollTrack, ragdollThumb)
-        cleanupRagdoll(); disconnectRemote()
+        antiRagdollMode = nil
+        disconnectAllRagdoll()
+        cachedCharData = {}
+    end
+end
+antiRagdollTrack.MouseButton1Click:Connect(function()
+    antiRagdollOn = not antiRagdollOn
+    if antiRagdollOn then
+        toggleOn(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
+        toggleAntiRagdoll(true)
+    else
+        toggleOff(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
+        toggleAntiRagdoll(false)
     end
 end)
 
@@ -1309,8 +1334,8 @@ task.defer(function()
         espOn = true; toggleOn(espLabel, espTrack, espThumb); enableESP()
     end
     if savedCfg.AntiRagdoll then
-        antiRagdollEnabled = true; toggleOn(ragdollLabel, ragdollTrack, ragdollThumb)
-        if me.Character then setupAntiRagdoll(me.Character) end
+        antiRagdollOn = true; toggleOn(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
+        toggleAntiRagdoll(true)
     end
     if savedCfg.FOV then
         fovValue = math.clamp(savedCfg.FOV, FOV_MIN, FOV_MAX)
