@@ -514,7 +514,6 @@ local function autoSteal_execute(prompt)
         task.wait(0.01)
         autoStealIsStealing = false
     end)
-    animateProgressBar()
     return true
 end
 
@@ -552,7 +551,10 @@ local function startAutoStealLoop()
         if autoStealLastUID ~= target.uid then autoStealLastUID = target.uid end
         local prompt = autoStealPromptCache[target.uid]
         if not prompt or not prompt.Parent then prompt = autoSteal_findPrompt(target) end
-        if prompt then autoSteal_attempt(prompt) end
+        if prompt then
+            local result = autoSteal_attempt(prompt)
+            if result then animateProgressBar() end
+        end
     end)
 end
 
