@@ -1358,3 +1358,247 @@ task.defer(function()
         enableGalaxySkyBright()
     end
 end)
+
+-- ══════════════════════════════════════
+--  MINI HUB - AUTO LEFT / AUTO RIGHT
+-- ══════════════════════════════════════
+
+local AutoLeftEnabled  = false
+local AutoRightEnabled = false
+local autoLeftConnection  = nil
+local autoRightConnection = nil
+local autoLeftPhase  = 1
+local autoRightPhase = 1
+local NORMAL_SPEED   = 60
+
+local POSITION_L1 = Vector3.new(-476.48, -6.28,  92.73)
+local POSITION_L2 = Vector3.new(-483.12, -4.95,  94.80)
+local POSITION_R1 = Vector3.new(-476.16, -6.52,  25.62)
+local POSITION_R2 = Vector3.new(-483.04, -5.09,  23.14)
+
+local _G_AL_lbl, _G_AL_swBg, _G_AL_swCircle = nil, nil, nil
+local _G_AR_lbl, _G_AR_swBg, _G_AR_swCircle = nil, nil, nil
+
+local function faceSouth()
+    local c = me.Character if not c then return end
+    local rp = c:FindFirstChild("HumanoidRootPart")
+    if rp then rp.CFrame = CFrame.new(rp.Position) * CFrame.Angles(0, math.rad(180), 0) end
+end
+
+local function faceNorth()
+    local c = me.Character if not c then return end
+    local rp = c:FindFirstChild("HumanoidRootPart")
+    if rp then rp.CFrame = CFrame.new(rp.Position) * CFrame.Angles(0, 0, 0) end
+end
+
+local function startAutoLeft()
+    if autoLeftConnection then autoLeftConnection:Disconnect() end
+    autoLeftPhase = 1
+    autoLeftConnection = RunService.Heartbeat:Connect(function()
+        if not AutoLeftEnabled then return end
+        local c = me.Character; if not c then return end
+        local rp = c:FindFirstChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not rp or not hum then return end
+        local spd = NORMAL_SPEED
+        if autoLeftPhase == 1 then
+            local tgt = Vector3.new(POSITION_L1.X, rp.Position.Y, POSITION_L1.Z)
+            if (tgt - rp.Position).Magnitude < 1 then
+                autoLeftPhase = 2
+                local d = (POSITION_L2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+                hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd); return
+            end
+            local d = (POSITION_L1 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+        elseif autoLeftPhase == 2 then
+            local tgt = Vector3.new(POSITION_L2.X, rp.Position.Y, POSITION_L2.Z)
+            if (tgt - rp.Position).Magnitude < 1 then
+                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                AutoLeftEnabled = false
+                if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection = nil end
+                autoLeftPhase = 1
+                if _G_AL_lbl and _G_AL_swBg and _G_AL_swCircle then
+                    toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+                end
+                faceSouth(); return
+            end
+            local d = (POSITION_L2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+        end
+    end)
+end
+
+local function stopAutoLeft()
+    if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection = nil end
+    autoLeftPhase = 1
+    local c = me.Character
+    if c then local hum = c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+end
+
+local function startAutoRight()
+    if autoRightConnection then autoRightConnection:Disconnect() end
+    autoRightPhase = 1
+    autoRightConnection = RunService.Heartbeat:Connect(function()
+        if not AutoRightEnabled then return end
+        local c = me.Character; if not c then return end
+        local rp = c:FindFirstChild("HumanoidRootPart")
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not rp or not hum then return end
+        local spd = NORMAL_SPEED
+        if autoRightPhase == 1 then
+            local tgt = Vector3.new(POSITION_R1.X, rp.Position.Y, POSITION_R1.Z)
+            if (tgt - rp.Position).Magnitude < 1 then
+                autoRightPhase = 2
+                local d = (POSITION_R2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+                hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd); return
+            end
+            local d = (POSITION_R1 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+        elseif autoRightPhase == 2 then
+            local tgt = Vector3.new(POSITION_R2.X, rp.Position.Y, POSITION_R2.Z)
+            if (tgt - rp.Position).Magnitude < 1 then
+                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                AutoRightEnabled = false
+                if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection = nil end
+                autoRightPhase = 1
+                if _G_AR_lbl and _G_AR_swBg and _G_AR_swCircle then
+                    toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+                end
+                faceNorth(); return
+            end
+            local d = (POSITION_R2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+        end
+    end)
+end
+
+local function stopAutoRight()
+    if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection = nil end
+    autoRightPhase = 1
+    local c = me.Character
+    if c then local hum = c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+end
+
+-- Panel mini hub
+local miniHub = Instance.new("Frame")
+miniHub.Size = UDim2.new(0, 180, 0, 180)
+miniHub.Position = UDim2.new(1, -190, 0, 4)
+miniHub.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+miniHub.BackgroundTransparency = 0
+miniHub.BorderSizePixel = 0
+miniHub.Active = true
+miniHub.Parent = ScreenGui
+Instance.new("UICorner", miniHub).CornerRadius = UDim.new(0, 10)
+local miniStroke = Instance.new("UIStroke", miniHub)
+miniStroke.Color = Color3.fromRGB(255, 0, 0); miniStroke.Thickness = 1.2
+
+local miniTitle = Instance.new("TextLabel")
+miniTitle.Text = "ROUTE HUB"
+miniTitle.Size = UDim2.new(1, -10, 0, 30)
+miniTitle.Position = UDim2.new(0, 10, 0, 6)
+miniTitle.BackgroundTransparency = 1
+miniTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+miniTitle.TextSize = 13
+miniTitle.Font = Enum.Font.GothamBlack
+miniTitle.TextXAlignment = Enum.TextXAlignment.Left
+miniTitle.ZIndex = 5
+miniTitle.Parent = miniHub
+
+local miniLine = Instance.new("Frame")
+miniLine.Size = UDim2.new(1, -20, 0, 1)
+miniLine.Position = UDim2.new(0, 10, 0, 36)
+miniLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+miniLine.BackgroundTransparency = 0.6
+miniLine.BorderSizePixel = 0
+miniLine.ZIndex = 5
+miniLine.Parent = miniHub
+
+local function makeMiniRow(labelText, yPos)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -20, 0, 44)
+    row.Position = UDim2.new(0, 10, 0, yPos)
+    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+    row.BorderSizePixel = 0
+    row.ZIndex = 4
+    row.Parent = miniHub
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
+    local rs = Instance.new("UIStroke", row)
+    rs.Color = Color3.fromRGB(255,0,0); rs.Thickness = 0.8; rs.Transparency = 0.5
+    local lbl = Instance.new("TextLabel")
+    lbl.Text = labelText; lbl.Size = UDim2.new(1,-60,1,0); lbl.Position = UDim2.new(0,10,0,0)
+    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(220,220,220)
+    lbl.TextSize = 12; lbl.Font = Enum.Font.GothamBlack
+    lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 5; lbl.Parent = row
+    local track = Instance.new("TextButton")
+    track.Text = ""; track.Size = UDim2.new(0,44,0,24); track.Position = UDim2.new(1,-54,0.5,-12)
+    track.BackgroundColor3 = Color3.fromRGB(40,40,40); track.BorderSizePixel = 0
+    track.ZIndex = 5; track.Parent = row
+    Instance.new("UICorner", track).CornerRadius = UDim.new(1,0)
+    local thumb = Instance.new("Frame")
+    thumb.Size = UDim2.new(0,18,0,18); thumb.Position = UDim2.new(0,3,0.5,-9)
+    thumb.BackgroundColor3 = Color3.fromRGB(180,180,180); thumb.BorderSizePixel = 0
+    thumb.ZIndex = 6; thumb.Parent = track
+    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
+    return lbl, track, thumb
+end
+
+_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle = makeMiniRow("AUTO LEFT",  46)
+_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle = makeMiniRow("AUTO RIGHT", 100)
+
+-- Drag mini hub
+local mDragging, mDragInput, mDragStart, mStartPos = false, nil, nil, nil
+miniHub.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        mDragging = true; mDragStart = input.Position; mStartPos = miniHub.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then mDragging = false end
+        end)
+    end
+end)
+miniHub.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        mDragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == mDragInput and mDragging then
+        local delta = input.Position - mDragStart
+        miniHub.Position = UDim2.new(
+            mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
+            mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Toggles
+_G_AL_swBg.MouseButton1Click:Connect(function()
+    AutoLeftEnabled = not AutoLeftEnabled
+    if AutoLeftEnabled then
+        if AutoRightEnabled then
+            AutoRightEnabled = false
+            stopAutoRight()
+            toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+        end
+        toggleOn(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+        startAutoLeft()
+    else
+        toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+        stopAutoLeft()
+    end
+end)
+
+_G_AR_swBg.MouseButton1Click:Connect(function()
+    AutoRightEnabled = not AutoRightEnabled
+    if AutoRightEnabled then
+        if AutoLeftEnabled then
+            AutoLeftEnabled = false
+            stopAutoLeft()
+            toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+        end
+        toggleOn(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+        startAutoRight()
+    else
+        toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+        stopAutoRight()
+    end
+end)
