@@ -253,6 +253,7 @@ local function createESP(plr)
     if plr.Character:FindFirstChild("NightESP") then return end
     local c = plr.Character
     local hrp = c:FindFirstChild("HumanoidRootPart") if not hrp then return end
+    local head = c:FindFirstChild("Head")
     local hum = c:FindFirstChildOfClass("Humanoid")
     if hum then hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
     local hitbox = Instance.new("BoxHandleAdornment")
@@ -260,11 +261,32 @@ local function createESP(plr)
     hitbox.Color3 = Color3.fromRGB(255,0,50); hitbox.Transparency = 0.3
     hitbox.ZIndex = 10; hitbox.AlwaysOnTop = true; hitbox.Parent = c
     espObjects[plr] = hitbox
+    -- NOMBRE ROJO
+    if head then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESP_Name"
+        billboard.Adornee = head
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = c
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = plr.DisplayName or plr.Name
+        label.TextColor3 = Color3.fromRGB(255, 0, 0)
+        label.Font = Enum.Font.GothamBold
+        label.TextScaled = true
+        label.TextStrokeTransparency = 0.6
+        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        label.Parent = billboard
+    end
 end
 local function removeESP(plr)
     pcall(function()
         if plr.Character then
             local h = plr.Character:FindFirstChild("NightESP") if h then h:Destroy() end
+            local n = plr.Character:FindFirstChild("ESP_Name") if n then n:Destroy() end
             local hum = plr.Character:FindFirstChildOfClass("Humanoid")
             if hum then hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Automatic end
         end
