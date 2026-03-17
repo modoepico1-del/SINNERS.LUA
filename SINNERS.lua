@@ -19,6 +19,7 @@ local unwalkOn           = false
 local unwalkConn         = nil
 local xrayOn             = false
 local espOn              = false
+local antiRagdollOn      = false
 local fovValue           = 70
 local infJumpOn          = false
 local autoStealActive    = false
@@ -948,7 +949,6 @@ end)
 -- ══════════════════════════════════════
 --  ANTI RAGDOLL
 -- ══════════════════════════════════════
-local antiRagdollOn = false
 local antiRagdollLabel, antiRagdollTrack, antiRagdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 local antiRagdollMode = nil
 local ragdollConnections = {}
