@@ -1029,16 +1029,46 @@ local function enableFPSBoost()
 end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
--- RADIUS INPUT
+-- RADIUS INPUT (fuera del hub, arrastrable)
 local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(1, -20, 0, 44)
-radiusRow.Position               = UDim2.new(0, 10, 1, -172)
+radiusRow.Size                   = UDim2.new(0, 276, 0, 44)
+radiusRow.Position               = UDim2.new(0, 0, 0, 708)
 radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
 radiusRow.BackgroundTransparency = 0
 radiusRow.BorderSizePixel        = 0
 radiusRow.ZIndex                 = 4
-radiusRow.Parent                 = MainFrame
+radiusRow.Active                 = true
+radiusRow.Parent                 = ScreenGui
 Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
+local radiusRowStroke = Instance.new("UIStroke", radiusRow)
+radiusRowStroke.Color = Color3.fromRGB(255,0,0); radiusRowStroke.Thickness = 0.8; radiusRowStroke.Transparency = 0.5
+
+-- Drag para radiusRow
+local rDragging, rDragInput, rDragStart, rStartPos = false, nil, nil, nil
+radiusRow.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        rDragging = true
+        rDragStart = input.Position
+        rStartPos = radiusRow.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then rDragging = false end
+        end)
+    end
+end)
+radiusRow.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        rDragInput = input
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == rDragInput and rDragging then
+        local delta = input.Position - rDragStart
+        radiusRow.Position = UDim2.new(
+            rStartPos.X.Scale, rStartPos.X.Offset + delta.X,
+            rStartPos.Y.Scale, rStartPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
 local radiusTitleLabel = Instance.new("TextLabel")
 radiusTitleLabel.Text="STEAL RADIUS"; radiusTitleLabel.Size=UDim2.new(0,130,1,0); radiusTitleLabel.Position=UDim2.new(0,10,0,0)
