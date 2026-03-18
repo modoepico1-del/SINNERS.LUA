@@ -635,13 +635,19 @@ local function createOrUpdateSquare(radius)
         stealSquarePart.Name = "StealCircle"
         stealSquarePart.Anchored = true
         stealSquarePart.CanCollide = false
-        stealSquarePart.Transparency = 0.7
+        stealSquarePart.Transparency = 1
         stealSquarePart.Material = Enum.Material.Neon
-        -- CAMBIO: color rojo
-        stealSquarePart.Color = Color3.fromRGB(255, 0, 0)
+        stealSquarePart.Color = Color3.fromRGB(0, 0, 0)
         stealSquarePart.Shape = Enum.PartType.Cylinder
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
         stealSquarePart.Parent = workspace
+        -- Borde negro sin relleno
+        local outline = Instance.new("SelectionSphere")
+        outline.Color3 = Color3.fromRGB(0, 0, 0)
+        outline.SurfaceTransparency = 1
+        outline.SurfaceColor3 = Color3.fromRGB(0, 0, 0)
+        outline.Adornee = stealSquarePart
+        outline.Parent = stealSquarePart
     else
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
     end
@@ -683,6 +689,27 @@ autoStealTrack.MouseButton1Click:Connect(function()
     end
 end)
 
+
+local featuresSeparator = Instance.new("Frame")
+featuresSeparator.Size = UDim2.new(1, -20, 0, 2)
+featuresSeparator.Position = UDim2.new(0, 10, 0, 320)
+featuresSeparator.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+featuresSeparator.BackgroundTransparency = 0.6
+featuresSeparator.BorderSizePixel = 0
+featuresSeparator.ZIndex = 4
+featuresSeparator.Parent = ContentArea
+
+local featuresTitleLbl = Instance.new("TextLabel")
+featuresTitleLbl.Text = "— FEATURES —"
+featuresTitleLbl.Size = UDim2.new(1, -20, 0, 20)
+featuresTitleLbl.Position = UDim2.new(0, 10, 0, 326)
+featuresTitleLbl.BackgroundTransparency = 1
+featuresTitleLbl.TextColor3 = Color3.fromRGB(255, 0, 0)
+featuresTitleLbl.TextSize = 12
+featuresTitleLbl.Font = Enum.Font.GothamBlack
+featuresTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
+featuresTitleLbl.ZIndex = 5
+featuresTitleLbl.Parent = ContentArea
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
@@ -952,8 +979,47 @@ speedActivate.MouseButton1Click:Connect(function()
     end
 end)
 
--- ══════════════════════════════════════
---  ANTI RAGDOLL
+local function toggleSpeed()
+    speedOn = not speedOn
+    if speedOn then
+        speedActivate.Text = "ON"
+        speedActivate.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        if speedConnection then speedConnection:Disconnect() end
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = me.Character; if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+            speedNoStealValue = tonumber(speedBox.Text) or 53
+            local moveDirection = hum.MoveDirection
+            if moveDirection.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*speedNoStealValue, hrp.AssemblyLinearVelocity.Y, moveDirection.Z*speedNoStealValue)
+            end
+        end)
+    else
+        speedActivate.Text = "OFF"
+        speedActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+        speedConnection = RunService.Heartbeat:Connect(function()
+            local char = me.Character; if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+            speedStealValue = tonumber(stealBox.Text) or 29
+            local moveDirection = hum.MoveDirection
+            if moveDirection.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*speedStealValue, hrp.AssemblyLinearVelocity.Y, moveDirection.Z*speedStealValue)
+            end
+        end)
+    end
+end
+
+-- Tecla Q activa/desactiva speed
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Q then toggleSpeed() end
+end)
+
 -- ══════════════════════════════════════
 local antiRagdollLabel, antiRagdollTrack, antiRagdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 local antiRagdollMode = nil
@@ -1587,5 +1653,40 @@ _G_AR_swBg.MouseButton1Click:Connect(function()
     else
         toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
         stopAutoRight()
+    end
+end)
+
+
+-- Tecla Z = AUTO LEFT, Tecla C = AUTO RIGHT
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Z then
+        AutoLeftEnabled = not AutoLeftEnabled
+        if AutoLeftEnabled then
+            if AutoRightEnabled then
+                AutoRightEnabled = false
+                stopAutoRight()
+                toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+            end
+            toggleOn(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+            startAutoLeft()
+        else
+            toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+            stopAutoLeft()
+        end
+    elseif input.KeyCode == Enum.KeyCode.C then
+        AutoRightEnabled = not AutoRightEnabled
+        if AutoRightEnabled then
+            if AutoLeftEnabled then
+                AutoLeftEnabled = false
+                stopAutoLeft()
+                toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
+            end
+            toggleOn(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+            startAutoRight()
+        else
+            toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
+            stopAutoRight()
+        end
     end
 end)
