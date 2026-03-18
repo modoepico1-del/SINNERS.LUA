@@ -519,41 +519,30 @@ local function autoSteal_findPrompt(animalData)
 end
 
 local function autoSteal_buildCallbacks(prompt)
-    if autoStealInternalCache[prompt] then return end
-    local data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
-    local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
-    if ok1 and type(conns1) == "table" then
-        for _, conn in ipairs(conns1) do
-            if type(conn.Function) == "function" then
-                table.insert(data.holdCallbacks, conn.Function)
-            end
-        end
-    end
-    local ok2, conns2 = pcall(getconnections, prompt.Triggered)
-    if ok2 and type(conns2) == "table" then
-        for _, conn in ipairs(conns2) do
-            if type(conn.Function) == "function" then
-                table.insert(data.triggerCallbacks, conn.Function)
-            end
-        end
-    end
-    if (#data.holdCallbacks > 0) or (#data.triggerCallbacks > 0) then
-        autoStealInternalCache[prompt] = data
-    end
+    -- no-op, using fireproximityprompt instead
 end
 
 local function autoSteal_execute(prompt)
     local data = autoStealInternalCache[prompt]
-    if not data or not data.ready then return false end
-    data.ready = false
+    if data and not data.ready then return false end
+    if not data then
+        autoStealInternalCache[prompt] = { ready = false }
+    else
+        data.ready = false
+    end
     autoStealIsStealing = true
     task.spawn(function()
-        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
-        task.wait(0.2)
-        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
-        task.wait(0.01)
-        data.ready = true
-        task.wait(0.01)
+        pcall(function()
+            if fireproximityprompt then
+                fireproximityprompt(prompt)
+            else
+                -- fallback: simulate hold + trigger
+                prompt.HoldDuration = 0
+                prompt.Triggered:Fire()
+            end
+        end)
+        task.wait(0.15)
+        autoStealInternalCache[prompt].ready = true
         autoStealIsStealing = false
     end)
     return true
@@ -561,8 +550,8 @@ end
 
 local function autoSteal_attempt(prompt)
     if not prompt or not prompt.Parent then return false end
-    autoSteal_buildCallbacks(prompt)
-    if not autoStealInternalCache[prompt] then return false end
+    local data = autoStealInternalCache[prompt]
+    if data and not data.ready then return false end
     return autoSteal_execute(prompt)
 end
 
