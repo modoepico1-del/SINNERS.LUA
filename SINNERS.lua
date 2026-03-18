@@ -23,7 +23,7 @@ local antiRagdollOn      = false
 local fovValue           = 70
 local infJumpOn          = false
 local autoStealActive    = false
-local AUTO_STEAL_PROX_RADIUS = 7
+local AUTO_STEAL_PROX_RADIUS = 7 , 8 , 9 , 10
 local galaxySkyOn        = false
 
 local CONFIG_FILE = "DEMONTIME_config.json"
