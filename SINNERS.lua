@@ -8,7 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
 local Lighting         = game:GetService("Lighting")
 local ReplicatedStorage= game:GetService("ReplicatedStorage")
-local CoreGui          = game:GetService("CoreGui")
+local CoreGui          = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
@@ -47,9 +47,8 @@ end
 local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
-if CoreGui:FindFirstChild("DEMONTIME_GUI") then
-    CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
-end
+local _existing = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("DEMONTIME_GUI")
+if _existing then _existing:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name           = "DEMONTIME_GUI"
