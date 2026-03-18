@@ -1198,6 +1198,18 @@ end
 local function startAutoLeft()
     if autoLeftConnection then autoLeftConnection:Disconnect() end
     autoLeftPhase = 1
+    -- activar speed al arrancar
+    if speedConnection then speedConnection:Disconnect() end
+    speedConnection = RunService.Heartbeat:Connect(function()
+        local char = me.Character; if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
+        local mv = hum.MoveDirection
+        if mv.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(speedBox.Text) or 53), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(speedBox.Text) or 53))
+        end
+    end)
     autoLeftConnection = RunService.Heartbeat:Connect(function()
         if not AutoLeftEnabled then return end
         local c = me.Character; if not c then return end
@@ -1235,11 +1247,35 @@ local function stopAutoLeft()
     autoLeftPhase=1
     local c=me.Character
     if c then local hum=c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+    -- volver a steal speed
+    if speedConnection then speedConnection:Disconnect() end
+    speedConnection = RunService.Heartbeat:Connect(function()
+        local char = me.Character; if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
+        local mv = hum.MoveDirection
+        if mv.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(stealBox.Text) or 29), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(stealBox.Text) or 29))
+        end
+    end)
 end
 
 local function startAutoRight()
     if autoRightConnection then autoRightConnection:Disconnect() end
     autoRightPhase=1
+    -- activar speed al arrancar
+    if speedConnection then speedConnection:Disconnect() end
+    speedConnection = RunService.Heartbeat:Connect(function()
+        local char = me.Character; if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
+        local mv = hum.MoveDirection
+        if mv.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(speedBox.Text) or 53), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(speedBox.Text) or 53))
+        end
+    end)
     autoRightConnection = RunService.Heartbeat:Connect(function()
         if not AutoRightEnabled then return end
         local c=me.Character; if not c then return end
@@ -1277,6 +1313,18 @@ local function stopAutoRight()
     autoRightPhase=1
     local c=me.Character
     if c then local hum=c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+    -- volver a steal speed
+    if speedConnection then speedConnection:Disconnect() end
+    speedConnection = RunService.Heartbeat:Connect(function()
+        local char = me.Character; if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hrp or not hum then return end
+        local mv = hum.MoveDirection
+        if mv.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(stealBox.Text) or 29), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(stealBox.Text) or 29))
+        end
+    end)
 end
 
 local miniHub = Instance.new("Frame")
