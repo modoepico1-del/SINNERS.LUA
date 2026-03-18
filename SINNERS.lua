@@ -8,7 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
 local Lighting         = game:GetService("Lighting")
 local ReplicatedStorage= game:GetService("ReplicatedStorage")
-local CoreGui          = game:GetService("CoreGui")
+local PlayerGui        = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
@@ -47,15 +47,16 @@ end
 local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
-if CoreGui:FindFirstChild("DEMONTIME_GUI") then
-    CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
-end
+local _existing = PlayerGui:FindFirstChild("DEMONTIME_GUI")
+if _existing then _existing:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name           = "DEMONTIME_GUI"
 ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent         = CoreGui
+ScreenGui.DisplayOrder   = 999
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent         = PlayerGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 700)
@@ -261,25 +262,17 @@ local function createESP(plr)
     hitbox.Color3 = Color3.fromRGB(255,0,50); hitbox.Transparency = 0.3
     hitbox.ZIndex = 10; hitbox.AlwaysOnTop = true; hitbox.Parent = c
     espObjects[plr] = hitbox
-    -- NOMBRE ROJO
     if head then
         local billboard = Instance.new("BillboardGui")
-        billboard.Name = "ESP_Name"
-        billboard.Adornee = head
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.StudsOffset = Vector3.new(0, 3, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = c
+        billboard.Name = "ESP_Name"; billboard.Adornee = head
+        billboard.Size = UDim2.new(0,200,0,50); billboard.StudsOffset = Vector3.new(0,3,0)
+        billboard.AlwaysOnTop = true; billboard.Parent = c
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1,0,1,0); label.BackgroundTransparency = 1
         label.Text = plr.DisplayName or plr.Name
-        label.TextColor3 = Color3.fromRGB(255, 0, 0)
-        label.Font = Enum.Font.GothamBold
-        label.TextScaled = true
-        label.TextStrokeTransparency = 0.6
-        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        label.Parent = billboard
+        label.TextColor3 = Color3.fromRGB(255,0,0); label.Font = Enum.Font.GothamBold
+        label.TextScaled = true; label.TextStrokeTransparency = 0.6
+        label.TextStrokeColor3 = Color3.fromRGB(0,0,0); label.Parent = billboard
     end
 end
 local function removeESP(plr)
@@ -335,27 +328,23 @@ end
 task.defer(function() task.wait(0.5); startDarkMode() end)
 me.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
--- ANTI RAGDOLL (row y logica definidos abajo)
-
 -- INF JUMP
 local infJumpLabel, infJumpTrack, infJumpThumb = makeOptionRow(ContentArea, "INF JUMP", 226)
 local jumpForce = 50
 local clampFallSpeed = 80
 RunService.Heartbeat:Connect(function()
     if not infJumpOn then return end
-    local char = me.Character
-    if not char then return end
+    local char = me.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp.Velocity.Y < -clampFallSpeed then
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+    if hrp and hrp.AssemblyLinearVelocity.Y < -clampFallSpeed then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -clampFallSpeed, hrp.AssemblyLinearVelocity.Z)
     end
 end)
 UserInputService.JumpRequest:Connect(function()
     if not infJumpOn then return end
-    local char = me.Character
-    if not char then return end
+    local char = me.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
+    if hrp then hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, jumpForce, hrp.AssemblyLinearVelocity.Z) end
 end)
 infJumpTrack.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
@@ -403,6 +392,49 @@ local function animateProgressBar()
         percentLabel.Text = "0%"
     end)
 end
+
+-- RADIO VISUAL
+local stealSquarePart = nil
+local circleConnection = nil
+local grabRadius = AUTO_STEAL_PROX_RADIUS
+
+local function hideSquare()
+    if stealSquarePart then stealSquarePart:Destroy(); stealSquarePart = nil end
+    if circleConnection then circleConnection:Disconnect(); circleConnection = nil end
+end
+
+local function createOrUpdateSquare(radius)
+    if not stealSquarePart then
+        stealSquarePart = Instance.new("Part")
+        stealSquarePart.Name = "StealCircle"
+        stealSquarePart.Anchored = true
+        stealSquarePart.CanCollide = false
+        stealSquarePart.Transparency = 0.7
+        stealSquarePart.Material = Enum.Material.Neon
+        stealSquarePart.Color = Color3.fromRGB(255, 0, 0)
+        stealSquarePart.Shape = Enum.PartType.Cylinder
+        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
+        stealSquarePart.Parent = workspace
+    else
+        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
+    end
+end
+
+local function updateSquarePosition()
+    if stealSquarePart and me.Character then
+        local root = me.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            stealSquarePart.CFrame =
+                CFrame.new(root.Position + Vector3.new(0, -2.5, 0))
+                * CFrame.Angles(0, 0, math.rad(90))
+        end
+    end
+end
+
+circleConnection = RunService.Heartbeat:Connect(function()
+    if not autoStealActive then hideSquare(); return end
+    updateSquarePosition()
+end)
 
 -- AUTO STEAL
 local autoStealLabel, autoStealTrack, autoStealThumb = makeOptionRow(ContentArea, "AUTO STEAL", 280)
@@ -517,42 +549,15 @@ local function autoSteal_findPrompt(animalData)
     return nil
 end
 
-local function autoSteal_buildCallbacks(prompt)
-    if autoStealInternalCache[prompt] then return end
-    local data = { holdCallbacks = {}, triggerCallbacks = {}, ready = true }
-    local ok1, conns1 = pcall(getconnections, prompt.PromptButtonHoldBegan)
-    if ok1 and type(conns1) == "table" then
-        for _, conn in ipairs(conns1) do
-            if type(conn.Function) == "function" then
-                table.insert(data.holdCallbacks, conn.Function)
-            end
-        end
-    end
-    local ok2, conns2 = pcall(getconnections, prompt.Triggered)
-    if ok2 and type(conns2) == "table" then
-        for _, conn in ipairs(conns2) do
-            if type(conn.Function) == "function" then
-                table.insert(data.triggerCallbacks, conn.Function)
-            end
-        end
-    end
-    if (#data.holdCallbacks > 0) or (#data.triggerCallbacks > 0) then
-        autoStealInternalCache[prompt] = data
-    end
-end
-
 local function autoSteal_execute(prompt)
     local data = autoStealInternalCache[prompt]
-    if not data or not data.ready then return false end
-    data.ready = false
+    if data and not data.ready then return false end
+    autoStealInternalCache[prompt] = { ready = false }
     autoStealIsStealing = true
     task.spawn(function()
-        for _, fn in ipairs(data.holdCallbacks) do task.spawn(fn) end
-        task.wait(0.2)
-        for _, fn in ipairs(data.triggerCallbacks) do task.spawn(fn) end
-        task.wait(0.01)
-        data.ready = true
-        task.wait(0.01)
+        pcall(function() fireproximityprompt(prompt) end)
+        task.wait(0.15)
+        autoStealInternalCache[prompt].ready = true
         autoStealIsStealing = false
     end)
     return true
@@ -560,8 +565,6 @@ end
 
 local function autoSteal_attempt(prompt)
     if not prompt or not prompt.Parent then return false end
-    autoSteal_buildCallbacks(prompt)
-    if not autoStealInternalCache[prompt] then return false end
     return autoSteal_execute(prompt)
 end
 
@@ -589,7 +592,6 @@ local function startAutoStealLoop()
         local hrp = autoSteal_getHRP()
         if not hrp then return end
         if (hrp.Position - target.worldPosition).Magnitude > AUTO_STEAL_PROX_RADIUS then return end
-        if autoStealLastUID ~= target.uid then autoStealLastUID = target.uid end
         local prompt = autoStealPromptCache[target.uid]
         if not prompt or not prompt.Parent then prompt = autoSteal_findPrompt(target) end
         if prompt then
@@ -634,53 +636,18 @@ autoStealTrack.MouseButton1Click:Connect(function()
     end
 end)
 
--- ══════════════════════════════════════
---  RADIO VISUAL (CIRCULO ROJO)
--- ══════════════════════════════════════
+-- FEATURES
+local featuresSep = Instance.new("Frame")
+featuresSep.Size = UDim2.new(1,-20,0,2); featuresSep.Position = UDim2.new(0,10,0,320)
+featuresSep.BackgroundColor3 = Color3.fromRGB(255,0,0); featuresSep.BackgroundTransparency = 0.6
+featuresSep.BorderSizePixel = 0; featuresSep.ZIndex = 4; featuresSep.Parent = ContentArea
 
-local stealSquarePart = nil
-local circleConnection = nil
-local grabRadius = AUTO_STEAL_PROX_RADIUS
-
-local function hideSquare()
-    if stealSquarePart then stealSquarePart:Destroy(); stealSquarePart = nil end
-    if circleConnection then circleConnection:Disconnect(); circleConnection = nil end
-end
-
-local function createOrUpdateSquare(radius)
-    if not stealSquarePart then
-        stealSquarePart = Instance.new("Part")
-        stealSquarePart.Name = "StealCircle"
-        stealSquarePart.Anchored = true
-        stealSquarePart.CanCollide = false
-        stealSquarePart.Transparency = 0.7
-        stealSquarePart.Material = Enum.Material.Neon
-        -- CAMBIO: color rojo
-        stealSquarePart.Color = Color3.fromRGB(255, 0, 0)
-        stealSquarePart.Shape = Enum.PartType.Cylinder
-        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
-        stealSquarePart.Parent = workspace
-    else
-        stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
-    end
-end
-
-local function updateSquarePosition()
-    if stealSquarePart and me.Character then
-        local root = me.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            stealSquarePart.CFrame =
-                CFrame.new(root.Position + Vector3.new(0, -2.5, 0))
-                * CFrame.Angles(0, 0, math.rad(90))
-        end
-    end
-end
-
-if circleConnection then circleConnection:Disconnect() end
-circleConnection = RunService.Heartbeat:Connect(function()
-    if not autoStealActive then hideSquare(); return end
-    updateSquarePosition()
-end)
+local featuresTitleLbl = Instance.new("TextLabel")
+featuresTitleLbl.Text = "— FEATURES —"; featuresTitleLbl.Size = UDim2.new(1,-20,0,20)
+featuresTitleLbl.Position = UDim2.new(0,10,0,326); featuresTitleLbl.BackgroundTransparency = 1
+featuresTitleLbl.TextColor3 = Color3.fromRGB(255,0,0); featuresTitleLbl.TextSize = 12
+featuresTitleLbl.Font = Enum.Font.GothamBlack; featuresTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
+featuresTitleLbl.ZIndex = 5; featuresTitleLbl.Parent = ContentArea
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
@@ -795,7 +762,8 @@ batAimbotTrack.MouseButton1Click:Connect(function()
     else toggleOff(batAimbotLabel, batAimbotTrack, batAimbotThumb); stopBatAimbot() end
 end)
 
-UserInputService.InputBegan:Connect(function(input)
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
     if input.KeyCode == Enum.KeyCode.E then
         batAimbotOn = not batAimbotOn
         if batAimbotOn then toggleOn(batAimbotLabel, batAimbotTrack, batAimbotThumb); startBatAimbot()
@@ -803,44 +771,29 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
--- ══════════════════════════════════════
---  SPEED
--- ══════════════════════════════════════
-
+-- SPEED
 local speedOn = false
 local speedConnection = nil
 local speedNoStealValue = 53
 local speedStealValue = 29
 
 local speedSeparator = Instance.new("Frame")
-speedSeparator.Size = UDim2.new(1, -20, 0, 2)
-speedSeparator.Position = UDim2.new(0, 10, 0, 448)
-speedSeparator.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-speedSeparator.BackgroundTransparency = 0.6
-speedSeparator.BorderSizePixel = 0
-speedSeparator.ZIndex = 4
-speedSeparator.Parent = ContentArea
+speedSeparator.Size = UDim2.new(1,-20,0,2); speedSeparator.Position = UDim2.new(0,10,0,448)
+speedSeparator.BackgroundColor3 = Color3.fromRGB(255,0,0); speedSeparator.BackgroundTransparency = 0.6
+speedSeparator.BorderSizePixel = 0; speedSeparator.ZIndex = 4; speedSeparator.Parent = ContentArea
 
 local speedTitleLbl = Instance.new("TextLabel")
-speedTitleLbl.Text = "— SPEED —"
-speedTitleLbl.Size = UDim2.new(1, -20, 0, 20)
-speedTitleLbl.Position = UDim2.new(0, 10, 0, 454)
-speedTitleLbl.BackgroundTransparency = 1
-speedTitleLbl.TextColor3 = Color3.fromRGB(255, 0, 0)
-speedTitleLbl.TextSize = 12
-speedTitleLbl.Font = Enum.Font.GothamBlack
-speedTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
-speedTitleLbl.ZIndex = 5
-speedTitleLbl.Parent = ContentArea
+speedTitleLbl.Text = "— SPEED —"; speedTitleLbl.Size = UDim2.new(1,-20,0,20)
+speedTitleLbl.Position = UDim2.new(0,10,0,454); speedTitleLbl.BackgroundTransparency = 1
+speedTitleLbl.TextColor3 = Color3.fromRGB(255,0,0); speedTitleLbl.TextSize = 12
+speedTitleLbl.Font = Enum.Font.GothamBlack; speedTitleLbl.TextXAlignment = Enum.TextXAlignment.Center
+speedTitleLbl.ZIndex = 5; speedTitleLbl.Parent = ContentArea
 
 local speedRow = Instance.new("Frame")
-speedRow.Size = UDim2.new(1, -20, 0, 60)
-speedRow.Position = UDim2.new(0, 10, 0, 478)
-speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-speedRow.BorderSizePixel = 0
-speedRow.ZIndex = 4
-speedRow.Parent = ContentArea
-Instance.new("UICorner", speedRow).CornerRadius = UDim.new(0, 7)
+speedRow.Size = UDim2.new(1,-20,0,60); speedRow.Position = UDim2.new(0,10,0,478)
+speedRow.BackgroundColor3 = Color3.fromRGB(15,0,0); speedRow.BorderSizePixel = 0
+speedRow.ZIndex = 4; speedRow.Parent = ContentArea
+Instance.new("UICorner", speedRow).CornerRadius = UDim.new(0,7)
 local speedRowStroke = Instance.new("UIStroke", speedRow)
 speedRowStroke.Color = Color3.fromRGB(255,0,0); speedRowStroke.Thickness = 0.8; speedRowStroke.Transparency = 0.5
 
@@ -881,151 +834,96 @@ speedBtnStroke.Color=Color3.fromRGB(255,0,0); speedBtnStroke.Thickness=1.2
 
 speedBox.FocusLost:Connect(function()
     local num = tonumber(speedBox.Text)
-    if num then
-        num = math.clamp(num, 15, 200)
-        speedBox.Text = tostring(num)
-        speedNoStealValue = num
-    else
-        speedBox.Text = tostring(speedNoStealValue)
-    end
+    if num then speedNoStealValue = math.clamp(num,15,200); speedBox.Text = tostring(speedNoStealValue)
+    else speedBox.Text = tostring(speedNoStealValue) end
 end)
-
 stealBox.FocusLost:Connect(function()
     local num = tonumber(stealBox.Text)
-    if num then
-        num = math.clamp(num, 15, 200)
-        stealBox.Text = tostring(num)
-        speedStealValue = num
-    else
-        stealBox.Text = tostring(speedStealValue)
-    end
+    if num then speedStealValue = math.clamp(num,15,200); stealBox.Text = tostring(speedStealValue)
+    else stealBox.Text = tostring(speedStealValue) end
 end)
 
--- CAMBIO PRINCIPAL: Speed ON usa SPEED, Speed OFF usa STEAL
-speedActivate.MouseButton1Click:Connect(function()
+local function toggleSpeed()
     speedOn = not speedOn
     if speedOn then
-        speedActivate.Text = "ON"
-        speedActivate.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        speedActivate.Text = "ON"; speedActivate.BackgroundColor3 = Color3.fromRGB(200,0,0)
         if speedConnection then speedConnection:Disconnect() end
         speedConnection = RunService.Heartbeat:Connect(function()
-            local char = me.Character
-            if not char then return end
+            local char = me.Character; if not char then return end
             local hrp = char:FindFirstChild("HumanoidRootPart")
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then return end
-            speedNoStealValue = tonumber(speedBox.Text) or 53
-            local moveDirection = hum.MoveDirection
-            if moveDirection.Magnitude > 0 then
-                -- Speed ON: siempre usa la velocidad SPEED (speedNoStealValue)
-                hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDirection.X * speedNoStealValue,
-                    hrp.AssemblyLinearVelocity.Y,
-                    moveDirection.Z * speedNoStealValue
-                )
+            local mv = hum.MoveDirection
+            if mv.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(speedBox.Text) or 53), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(speedBox.Text) or 53))
             end
         end)
     else
-        speedActivate.Text = "OFF"
-        speedActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        speedActivate.Text = "OFF"; speedActivate.BackgroundColor3 = Color3.fromRGB(25,25,25)
         if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
-        -- Speed OFF: activar loop con velocidad STEAL
         speedConnection = RunService.Heartbeat:Connect(function()
-            local char = me.Character
-            if not char then return end
+            local char = me.Character; if not char then return end
             local hrp = char:FindFirstChild("HumanoidRootPart")
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then return end
-            speedStealValue = tonumber(stealBox.Text) or 29
-            local moveDirection = hum.MoveDirection
-            if moveDirection.Magnitude > 0 then
-                -- Speed OFF: siempre usa la velocidad STEAL (speedStealValue)
-                hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDirection.X * speedStealValue,
-                    hrp.AssemblyLinearVelocity.Y,
-                    moveDirection.Z * speedStealValue
-                )
+            local mv = hum.MoveDirection
+            if mv.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(mv.X*(tonumber(stealBox.Text) or 29), hrp.AssemblyLinearVelocity.Y, mv.Z*(tonumber(stealBox.Text) or 29))
             end
         end)
     end
-end)
+end
+speedActivate.MouseButton1Click:Connect(toggleSpeed)
 
--- ══════════════════════════════════════
---  ANTI RAGDOLL
--- ══════════════════════════════════════
+-- ANTI RAGDOLL
 local antiRagdollLabel, antiRagdollTrack, antiRagdollThumb = makeOptionRow(ContentArea, "ANTI RAGDOLL", 172)
 local antiRagdollMode = nil
 local ragdollConnections = {}
 local cachedCharData = {}
 local function cacheCharacterData()
-    local char = me.Character
-    if not char then return false end
-    local hum  = char:FindFirstChildOfClass("Humanoid")
+    local char = me.Character; if not char then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
     local root = char:FindFirstChild("HumanoidRootPart")
     if not hum or not root then return false end
-    cachedCharData = {
-        character         = char,
-        humanoid          = hum,
-        root              = root,
-        originalWalkSpeed = hum.WalkSpeed,
-        originalJumpPower = hum.JumpPower,
-        isFrozen          = false
-    }
+    cachedCharData = { character=char, humanoid=hum, root=root, originalWalkSpeed=hum.WalkSpeed, originalJumpPower=hum.JumpPower, isFrozen=false }
     return true
 end
 local function disconnectAllRagdoll()
     for _, conn in ipairs(ragdollConnections) do
-        if typeof(conn) == "RBXScriptConnection" then
-            pcall(function() conn:Disconnect() end)
-        end
+        if typeof(conn) == "RBXScriptConnection" then pcall(function() conn:Disconnect() end) end
     end
     ragdollConnections = {}
 end
 local function isRagdolled()
     if not cachedCharData.humanoid then return false end
     local state = cachedCharData.humanoid:GetState()
-    if state == Enum.HumanoidStateType.Physics
-    or state == Enum.HumanoidStateType.Ragdoll
-    or state == Enum.HumanoidStateType.FallingDown then
-        return true
-    end
+    if state == Enum.HumanoidStateType.Physics or state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.FallingDown then return true end
     local endTime = me:GetAttribute("RagdollEndTime")
-    if endTime then
-        if (endTime - workspace:GetServerTimeNow()) > 0 then return true end
-    end
+    if endTime and (endTime - workspace:GetServerTimeNow()) > 0 then return true end
     return false
 end
 local function removeRagdollConstraints()
     if not cachedCharData.character then return end
     for _, descendant in ipairs(cachedCharData.character:GetDescendants()) do
-        if descendant:IsA("BallSocketConstraint") or
-           (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
+        if descendant:IsA("BallSocketConstraint") or (descendant:IsA("Attachment") and descendant.Name:find("RagdollAttachment")) then
             pcall(function() descendant:Destroy() end)
         end
     end
 end
 local function forceExitRagdoll()
     if not cachedCharData.humanoid or not cachedCharData.root then return end
-    local hum  = cachedCharData.humanoid
-    local root = cachedCharData.root
+    local hum = cachedCharData.humanoid; local root = cachedCharData.root
     pcall(function() me:SetAttribute("RagdollEndTime", workspace:GetServerTimeNow()) end)
     if hum.Health > 0 then hum:ChangeState(Enum.HumanoidStateType.Running) end
-    root.Anchored = false
-    root.AssemblyLinearVelocity  = Vector3.zero
-    root.AssemblyAngularVelocity = Vector3.zero
+    root.Anchored = false; root.AssemblyLinearVelocity = Vector3.zero; root.AssemblyAngularVelocity = Vector3.zero
 end
 local function antiRagdollLoop()
     while antiRagdollMode do
         task.wait()
-        if isRagdolled() then
-            removeRagdollConstraints()
-            forceExitRagdoll()
-        end
+        if isRagdolled() then removeRagdollConstraints(); forceExitRagdoll() end
         local cam = workspace.CurrentCamera
-        if cam and cachedCharData.humanoid then
-            if cam.CameraSubject ~= cachedCharData.humanoid then
-                cam.CameraSubject = cachedCharData.humanoid
-            end
+        if cam and cachedCharData.humanoid and cam.CameraSubject ~= cachedCharData.humanoid then
+            cam.CameraSubject = cachedCharData.humanoid
         end
     end
 end
@@ -1035,26 +933,18 @@ local function toggleAntiRagdoll(enable)
         if not cacheCharacterData() then return end
         antiRagdollMode = "v1"
         local charConn = me.CharacterAdded:Connect(function()
-            task.wait(0.5)
-            if antiRagdollMode then cacheCharacterData() end
+            task.wait(0.5); if antiRagdollMode then cacheCharacterData() end
         end)
         table.insert(ragdollConnections, charConn)
         task.spawn(antiRagdollLoop)
     else
-        antiRagdollMode = nil
-        disconnectAllRagdoll()
-        cachedCharData = {}
+        antiRagdollMode = nil; disconnectAllRagdoll(); cachedCharData = {}
     end
 end
 antiRagdollTrack.MouseButton1Click:Connect(function()
     antiRagdollOn = not antiRagdollOn
-    if antiRagdollOn then
-        toggleOn(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
-        toggleAntiRagdoll(true)
-    else
-        toggleOff(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
-        toggleAntiRagdoll(false)
-    end
+    if antiRagdollOn then toggleOn(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb); toggleAntiRagdoll(true)
+    else toggleOff(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb); toggleAntiRagdoll(false) end
 end)
 
 -- FPS BOOST
@@ -1085,30 +975,19 @@ local function enableFPSBoost()
 end
 task.defer(function() task.wait(1); enableFPSBoost() end)
 
--- ══════════════════════════════════════
---  RADIUS INPUT (arrastrable, fuera del hub)
--- ══════════════════════════════════════
-
+-- RADIUS INPUT
 local radiusRow = Instance.new("Frame")
-radiusRow.Size                   = UDim2.new(0, 276, 0, 44)
-radiusRow.Position               = UDim2.new(0, 0, 0, 708)
-radiusRow.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-radiusRow.BackgroundTransparency = 0
-radiusRow.BorderSizePixel        = 0
-radiusRow.ZIndex                 = 4
-radiusRow.Active                 = true
-radiusRow.Parent                 = ScreenGui
-Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0, 7)
+radiusRow.Size = UDim2.new(0,276,0,44); radiusRow.Position = UDim2.new(0,0,0,708)
+radiusRow.BackgroundColor3 = Color3.fromRGB(0,0,0); radiusRow.BackgroundTransparency = 0
+radiusRow.BorderSizePixel = 0; radiusRow.ZIndex = 4; radiusRow.Active = true; radiusRow.Parent = ScreenGui
+Instance.new("UICorner", radiusRow).CornerRadius = UDim.new(0,7)
 local radiusRowStroke = Instance.new("UIStroke", radiusRow)
 radiusRowStroke.Color = Color3.fromRGB(255,0,0); radiusRowStroke.Thickness = 0.8; radiusRowStroke.Transparency = 0.5
 
--- Drag para radiusRow
 local rDragging, rDragInput, rDragStart, rStartPos = false, nil, nil, nil
 radiusRow.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        rDragging = true
-        rDragStart = input.Position
-        rStartPos = radiusRow.Position
+        rDragging = true; rDragStart = input.Position; rStartPos = radiusRow.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then rDragging = false end
         end)
@@ -1122,16 +1001,9 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if input == rDragInput and rDragging then
         local delta = input.Position - rDragStart
-        local newPos = UDim2.new(
-            rStartPos.X.Scale, rStartPos.X.Offset + delta.X,
-            rStartPos.Y.Scale, rStartPos.Y.Offset + delta.Y
-        )
+        local newPos = UDim2.new(rStartPos.X.Scale, rStartPos.X.Offset+delta.X, rStartPos.Y.Scale, rStartPos.Y.Offset+delta.Y)
         radiusRow.Position = newPos
-        -- La barra de progreso sigue al radiusRow
-        progressBarBg.Position = UDim2.new(
-            newPos.X.Scale, newPos.X.Offset,
-            newPos.Y.Scale, newPos.Y.Offset + 50
-        )
+        progressBarBg.Position = UDim2.new(newPos.X.Scale, newPos.X.Offset, newPos.Y.Scale, newPos.Y.Offset+50)
     end
 end)
 
@@ -1142,47 +1014,28 @@ radiusTitleLabel.TextSize=13; radiusTitleLabel.Font=Enum.Font.GothamBlack
 radiusTitleLabel.TextXAlignment=Enum.TextXAlignment.Left; radiusTitleLabel.ZIndex=5; radiusTitleLabel.Parent=radiusRow
 
 local radiusInput = Instance.new("TextBox")
-radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-radiusInput.Size = UDim2.new(0, 70, 0, 28)
-radiusInput.Position = UDim2.new(1, -80, 0.5, -14)
-radiusInput.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-radiusInput.BorderSizePixel = 0
-radiusInput.TextColor3 = Color3.fromRGB(180, 180, 180)
-radiusInput.PlaceholderText = "7"
-radiusInput.TextSize = 13
-radiusInput.Font = Enum.Font.GothamBlack
-radiusInput.ClearTextOnFocus = true
-radiusInput.ZIndex = 6
-radiusInput.Parent = radiusRow
-Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0, 5)
+radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS); radiusInput.Size = UDim2.new(0,70,0,28)
+radiusInput.Position = UDim2.new(1,-80,0.5,-14); radiusInput.BackgroundColor3 = Color3.fromRGB(20,20,20)
+radiusInput.BorderSizePixel = 0; radiusInput.TextColor3 = Color3.fromRGB(180,180,180)
+radiusInput.PlaceholderText = "7"; radiusInput.TextSize = 13; radiusInput.Font = Enum.Font.GothamBlack
+radiusInput.ClearTextOnFocus = true; radiusInput.ZIndex = 6; radiusInput.Parent = radiusRow
+Instance.new("UICorner", radiusInput).CornerRadius = UDim.new(0,5)
 local radiusInputStroke = Instance.new("UIStroke", radiusInput)
 radiusInputStroke.Color = Color3.fromRGB(255,0,0); radiusInputStroke.Thickness = 1.2
 
 radiusInput.FocusLost:Connect(function()
     local val = tonumber(radiusInput.Text)
-    if val and val > 0 then
-        AUTO_STEAL_PROX_RADIUS = math.floor(val)
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-    else
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
-    end
+    if val and val > 0 then AUTO_STEAL_PROX_RADIUS = math.floor(val); radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+    else radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS) end
 end)
 
--- Posicionar barra de progreso debajo del radiusRow (separada 6px)
-progressBarBg.Position = UDim2.new(
-    radiusRow.Position.X.Scale, radiusRow.Position.X.Offset,
-    radiusRow.Position.Y.Scale, radiusRow.Position.Y.Offset + 50
-)
+progressBarBg.Position = UDim2.new(radiusRow.Position.X.Scale, radiusRow.Position.X.Offset, radiusRow.Position.Y.Scale, radiusRow.Position.Y.Offset+50)
 
--- ══════════════════════════════════════
---  FOV SLIDER
--- ══════════════════════════════════════
-
+-- FOV SLIDER
 local FOV_MIN, FOV_MAX = 70, 120
 local fovRow = Instance.new("Frame")
 fovRow.Size=UDim2.new(1,-20,0,54); fovRow.Position=UDim2.new(0,10,1,-118)
-fovRow.BackgroundColor3=Color3.fromRGB(0,0,0); fovRow.BackgroundTransparency=0
-fovRow.BorderSizePixel=0; fovRow.ZIndex=4; fovRow.Parent=MainFrame
+fovRow.BackgroundColor3=Color3.fromRGB(0,0,0); fovRow.BorderSizePixel=0; fovRow.ZIndex=4; fovRow.Parent=MainFrame
 Instance.new("UICorner", fovRow).CornerRadius = UDim.new(0,7)
 
 local fovTitleLabel = Instance.new("TextLabel")
@@ -1210,8 +1063,7 @@ Instance.new("UICorner", sliderFill).CornerRadius = UDim.new(1,0)
 
 local sliderThumb = Instance.new("Frame")
 sliderThumb.Size=UDim2.new(0,28,0,28); sliderThumb.Position=UDim2.new(0,-14,0.5,-14)
-sliderThumb.BackgroundTransparency=1; sliderThumb.BorderSizePixel=0
-sliderThumb.ZIndex=8; sliderThumb.Parent=sliderTrack
+sliderThumb.BackgroundTransparency=1; sliderThumb.BorderSizePixel=0; sliderThumb.ZIndex=8; sliderThumb.Parent=sliderTrack
 
 local thumbImg = Instance.new("ImageLabel")
 thumbImg.Size=UDim2.new(1,0,1,0); thumbImg.BackgroundTransparency=1
@@ -1219,42 +1071,35 @@ thumbImg.Image="rbxassetid://11662710259"; thumbImg.ImageColor3=Color3.fromRGB(2
 thumbImg.ScaleType=Enum.ScaleType.Fit; thumbImg.ZIndex=9; thumbImg.Parent=sliderThumb
 
 local function updateFOVVisual(pct)
-    sliderFill.Size      = UDim2.new(pct, 0, 1, 0)
-    sliderThumb.Position = UDim2.new(pct, -14, 0.5, -14)
-    fovValLabel.Text     = tostring(fovValue)
+    sliderFill.Size = UDim2.new(pct,0,1,0); sliderThumb.Position = UDim2.new(pct,-14,0.5,-14)
+    fovValLabel.Text = tostring(fovValue)
 end
-updateFOVVisual((fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN))
+updateFOVVisual((fovValue-FOV_MIN)/(FOV_MAX-FOV_MIN))
 
 local draggingFOV = false
 sliderTrack.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingFOV = true
-        TweenService:Create(thumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,80,80)}):Play()
+        draggingFOV = true; TweenService:Create(thumbImg,TweenInfo.new(0.1),{ImageColor3=Color3.fromRGB(255,80,80)}):Play()
     end
 end)
 sliderTrack.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        draggingFOV = false
-        TweenService:Create(thumbImg, TweenInfo.new(0.1), {ImageColor3 = Color3.fromRGB(255,0,0)}):Play()
+        draggingFOV = false; TweenService:Create(thumbImg,TweenInfo.new(0.1),{ImageColor3=Color3.fromRGB(255,0,0)}):Play()
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
     if draggingFOV and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local pct = math.clamp((input.Position.X - sliderTrack.AbsolutePosition.X) / sliderTrack.AbsoluteSize.X, 0, 1)
-        fovValue = math.floor(FOV_MIN + pct * (FOV_MAX - FOV_MIN))
-        Camera.FieldOfView = fovValue
-        updateFOVVisual(pct)
+        local pct = math.clamp((input.Position.X-sliderTrack.AbsolutePosition.X)/sliderTrack.AbsoluteSize.X,0,1)
+        fovValue = math.floor(FOV_MIN+pct*(FOV_MAX-FOV_MIN)); Camera.FieldOfView = fovValue; updateFOVVisual(pct)
     end
 end)
 
 -- SAVE CONFIG
 local SaveFrame = Instance.new("Frame")
 SaveFrame.Size=UDim2.new(1,-24,0,40); SaveFrame.Position=UDim2.new(0,12,1,-52)
-SaveFrame.BackgroundColor3=Color3.fromRGB(0,0,0); SaveFrame.BackgroundTransparency=0
-SaveFrame.BorderSizePixel=0; SaveFrame.ZIndex=6; SaveFrame.Parent=MainFrame
+SaveFrame.BackgroundColor3=Color3.fromRGB(0,0,0); SaveFrame.BorderSizePixel=0; SaveFrame.ZIndex=6; SaveFrame.Parent=MainFrame
 Instance.new("UICorner", SaveFrame).CornerRadius = UDim.new(0,7)
-local sfStroke = Instance.new("UIStroke", SaveFrame)
-sfStroke.Color=Color3.fromRGB(0,0,0); sfStroke.Thickness=1.5
+local sfStroke = Instance.new("UIStroke", SaveFrame); sfStroke.Color=Color3.fromRGB(0,0,0); sfStroke.Thickness=1.5
 
 local SaveBtn = Instance.new("TextButton")
 SaveBtn.Size=UDim2.new(1,0,1,0); SaveBtn.BackgroundTransparency=1
@@ -1262,8 +1107,7 @@ SaveBtn.Text="SAVE CONFIG"; SaveBtn.Font=Enum.Font.GothamBlack; SaveBtn.TextSize
 SaveBtn.TextColor3=Color3.fromRGB(255,80,80); SaveBtn.TextStrokeColor3=Color3.fromRGB(0,0,0)
 SaveBtn.TextStrokeTransparency=0; SaveBtn.BorderSizePixel=0; SaveBtn.ZIndex=7; SaveBtn.Parent=SaveFrame
 Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0,8)
-local saveBtnStroke = Instance.new("UIStroke", SaveBtn)
-saveBtnStroke.Color=Color3.fromRGB(0,0,0); saveBtnStroke.Thickness=1.5
+local saveBtnStroke = Instance.new("UIStroke", SaveBtn); saveBtnStroke.Color=Color3.fromRGB(0,0,0); saveBtnStroke.Thickness=1.5
 
 SaveBtn.MouseEnter:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,255,255)}):Play() end)
 SaveBtn.MouseLeave:Connect(function() TweenService:Create(SaveBtn,TweenInfo.new(0.15),{TextColor3=Color3.fromRGB(255,80,80)}):Play() end)
@@ -1273,31 +1117,23 @@ end)
 
 -- DRAG MAIN FRAME
 local dragging, dragInput, dragStart, startPos
-
 TitleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
+        dragging=true; dragStart=input.Position; startPos=MainFrame.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            if input.UserInputState == Enum.UserInputState.End then dragging=false end
         end)
     end
 end)
-
 TitleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+delta.X, startPos.Y.Scale, startPos.Y.Offset+delta.Y)
     end
 end)
 
@@ -1307,47 +1143,33 @@ TweenService:Create(MainFrame, TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.Easi
 
 -- AUTO-LOAD CONFIG
 task.defer(function()
-    if savedCfg.Unwalk then
-        unwalkOn = true; toggleOn(unwalkLabel, unwalkTrack, unwalkThumb); enableUnwalk()
-    end
-    if savedCfg.Xray then
-        xrayOn = true; toggleOn(xrayLabel, xrayTrack, xrayThumb); startXray()
-    end
-    if savedCfg.ESP then
-        espOn = true; toggleOn(espLabel, espTrack, espThumb); enableESP()
-    end
-    if savedCfg.AntiRagdoll then
-        antiRagdollOn = true; toggleOn(antiRagdollLabel, antiRagdollTrack, antiRagdollThumb)
-        toggleAntiRagdoll(true)
-    end
+    if savedCfg.Unwalk then unwalkOn=true; toggleOn(unwalkLabel,unwalkTrack,unwalkThumb); enableUnwalk() end
+    if savedCfg.Xray then xrayOn=true; toggleOn(xrayLabel,xrayTrack,xrayThumb); startXray() end
+    if savedCfg.ESP then espOn=true; toggleOn(espLabel,espTrack,espThumb); enableESP() end
+    if savedCfg.AntiRagdoll then antiRagdollOn=true; toggleOn(antiRagdollLabel,antiRagdollTrack,antiRagdollThumb); toggleAntiRagdoll(true) end
     if savedCfg.FOV then
-        fovValue = math.clamp(savedCfg.FOV, FOV_MIN, FOV_MAX)
-        Camera.FieldOfView = fovValue
-        updateFOVVisual((fovValue - FOV_MIN) / (FOV_MAX - FOV_MIN))
+        fovValue=math.clamp(savedCfg.FOV,FOV_MIN,FOV_MAX); Camera.FieldOfView=fovValue
+        updateFOVVisual((fovValue-FOV_MIN)/(FOV_MAX-FOV_MIN))
     end
-    if savedCfg.InfJump then
-        infJumpOn = true; toggleOn(infJumpLabel, infJumpTrack, infJumpThumb)
-    end
+    if savedCfg.InfJump then infJumpOn=true; toggleOn(infJumpLabel,infJumpTrack,infJumpThumb) end
     if savedCfg.StealRadius then
-        AUTO_STEAL_PROX_RADIUS = math.clamp(savedCfg.StealRadius, 1, 999)
-        radiusInput.Text = tostring(AUTO_STEAL_PROX_RADIUS)
+        AUTO_STEAL_PROX_RADIUS=math.clamp(savedCfg.StealRadius,1,999); radiusInput.Text=tostring(AUTO_STEAL_PROX_RADIUS)
     end
     if savedCfg.AutoSteal then
-        autoStealActive = true; toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
-        enableAutoSteal()
-        grabRadius = AUTO_STEAL_PROX_RADIUS
-        createOrUpdateSquare(grabRadius)
+        autoStealActive=true; toggleOn(autoStealLabel,autoStealTrack,autoStealThumb)
+        enableAutoSteal(); grabRadius=AUTO_STEAL_PROX_RADIUS; createOrUpdateSquare(grabRadius)
+        progressBarBg.Visible=true
     end
-    if savedCfg.GalaxySky then
-        galaxySkyOn = true; toggleOn(galaxySkyLabel, galaxySkyTrack, galaxySkyThumb)
-        enableGalaxySkyBright()
-    end
+    if savedCfg.GalaxySky then galaxySkyOn=true; toggleOn(galaxySkyLabel,galaxySkyTrack,galaxySkyThumb); enableGalaxySkyBright() end
 end)
 
--- ══════════════════════════════════════
---  MINI HUB - AUTO LEFT / AUTO RIGHT
--- ══════════════════════════════════════
+-- KEYBINDS
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.Q then toggleSpeed() end
+end)
 
+-- MINI HUB - AUTO LEFT / AUTO RIGHT
 local AutoLeftEnabled  = false
 local AutoRightEnabled = false
 local autoLeftConnection  = nil
@@ -1387,203 +1209,172 @@ local function startAutoLeft()
         if not rp or not hum then return end
         local spd = NORMAL_SPEED
         if autoLeftPhase == 1 then
-            local tgt = Vector3.new(POSITION_L1.X, rp.Position.Y, POSITION_L1.Z)
-            if (tgt - rp.Position).Magnitude < 1 then
+            local tgt = Vector3.new(POSITION_L1.X,rp.Position.Y,POSITION_L1.Z)
+            if (tgt-rp.Position).Magnitude < 1 then
                 autoLeftPhase = 2
-                local d = (POSITION_L2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-                hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd); return
+                local d=(POSITION_L2-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+                hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd); return
             end
-            local d = (POSITION_L1 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+            local d=(POSITION_L1-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd)
         elseif autoLeftPhase == 2 then
-            local tgt = Vector3.new(POSITION_L2.X, rp.Position.Y, POSITION_L2.Z)
-            if (tgt - rp.Position).Magnitude < 1 then
-                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity = Vector3.new(0,0,0)
-                AutoLeftEnabled = false
-                if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection = nil end
-                autoLeftPhase = 1
-                if _G_AL_lbl and _G_AL_swBg and _G_AL_swCircle then
-                    toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
-                end
+            local tgt = Vector3.new(POSITION_L2.X,rp.Position.Y,POSITION_L2.Z)
+            if (tgt-rp.Position).Magnitude < 1 then
+                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity=Vector3.new(0,0,0)
+                AutoLeftEnabled=false
+                if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection=nil end
+                autoLeftPhase=1
+                if _G_AL_lbl and _G_AL_swBg and _G_AL_swCircle then toggleOff(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle) end
                 faceSouth(); return
             end
-            local d = (POSITION_L2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+            local d=(POSITION_L2-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd)
         end
     end)
 end
 
 local function stopAutoLeft()
-    if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection = nil end
-    autoLeftPhase = 1
-    local c = me.Character
-    if c then local hum = c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+    if autoLeftConnection then autoLeftConnection:Disconnect(); autoLeftConnection=nil end
+    autoLeftPhase=1
+    local c=me.Character
+    if c then local hum=c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
 end
 
 local function startAutoRight()
     if autoRightConnection then autoRightConnection:Disconnect() end
-    autoRightPhase = 1
+    autoRightPhase=1
     autoRightConnection = RunService.Heartbeat:Connect(function()
         if not AutoRightEnabled then return end
-        local c = me.Character; if not c then return end
-        local rp = c:FindFirstChild("HumanoidRootPart")
-        local hum = c:FindFirstChildOfClass("Humanoid")
+        local c=me.Character; if not c then return end
+        local rp=c:FindFirstChild("HumanoidRootPart")
+        local hum=c:FindFirstChildOfClass("Humanoid")
         if not rp or not hum then return end
-        local spd = NORMAL_SPEED
+        local spd=NORMAL_SPEED
         if autoRightPhase == 1 then
-            local tgt = Vector3.new(POSITION_R1.X, rp.Position.Y, POSITION_R1.Z)
-            if (tgt - rp.Position).Magnitude < 1 then
-                autoRightPhase = 2
-                local d = (POSITION_R2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-                hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd); return
+            local tgt=Vector3.new(POSITION_R1.X,rp.Position.Y,POSITION_R1.Z)
+            if (tgt-rp.Position).Magnitude < 1 then
+                autoRightPhase=2
+                local d=(POSITION_R2-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+                hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd); return
             end
-            local d = (POSITION_R1 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+            local d=(POSITION_R1-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd)
         elseif autoRightPhase == 2 then
-            local tgt = Vector3.new(POSITION_R2.X, rp.Position.Y, POSITION_R2.Z)
-            if (tgt - rp.Position).Magnitude < 1 then
-                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity = Vector3.new(0,0,0)
-                AutoRightEnabled = false
-                if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection = nil end
-                autoRightPhase = 1
-                if _G_AR_lbl and _G_AR_swBg and _G_AR_swCircle then
-                    toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
-                end
+            local tgt=Vector3.new(POSITION_R2.X,rp.Position.Y,POSITION_R2.Z)
+            if (tgt-rp.Position).Magnitude < 1 then
+                hum:Move(Vector3.zero,false); rp.AssemblyLinearVelocity=Vector3.new(0,0,0)
+                AutoRightEnabled=false
+                if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection=nil end
+                autoRightPhase=1
+                if _G_AR_lbl and _G_AR_swBg and _G_AR_swCircle then toggleOff(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle) end
                 faceNorth(); return
             end
-            local d = (POSITION_R2 - rp.Position); local mv = Vector3.new(d.X,0,d.Z).Unit
-            hum:Move(mv,false); rp.AssemblyLinearVelocity = Vector3.new(mv.X*spd, rp.AssemblyLinearVelocity.Y, mv.Z*spd)
+            local d=(POSITION_R2-rp.Position); local mv=Vector3.new(d.X,0,d.Z).Unit
+            hum:Move(mv,false); rp.AssemblyLinearVelocity=Vector3.new(mv.X*spd,rp.AssemblyLinearVelocity.Y,mv.Z*spd)
         end
     end)
 end
 
 local function stopAutoRight()
-    if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection = nil end
-    autoRightPhase = 1
-    local c = me.Character
-    if c then local hum = c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
+    if autoRightConnection then autoRightConnection:Disconnect(); autoRightConnection=nil end
+    autoRightPhase=1
+    local c=me.Character
+    if c then local hum=c:FindFirstChildOfClass("Humanoid"); if hum then hum:Move(Vector3.zero,false) end end
 end
 
--- Panel mini hub
 local miniHub = Instance.new("Frame")
-miniHub.Size = UDim2.new(0, 180, 0, 180)
-miniHub.Position = UDim2.new(1, -190, 0, 4)
-miniHub.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-miniHub.BackgroundTransparency = 0
-miniHub.BorderSizePixel = 0
-miniHub.Active = true
-miniHub.Parent = ScreenGui
-Instance.new("UICorner", miniHub).CornerRadius = UDim.new(0, 10)
-local miniStroke = Instance.new("UIStroke", miniHub)
-miniStroke.Color = Color3.fromRGB(255, 0, 0); miniStroke.Thickness = 1.2
+miniHub.Size=UDim2.new(0,180,0,160); miniHub.Position=UDim2.new(1,-190,0,4)
+miniHub.BackgroundColor3=Color3.fromRGB(0,0,0); miniHub.BorderSizePixel=0
+miniHub.Active=true; miniHub.Parent=ScreenGui
+Instance.new("UICorner",miniHub).CornerRadius=UDim.new(0,10)
+local miniStroke=Instance.new("UIStroke",miniHub); miniStroke.Color=Color3.fromRGB(255,0,0); miniStroke.Thickness=1.2
 
-local miniTitle = Instance.new("TextLabel")
-miniTitle.Text = "ROUTE HUB"
-miniTitle.Size = UDim2.new(1, -10, 0, 30)
-miniTitle.Position = UDim2.new(0, 10, 0, 6)
-miniTitle.BackgroundTransparency = 1
-miniTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
-miniTitle.TextSize = 13
-miniTitle.Font = Enum.Font.GothamBlack
-miniTitle.TextXAlignment = Enum.TextXAlignment.Left
-miniTitle.ZIndex = 5
-miniTitle.Parent = miniHub
+local miniTitle=Instance.new("TextLabel")
+miniTitle.Text="ROUTE HUB"; miniTitle.Size=UDim2.new(1,-10,0,30); miniTitle.Position=UDim2.new(0,10,0,6)
+miniTitle.BackgroundTransparency=1; miniTitle.TextColor3=Color3.fromRGB(255,0,0)
+miniTitle.TextSize=13; miniTitle.Font=Enum.Font.GothamBlack
+miniTitle.TextXAlignment=Enum.TextXAlignment.Left; miniTitle.ZIndex=5; miniTitle.Parent=miniHub
 
-local miniLine = Instance.new("Frame")
-miniLine.Size = UDim2.new(1, -20, 0, 1)
-miniLine.Position = UDim2.new(0, 10, 0, 36)
-miniLine.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-miniLine.BackgroundTransparency = 0.6
-miniLine.BorderSizePixel = 0
-miniLine.ZIndex = 5
-miniLine.Parent = miniHub
+local miniLine=Instance.new("Frame")
+miniLine.Size=UDim2.new(1,-20,0,1); miniLine.Position=UDim2.new(0,10,0,36)
+miniLine.BackgroundColor3=Color3.fromRGB(255,0,0); miniLine.BackgroundTransparency=0.6
+miniLine.BorderSizePixel=0; miniLine.ZIndex=5; miniLine.Parent=miniHub
 
 local function makeMiniRow(labelText, yPos)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -20, 0, 44)
-    row.Position = UDim2.new(0, 10, 0, yPos)
-    row.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
-    row.BorderSizePixel = 0
-    row.ZIndex = 4
-    row.Parent = miniHub
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
-    local rs = Instance.new("UIStroke", row)
-    rs.Color = Color3.fromRGB(255,0,0); rs.Thickness = 0.8; rs.Transparency = 0.5
-    local lbl = Instance.new("TextLabel")
-    lbl.Text = labelText; lbl.Size = UDim2.new(1,-60,1,0); lbl.Position = UDim2.new(0,10,0,0)
-    lbl.BackgroundTransparency = 1; lbl.TextColor3 = Color3.fromRGB(220,220,220)
-    lbl.TextSize = 12; lbl.Font = Enum.Font.GothamBlack
-    lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.ZIndex = 5; lbl.Parent = row
-    local track = Instance.new("TextButton")
-    track.Text = ""; track.Size = UDim2.new(0,44,0,24); track.Position = UDim2.new(1,-54,0.5,-12)
-    track.BackgroundColor3 = Color3.fromRGB(40,40,40); track.BorderSizePixel = 0
-    track.ZIndex = 5; track.Parent = row
-    Instance.new("UICorner", track).CornerRadius = UDim.new(1,0)
-    local thumb = Instance.new("Frame")
-    thumb.Size = UDim2.new(0,18,0,18); thumb.Position = UDim2.new(0,3,0.5,-9)
-    thumb.BackgroundColor3 = Color3.fromRGB(180,180,180); thumb.BorderSizePixel = 0
-    thumb.ZIndex = 6; thumb.Parent = track
-    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
+    local row=Instance.new("Frame")
+    row.Size=UDim2.new(1,-20,0,44); row.Position=UDim2.new(0,10,0,yPos)
+    row.BackgroundColor3=Color3.fromRGB(15,0,0); row.BorderSizePixel=0; row.ZIndex=4; row.Parent=miniHub
+    Instance.new("UICorner",row).CornerRadius=UDim.new(0,7)
+    local rs=Instance.new("UIStroke",row); rs.Color=Color3.fromRGB(255,0,0); rs.Thickness=0.8; rs.Transparency=0.5
+    local lbl=Instance.new("TextLabel")
+    lbl.Text=labelText; lbl.Size=UDim2.new(1,-60,1,0); lbl.Position=UDim2.new(0,10,0,0)
+    lbl.BackgroundTransparency=1; lbl.TextColor3=Color3.fromRGB(220,220,220)
+    lbl.TextSize=12; lbl.Font=Enum.Font.GothamBlack
+    lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=5; lbl.Parent=row
+    local track=Instance.new("TextButton")
+    track.Text=""; track.Size=UDim2.new(0,44,0,24); track.Position=UDim2.new(1,-54,0.5,-12)
+    track.BackgroundColor3=Color3.fromRGB(40,40,40); track.BorderSizePixel=0; track.ZIndex=5; track.Parent=row
+    Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
+    local thumb=Instance.new("Frame")
+    thumb.Size=UDim2.new(0,18,0,18); thumb.Position=UDim2.new(0,3,0.5,-9)
+    thumb.BackgroundColor3=Color3.fromRGB(180,180,180); thumb.BorderSizePixel=0; thumb.ZIndex=6; thumb.Parent=track
+    Instance.new("UICorner",thumb).CornerRadius=UDim.new(1,0)
     return lbl, track, thumb
 end
 
-_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle = makeMiniRow("AUTO LEFT",  46)
-_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle = makeMiniRow("AUTO RIGHT", 100)
+_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle = makeMiniRow("AUTO LEFT [Z]", 46)
+_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle = makeMiniRow("AUTO RIGHT [C]", 100)
 
--- Drag mini hub
-local mDragging, mDragInput, mDragStart, mStartPos = false, nil, nil, nil
+local mDragging,mDragInput,mDragStart,mStartPos=false,nil,nil,nil
 miniHub.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        mDragging = true; mDragStart = input.Position; mStartPos = miniHub.Position
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        mDragging=true; mDragStart=input.Position; mStartPos=miniHub.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then mDragging = false end
+            if input.UserInputState==Enum.UserInputState.End then mDragging=false end
         end)
     end
 end)
 miniHub.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        mDragInput = input
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+        mDragInput=input
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if input == mDragInput and mDragging then
-        local delta = input.Position - mDragStart
-        miniHub.Position = UDim2.new(
-            mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
-            mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y
-        )
+    if input==mDragInput and mDragging then
+        local delta=input.Position-mDragStart
+        miniHub.Position=UDim2.new(mStartPos.X.Scale,mStartPos.X.Offset+delta.X,mStartPos.Y.Scale,mStartPos.Y.Offset+delta.Y)
     end
 end)
 
--- Toggles
 _G_AL_swBg.MouseButton1Click:Connect(function()
-    AutoLeftEnabled = not AutoLeftEnabled
+    AutoLeftEnabled=not AutoLeftEnabled
     if AutoLeftEnabled then
-        if AutoRightEnabled then
-            AutoRightEnabled = false
-            stopAutoRight()
-            toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
-        end
-        toggleOn(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
-        startAutoLeft()
-    else
-        toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
-        stopAutoLeft()
-    end
+        if AutoRightEnabled then AutoRightEnabled=false; stopAutoRight(); toggleOff(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle) end
+        toggleOn(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle); startAutoLeft()
+    else toggleOff(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle); stopAutoLeft() end
 end)
 
 _G_AR_swBg.MouseButton1Click:Connect(function()
-    AutoRightEnabled = not AutoRightEnabled
+    AutoRightEnabled=not AutoRightEnabled
     if AutoRightEnabled then
+        if AutoLeftEnabled then AutoLeftEnabled=false; stopAutoLeft(); toggleOff(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle) end
+        toggleOn(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle); startAutoRight()
+    else toggleOff(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle); stopAutoRight() end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.KeyCode==Enum.KeyCode.Z then
+        AutoLeftEnabled=not AutoLeftEnabled
         if AutoLeftEnabled then
-            AutoLeftEnabled = false
-            stopAutoLeft()
-            toggleOff(_G_AL_lbl, _G_AL_swBg, _G_AL_swCircle)
-        end
-        toggleOn(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
-        startAutoRight()
-    else
-        toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
-        stopAutoRight()
+            if AutoRightEnabled then AutoRightEnabled=false; stopAutoRight(); toggleOff(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle) end
+            toggleOn(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle); startAutoLeft()
+        else toggleOff(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle); stopAutoLeft() end
+    elseif input.KeyCode==Enum.KeyCode.C then
+        AutoRightEnabled=not AutoRightEnabled
+        if AutoRightEnabled then
+            if AutoLeftEnabled then AutoLeftEnabled=false; stopAutoLeft(); toggleOff(_G_AL_lbl,_G_AL_swBg,_G_AL_swCircle) end
+            toggleOn(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle); startAutoRight()
+        else toggleOff(_G_AR_lbl,_G_AR_swBg,_G_AR_swCircle); stopAutoRight() end
     end
 end)
