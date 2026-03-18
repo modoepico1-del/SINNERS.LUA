@@ -8,7 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
 local Lighting         = game:GetService("Lighting")
 local ReplicatedStorage= game:GetService("ReplicatedStorage")
-local CoreGui          = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+local PlayerGui        = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
@@ -54,7 +54,9 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name           = "DEMONTIME_GUI"
 ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent         = CoreGui
+ScreenGui.DisplayOrder   = 999
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent         = PlayerGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 700)
@@ -345,8 +347,8 @@ RunService.Heartbeat:Connect(function()
     local char = me.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp.Velocity.Y < -clampFallSpeed then
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+    if hrp and hrp.AssemblyLinearVelocity.Y < -clampFallSpeed then
+        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -clampFallSpeed, hrp.AssemblyLinearVelocity.Z)
     end
 end)
 UserInputService.JumpRequest:Connect(function()
@@ -354,7 +356,7 @@ UserInputService.JumpRequest:Connect(function()
     local char = me.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
+    if hrp then hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, jumpForce, hrp.AssemblyLinearVelocity.Z) end
 end)
 infJumpTrack.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
