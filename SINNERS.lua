@@ -635,19 +635,12 @@ local function createOrUpdateSquare(radius)
         stealSquarePart.Name = "StealCircle"
         stealSquarePart.Anchored = true
         stealSquarePart.CanCollide = false
-        stealSquarePart.Transparency = 1
+        stealSquarePart.Transparency = 0.5
         stealSquarePart.Material = Enum.Material.Neon
         stealSquarePart.Color = Color3.fromRGB(0, 0, 0)
         stealSquarePart.Shape = Enum.PartType.Cylinder
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
         stealSquarePart.Parent = workspace
-        -- Borde negro sin relleno
-        local outline = Instance.new("SelectionSphere")
-        outline.Color3 = Color3.fromRGB(0, 0, 0)
-        outline.SurfaceTransparency = 1
-        outline.SurfaceColor3 = Color3.fromRGB(0, 0, 0)
-        outline.Adornee = stealSquarePart
-        outline.Parent = stealSquarePart
     else
         stealSquarePart.Size = Vector3.new(0.05, radius*2, radius*2)
     end
