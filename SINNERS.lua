@@ -834,7 +834,7 @@ speedTitleLbl.ZIndex = 5
 speedTitleLbl.Parent = ContentArea
 
 local speedRow = Instance.new("Frame")
-speedRow.Size = UDim2.new(1, -20, 0, 90)
+speedRow.Size = UDim2.new(1, -20, 0, 60)
 speedRow.Position = UDim2.new(0, 10, 0, 478)
 speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 speedRow.BorderSizePixel = 0
@@ -869,24 +869,6 @@ stealBox.BackgroundColor3=Color3.fromRGB(20,20,20); stealBox.BorderSizePixel=0
 stealBox.TextColor3=Color3.fromRGB(255,80,80); stealBox.TextSize=12; stealBox.Font=Enum.Font.GothamBold
 stealBox.ClearTextOnFocus=true; stealBox.ZIndex=6; stealBox.Parent=speedRow
 Instance.new("UICorner", stealBox).CornerRadius = UDim.new(0,5)
-
-local jumpLbl = Instance.new("TextLabel")
-jumpLbl.Text = "JUMP"; jumpLbl.Size = UDim2.new(0,50,0,18); jumpLbl.Position = UDim2.new(0,138,0,4)
-jumpLbl.BackgroundTransparency=1; jumpLbl.TextColor3=Color3.fromRGB(180,180,180)
-jumpLbl.TextSize=10; jumpLbl.Font=Enum.Font.GothamBold
-jumpLbl.TextXAlignment=Enum.TextXAlignment.Left; jumpLbl.ZIndex=5; jumpLbl.Parent=speedRow
-
-local jumpBox = Instance.new("TextBox")
-jumpBox.Text = tostring(jumpForce); jumpBox.Size = UDim2.new(0,55,0,22); jumpBox.Position = UDim2.new(0,138,0,24)
-jumpBox.BackgroundColor3=Color3.fromRGB(20,20,20); jumpBox.BorderSizePixel=0
-jumpBox.TextColor3=Color3.fromRGB(255,80,80); jumpBox.TextSize=12; jumpBox.Font=Enum.Font.GothamBold
-jumpBox.ClearTextOnFocus=true; jumpBox.ZIndex=6; jumpBox.Parent=speedRow
-Instance.new("UICorner", jumpBox).CornerRadius = UDim.new(0,5)
-jumpBox.FocusLost:Connect(function()
-    local num = tonumber(jumpBox.Text)
-    if num then jumpForce = math.clamp(num, 10, 500); jumpBox.Text = tostring(jumpForce)
-    else jumpBox.Text = tostring(jumpForce) end
-end)
 
 local speedActivate = Instance.new("TextButton")
 speedActivate.Text = "OFF"; speedActivate.Size = UDim2.new(0,60,0,40); speedActivate.Position = UDim2.new(1,-68,0.5,-20)
@@ -1604,4 +1586,144 @@ _G_AR_swBg.MouseButton1Click:Connect(function()
         toggleOff(_G_AR_lbl, _G_AR_swBg, _G_AR_swCircle)
         stopAutoRight()
     end
+end)
+
+-- ══════════════════════════════════════
+--  BOOSTER CUSTOMIZER
+-- ══════════════════════════════════════
+
+local boosterGui = Instance.new("ScreenGui")
+boosterGui.Name = "BoosterCustomizer"
+boosterGui.ResetOnSpawn = false
+boosterGui.Enabled = false
+boosterGui.Parent = CoreGui
+
+local boosterMain = Instance.new("Frame")
+boosterMain.Size = UDim2.new(0, 200, 0, 185)
+boosterMain.Position = UDim2.new(0.5, -100, 0.15, 0)
+boosterMain.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+boosterMain.BackgroundTransparency = 0.35
+boosterMain.Parent = boosterGui
+Instance.new("UICorner", boosterMain).CornerRadius = UDim.new(0, 10)
+local boosterStroke = Instance.new("UIStroke", boosterMain)
+boosterStroke.Color = Color3.fromRGB(255, 0, 0)
+boosterStroke.Thickness = 2
+
+-- Titulo
+local boosterTitle = Instance.new("TextLabel")
+boosterTitle.Size = UDim2.new(1, 0, 0, 30)
+boosterTitle.Position = UDim2.new(0, 10, 0, 0)
+boosterTitle.BackgroundTransparency = 1
+boosterTitle.Text = "Booster Customizer"
+boosterTitle.Font = Enum.Font.GothamBold
+boosterTitle.TextSize = 15
+boosterTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+boosterTitle.TextXAlignment = Enum.TextXAlignment.Left
+boosterTitle.Parent = boosterMain
+
+-- Funcion createRow para este menu
+local function createBoosterRow(text, posY, default)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.55, 0, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, posY)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = boosterMain
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.4, 0, 0, 25)
+    box.Position = UDim2.new(0.55, 5, 0, posY)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.Text = tostring(default)
+    box.Font = Enum.Font.GothamBold
+    box.TextSize = 13
+    box.ClearTextOnFocus = false
+    box.Parent = boosterMain
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+    local s = Instance.new("UIStroke", box)
+    s.Color = Color3.fromRGB(255, 0, 0)
+    return box
+end
+
+local bSpeedBox = createBoosterRow("Speed",      75, 53)
+local bStealBox = createBoosterRow("Steal Speed",110, 29)
+local bJumpBox  = createBoosterRow("Jump",       145, 60)
+
+-- Boton activar
+local boosterActivate = Instance.new("TextButton")
+boosterActivate.Size = UDim2.new(1, -20, 0, 30)
+boosterActivate.Position = UDim2.new(0, 10, 0, 35)
+boosterActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+boosterActivate.TextColor3 = Color3.fromRGB(255, 255, 255)
+boosterActivate.Text = "OFF"
+boosterActivate.Font = Enum.Font.GothamBold
+boosterActivate.TextSize = 14
+boosterActivate.Parent = boosterMain
+Instance.new("UICorner", boosterActivate).CornerRadius = UDim.new(0, 8)
+local boosterBtnStroke = Instance.new("UIStroke", boosterActivate)
+boosterBtnStroke.Color = Color3.fromRGB(255, 0, 0)
+
+local boosterOn = false
+boosterActivate.MouseButton1Click:Connect(function()
+    boosterOn = not boosterOn
+    if boosterOn then
+        boosterActivate.Text = "ON"
+        boosterActivate.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        speedNoStealValue = tonumber(bSpeedBox.Text) or 53
+        speedStealValue   = tonumber(bStealBox.Text) or 29
+        jumpForce         = tonumber(bJumpBox.Text)  or 60
+    else
+        boosterActivate.Text = "OFF"
+        boosterActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    end
+end)
+
+-- Drag
+local bDragging, bDragInput, bDragStart, bStartPos = false, nil, Vector2.new(), Vector2.new()
+local boosterDragHandle = Instance.new("Frame")
+boosterDragHandle.Size = UDim2.new(1, 0, 0, 30)
+boosterDragHandle.Position = UDim2.new(0, 0, 0, 0)
+boosterDragHandle.BackgroundTransparency = 1
+boosterDragHandle.Parent = boosterMain
+
+boosterDragHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        bDragging = true; bDragInput = input
+        bDragStart = input.Position
+        bStartPos = Vector2.new(boosterMain.AbsolutePosition.X, boosterMain.AbsolutePosition.Y)
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then bDragging = false; bDragInput = nil end
+        end)
+    end
+end)
+boosterDragHandle.InputChanged:Connect(function(input)
+    if input == bDragInput and bDragging then
+        local delta = input.Position - bDragStart
+        boosterMain.Position = UDim2.new(0, bStartPos.X + delta.X, 0, bStartPos.Y + delta.Y)
+    end
+end)
+
+-- Boton en hub principal para abrir/cerrar booster
+local boosterToggleBtn = Instance.new("TextButton")
+boosterToggleBtn.Size = UDim2.new(1, -24, 0, 30)
+boosterToggleBtn.Position = UDim2.new(0, 12, 1, -90)
+boosterToggleBtn.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
+boosterToggleBtn.TextColor3 = Color3.fromRGB(255, 0, 0)
+boosterToggleBtn.Text = "BOOSTER ▼"
+boosterToggleBtn.Font = Enum.Font.GothamBlack
+boosterToggleBtn.TextSize = 12
+boosterToggleBtn.BorderSizePixel = 0
+boosterToggleBtn.ZIndex = 6
+boosterToggleBtn.Parent = MainFrame
+Instance.new("UICorner", boosterToggleBtn).CornerRadius = UDim.new(0, 7)
+local boosterToggleStroke = Instance.new("UIStroke", boosterToggleBtn)
+boosterToggleStroke.Color = Color3.fromRGB(255, 0, 0); boosterToggleStroke.Thickness = 1
+
+boosterToggleBtn.MouseButton1Click:Connect(function()
+    boosterGui.Enabled = not boosterGui.Enabled
+    boosterToggleBtn.Text = boosterGui.Enabled and "BOOSTER ▲" or "BOOSTER ▼"
 end)
