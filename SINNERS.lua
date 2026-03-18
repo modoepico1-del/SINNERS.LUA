@@ -616,24 +616,6 @@ local function disableAutoSteal()
     stopAutoStealLoop()
 end
 
-autoStealTrack.MouseButton1Click:Connect(function()
-    autoStealActive = not autoStealActive
-    if autoStealActive then
-        toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
-        enableAutoSteal()
-        grabRadius = AUTO_STEAL_PROX_RADIUS
-        createOrUpdateSquare(grabRadius)
-        progressBarBg.Visible = true
-    else
-        toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
-        disableAutoSteal()
-        hideSquare()
-        progressBarBg.Visible = false
-        progressFill.Size = UDim2.new(0, 0, 1, 0)
-        percentLabel.Text = "0%"
-    end
-end)
-
 -- ══════════════════════════════════════
 --  RADIO VISUAL (CIRCULO ROJO)
 -- ══════════════════════════════════════
@@ -681,6 +663,26 @@ circleConnection = RunService.Heartbeat:Connect(function()
     if not autoStealActive then hideSquare(); return end
     updateSquarePosition()
 end)
+
+
+autoStealTrack.MouseButton1Click:Connect(function()
+    autoStealActive = not autoStealActive
+    if autoStealActive then
+        toggleOn(autoStealLabel, autoStealTrack, autoStealThumb)
+        enableAutoSteal()
+        grabRadius = AUTO_STEAL_PROX_RADIUS
+        createOrUpdateSquare(grabRadius)
+        progressBarBg.Visible = true
+    else
+        toggleOff(autoStealLabel, autoStealTrack, autoStealThumb)
+        disableAutoSteal()
+        hideSquare()
+        progressBarBg.Visible = false
+        progressFill.Size = UDim2.new(0, 0, 1, 0)
+        percentLabel.Text = "0%"
+    end
+end)
+
 
 local galaxySkyLabel, galaxySkyTrack, galaxySkyThumb = makeOptionRow(ContentArea, "GALAXY SKY", 334)
 local originalSkybox, galaxySkyBright, galaxySkyBrightConn
@@ -1624,11 +1626,7 @@ RunService.RenderStepped:Connect(function()
     end
     local ping = 0
     pcall(function()
-        local network = Stats:FindFirstChild("Network")
-        if network then
-            local dataPing = network:FindFirstChild("Data Ping")
-            if dataPing then ping = math.floor(dataPing:GetValue()) end
-        end
+        ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
     end)
     topLabel.Text = "DEMONTIME | " .. fps .. " FPS | " .. ping .. " ms"
 end)
