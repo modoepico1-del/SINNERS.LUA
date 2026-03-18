@@ -924,54 +924,6 @@ stealBox.FocusLost:Connect(function()
 end)
 
 -- CAMBIO PRINCIPAL: Speed ON usa SPEED, Speed OFF usa STEAL
-speedActivate.MouseButton1Click:Connect(function()
-    speedOn = not speedOn
-    if speedOn then
-        speedActivate.Text = "ON"
-        speedActivate.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-        if speedConnection then speedConnection:Disconnect() end
-        speedConnection = RunService.Heartbeat:Connect(function()
-            local char = me.Character
-            if not char then return end
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if not hrp or not hum then return end
-            speedNoStealValue = tonumber(speedBox.Text) or 53
-            local moveDirection = hum.MoveDirection
-            if moveDirection.Magnitude > 0 then
-                -- Speed ON: siempre usa la velocidad SPEED (speedNoStealValue)
-                hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDirection.X * speedNoStealValue,
-                    hrp.AssemblyLinearVelocity.Y,
-                    moveDirection.Z * speedNoStealValue
-                )
-            end
-        end)
-    else
-        speedActivate.Text = "OFF"
-        speedActivate.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
-        -- Speed OFF: activar loop con velocidad STEAL
-        speedConnection = RunService.Heartbeat:Connect(function()
-            local char = me.Character
-            if not char then return end
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if not hrp or not hum then return end
-            speedStealValue = tonumber(stealBox.Text) or 29
-            local moveDirection = hum.MoveDirection
-            if moveDirection.Magnitude > 0 then
-                -- Speed OFF: siempre usa la velocidad STEAL (speedStealValue)
-                hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDirection.X * speedStealValue,
-                    hrp.AssemblyLinearVelocity.Y,
-                    moveDirection.Z * speedStealValue
-                )
-            end
-        end)
-    end
-end)
-
 local function toggleSpeed()
     speedOn = not speedOn
     if speedOn then
@@ -983,10 +935,9 @@ local function toggleSpeed()
             local hrp = char:FindFirstChild("HumanoidRootPart")
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then return end
-            speedNoStealValue = tonumber(speedBox.Text) or 53
             local moveDirection = hum.MoveDirection
             if moveDirection.Magnitude > 0 then
-                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*speedNoStealValue, hrp.AssemblyLinearVelocity.Y, moveDirection.Z*speedNoStealValue)
+                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*(tonumber(speedBox.Text) or 53), hrp.AssemblyLinearVelocity.Y, moveDirection.Z*(tonumber(speedBox.Text) or 53))
             end
         end)
     else
@@ -998,14 +949,15 @@ local function toggleSpeed()
             local hrp = char:FindFirstChild("HumanoidRootPart")
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then return end
-            speedStealValue = tonumber(stealBox.Text) or 29
             local moveDirection = hum.MoveDirection
             if moveDirection.Magnitude > 0 then
-                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*speedStealValue, hrp.AssemblyLinearVelocity.Y, moveDirection.Z*speedStealValue)
+                hrp.AssemblyLinearVelocity = Vector3.new(moveDirection.X*(tonumber(stealBox.Text) or 29), hrp.AssemblyLinearVelocity.Y, moveDirection.Z*(tonumber(stealBox.Text) or 29))
             end
         end)
     end
 end
+
+speedActivate.MouseButton1Click:Connect(toggleSpeed)
 
 -- Tecla Q activa/desactiva speed
 UserInputService.InputBegan:Connect(function(input, gp)
