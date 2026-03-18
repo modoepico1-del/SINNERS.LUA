@@ -6,7 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local RunService       = game:GetService("RunService")
 local Lighting         = game:GetService("Lighting")
 local ReplicatedStorage= game:GetService("ReplicatedStorage")
-local PlayerGui        = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+local CoreGui          = game:GetService("CoreGui")
 local HttpService      = game:GetService("HttpService")
 
 local me          = Players.LocalPlayer
@@ -45,16 +45,15 @@ end
 local savedCfg = {}
 pcall(function() savedCfg = HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
 
-local _existing = PlayerGui:FindFirstChild("DEMONTIME_GUI")
-if _existing then _existing:Destroy() end
+if CoreGui:FindFirstChild("DEMONTIME_GUI") then
+    CoreGui:FindFirstChild("DEMONTIME_GUI"):Destroy()
+end
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name           = "DEMONTIME_GUI"
 ScreenGui.ResetOnSpawn   = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder   = 999
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent         = PlayerGui
+ScreenGui.Parent         = CoreGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size               = UDim2.new(0, 300, 0, 700)
@@ -334,15 +333,15 @@ RunService.Heartbeat:Connect(function()
     if not infJumpOn then return end
     local char = me.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp.AssemblyLinearVelocity.Y < -clampFallSpeed then
-        hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, -clampFallSpeed, hrp.AssemblyLinearVelocity.Z)
+    if hrp and hrp.Velocity.Y < -clampFallSpeed then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
     end
 end)
 UserInputService.JumpRequest:Connect(function()
     if not infJumpOn then return end
     local char = me.Character; if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, jumpForce, hrp.AssemblyLinearVelocity.Z) end
+    if hrp then hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z) end
 end)
 infJumpTrack.MouseButton1Click:Connect(function()
     infJumpOn = not infJumpOn
