@@ -834,7 +834,7 @@ speedTitleLbl.ZIndex = 5
 speedTitleLbl.Parent = ContentArea
 
 local speedRow = Instance.new("Frame")
-speedRow.Size = UDim2.new(1, -20, 0, 60)
+speedRow.Size = UDim2.new(1, -20, 0, 90)
 speedRow.Position = UDim2.new(0, 10, 0, 478)
 speedRow.BackgroundColor3 = Color3.fromRGB(15, 0, 0)
 speedRow.BorderSizePixel = 0
@@ -869,6 +869,24 @@ stealBox.BackgroundColor3=Color3.fromRGB(20,20,20); stealBox.BorderSizePixel=0
 stealBox.TextColor3=Color3.fromRGB(255,80,80); stealBox.TextSize=12; stealBox.Font=Enum.Font.GothamBold
 stealBox.ClearTextOnFocus=true; stealBox.ZIndex=6; stealBox.Parent=speedRow
 Instance.new("UICorner", stealBox).CornerRadius = UDim.new(0,5)
+
+local jumpLbl = Instance.new("TextLabel")
+jumpLbl.Text = "JUMP"; jumpLbl.Size = UDim2.new(0,50,0,18); jumpLbl.Position = UDim2.new(0,138,0,4)
+jumpLbl.BackgroundTransparency=1; jumpLbl.TextColor3=Color3.fromRGB(180,180,180)
+jumpLbl.TextSize=10; jumpLbl.Font=Enum.Font.GothamBold
+jumpLbl.TextXAlignment=Enum.TextXAlignment.Left; jumpLbl.ZIndex=5; jumpLbl.Parent=speedRow
+
+local jumpBox = Instance.new("TextBox")
+jumpBox.Text = tostring(jumpForce); jumpBox.Size = UDim2.new(0,55,0,22); jumpBox.Position = UDim2.new(0,138,0,24)
+jumpBox.BackgroundColor3=Color3.fromRGB(20,20,20); jumpBox.BorderSizePixel=0
+jumpBox.TextColor3=Color3.fromRGB(255,80,80); jumpBox.TextSize=12; jumpBox.Font=Enum.Font.GothamBold
+jumpBox.ClearTextOnFocus=true; jumpBox.ZIndex=6; jumpBox.Parent=speedRow
+Instance.new("UICorner", jumpBox).CornerRadius = UDim.new(0,5)
+jumpBox.FocusLost:Connect(function()
+    local num = tonumber(jumpBox.Text)
+    if num then jumpForce = math.clamp(num, 10, 500); jumpBox.Text = tostring(jumpForce)
+    else jumpBox.Text = tostring(jumpForce) end
+end)
 
 local speedActivate = Instance.new("TextButton")
 speedActivate.Text = "OFF"; speedActivate.Size = UDim2.new(0,60,0,40); speedActivate.Position = UDim2.new(1,-68,0.5,-20)
