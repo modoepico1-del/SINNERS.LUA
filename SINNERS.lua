@@ -1062,16 +1062,6 @@ end
 -- ══════════════════════════════════════════
 --         DARK MODE (siempre activo)
 -- ══════════════════════════════════════════
-local function startDarkMode()
-    for _, child in pairs(Lighting:GetChildren()) do if child:IsA("Sky") then child.Parent = nil end end
-    local sky = Instance.new("Sky")
-    sky.SkyboxBk="rbxassetid://2013298"; sky.SkyboxDn="rbxassetid://2013298"
-    sky.SkyboxFt="rbxassetid://2013298"; sky.SkyboxLf="rbxassetid://2013298"
-    sky.SkyboxRt="rbxassetid://2013298"; sky.SkyboxUp="rbxassetid://2013298"
-    sky.StarCount=0; sky.CelestialBodiesShown=false; sky.Parent=Lighting
-end
-task.defer(function() task.wait(0.5); startDarkMode() end)
-me.CharacterAdded:Connect(function() task.wait(1); startDarkMode() end)
 
 -- ══════════════════════════════════════════
 --    ████  BUILDING TABS CONTENT  ████
